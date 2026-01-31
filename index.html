@@ -1,1 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Mapa de Gaylords</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <!-- CSS -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<h1>Gerenciamento de Gaylords</h1>
+
+<!-- BUSCA -->
+<div class="busca">
+  <input type="text" id="buscaInput" placeholder="Buscar por lote, RZ ou volume">
+  <button onclick="buscar()">Buscar</button>
+  <button onclick="limparBusca()">Limpar Destaque</button>
+</div>
+
+<!-- CADASTRO DE ÁREA -->
+<section class="cadastros">
+  <h2>Cadastrar Área</h2>
+  <input id="areaNome" placeholder="Nome da área">
+  <button onclick="cadastrarArea()">Cadastrar Área</button>
+</section>
+
+<!-- CADASTRO DE LOTE -->
+<section class="cadastros">
+  <h2>Cadastrar Lote</h2>
+  <input id="loteNome" placeholder="Nome do lote">
+  <input id="loteTotal" type="number" placeholder="Quantidade total de gaylords" min="1">
+  <button onclick="cadastrarLote()">Cadastrar Lote</button>
+</section>
+
+<!-- MAPA -->
+<section id="mapa"></section>
+
+<!-- DASHBOARD LOTES ATIVOS -->
+<h2>Lotes Ativos</h2>
+<div id="dashboard"></div>
+
+<!-- LOTES EXPEDIDOS -->
+<h2>Lotes Expedidos</h2>
+<div id="lotesExpedidos"></div>
+
+<!-- MODAL ENDEREÇAMENTO -->
+<div id="modal" class="modal hidden">
+  <div class="modal-content">
+    <h3>Endereçar Gaylord</h3>
+    <label>Lote:
+      <select id="modalLote"></select>
+    </label>
+    <label>Volume (opcional):
+      <input id="modalVolume" type="text">
+    </label>
+    <label>RZ (obrigatório):
+      <input id="modalRz" type="text">
+    </label>
+    <div class="acoes">
+      <button onclick="confirmarEndereco()">Salvar</button>
+      <button onclick="removerGaylord()">Remover Gaylord</button>
+      <button onclick="fecharModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- JS -->
+<script src="js/script.js"></script>
+</body>
+</html>
