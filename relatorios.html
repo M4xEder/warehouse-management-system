@@ -1,1 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Relatórios de Gaylords</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <!-- CSS -->
+  <link rel="stylesheet" href="css/relatorios.css">
+</head>
+
+<body>
+
+<h1>📊 Relatórios de Gaylords</h1>
+
+<div class="box">
+  <label>
+    Lote:
+    <select id="loteSelecionado"></select>
+  </label>
+
+  <button onclick="gerarRelatorio()">Gerar Relatório</button>
+  <button onclick="exportarExcelLote()">📊 Excel (Lote)</button>
+  <button onclick="exportarExcelTodos()">📦 Excel (Todos)</button>
+  <button onclick="exportarCSVLote()">📄 CSV (Lote)</button>
+  <button onclick="exportarCSVTodos()">📦 CSV (Todos)</button>
+</div>
+
+<div id="mensagem" class="alerta" style="display:none"></div>
+<div id="resumo" class="resumo"></div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Status</th>
+      <th>Área</th>
+      <th>Rua</th>
+      <th>Endereço</th>
+      <th>RZ</th>
+      <th>Volume</th>
+    </tr>
+  </thead>
+  <tbody id="tabela"></tbody>
+</table>
+
+<!-- Biblioteca XLSX -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<!-- JS -->
+<script src="js/relatorios.js"></script>
+
+</body>
+</html>
