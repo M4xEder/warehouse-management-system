@@ -1,1 +1,67 @@
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f4f4;
+  padding: 20px;
+}
 
+.box {
+  background: #fff;
+  padding: 15px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+}
+
+select,
+button {
+  padding: 6px 12px;
+  margin-right: 6px;
+  cursor: pointer;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+th,
+td {
+  border: 1px solid #ccc;
+  padding: 8px;
+}
+
+th {
+  background: #eee;
+}
+
+.ativo {
+  color: green;
+  font-weight: bold;
+}
+
+.expedido {
+  color: #b91c1c;
+  font-weight: bold;
+}
+
+.resumo {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.card {
+  background: #fafafa;
+  padding: 10px;
+  border-radius: 6px;
+  min-width: 200px;
+}
+
+.alerta {
+  background: #fff3cd;
+  border: 1px solid #ffeeba;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  color: #856404;
+}
