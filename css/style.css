@@ -1,4 +1,126 @@
-
 body {
-  background: #f4f4f4;
+  font-family: Arial, sans-serif;
+  padding: 20px;
+  background: #f5f5f5;
+}
+
+h1, h2 {
+  margin-bottom: 10px;
+}
+
+.cadastros input {
+  margin: 4px;
+  padding: 6px;
+}
+
+button {
+  padding: 6px 10px;
+  cursor: pointer;
+  margin-left: 4px;
+}
+
+.busca {
+  margin-bottom: 20px;
+}
+
+#mapa {
+  margin-top: 20px;
+}
+
+.area {
+  background: #fff;
+  padding: 10px;
+  margin-bottom: 15px;
+  border-radius: 6px;
+}
+
+.rua {
+  margin-top: 8px;
+}
+
+.posicoes {
+  display: flex;
+  gap: 4px;
+  margin-top: 5px;
+}
+
+.posicao {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #999;
+  cursor: pointer;
+}
+
+.posicao.ocupada {
+  border: 2px solid #000;
+}
+
+.posicao.highlight {
+  outline: 3px solid red;
+  animation: piscar 1s infinite;
+}
+
+@keyframes piscar {
+  0% { outline-color: red; }
+  50% { outline-color: yellow; }
+  100% { outline-color: red; }
+}
+
+.lote-card {
+  background: #fff;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.progress-bar {
+  background: #ddd;
+  height: 10px;
+  border-radius: 4px;
+  margin: 6px 0;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 4px;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 6px;
+  width: 300px;
+}
+
+.hidden {
+  display: none;
+}
+
+.acoes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.historico-item {
+  background: #f9f9f9;
+  border: 1px solid #ccc;
+  padding: 8px;
+  margin-bottom: 6px;
+  border-radius: 4px;
+}
+
+.danger {
+  background: #b91c1c;
+  color: white;
+  border: none;
 }
