@@ -1,14 +1,10 @@
-async function protectPage() {
-  const { data, error } = await supabase.auth.getSession()
-
-  if (error || !data.session) {
-    window.location.replace('login.html')
-    return
-  }
-
-  // Libera a página
-  document.body.style.display = 'block'
-}
-
+// Esconde a página até validar login
 document.body.style.display = 'none'
-protectPage()
+
+supabase.auth.onAuthStateChange((event, session) => {
+  if (!session) {
+    window.location.replace('login.html')
+  } else {
+    document.body.style.display = 'block'
+  }
+})
