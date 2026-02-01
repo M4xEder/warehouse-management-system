@@ -1,2 +1,1 @@
-
-window.location.href = 'relatorios.html'
+window.location.href = 'index.html'
