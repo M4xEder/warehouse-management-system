@@ -1,10 +1,15 @@
-async function loadHeader() {
-  const container = document.getElementById('header')
-  if (!container) return
+document.addEventListener('DOMContentLoaded', () => {
+  const header = document.getElementById('header');
+  if (!header) return;
 
-  const response = await fetch('components/header.html')
-  const html = await response.text()
-  container.innerHTML = html
-}
-
-loadHeader()
+  header.innerHTML = `
+    <header class="app-header">
+      <strong>Sistema Gaylords</strong>
+      <nav>
+        <a href="index.html">Sistema</a>
+        <a href="relatorios.html">Relatórios</a>
+        <button onclick="logout()">Sair</button>
+      </nav>
+    </header>
+  `;
+});
