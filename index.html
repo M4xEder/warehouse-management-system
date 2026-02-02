@@ -5,11 +5,12 @@
   <title>Mapa de Gaylords</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <!-- CSS -->
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-  <!-- HEADER -->
+  <!-- HEADER DINÂMICO -->
   <div id="header"></div>
 
   <main id="app">
@@ -34,7 +35,7 @@
     <section class="cadastros">
       <h2>Cadastrar Lote</h2>
       <input id="loteNome" placeholder="Nome do lote">
-      <input id="loteTotal" type="number" min="1" placeholder="Quantidade total">
+      <input id="loteTotal" type="number" placeholder="Quantidade total" min="1">
       <button onclick="cadastrarLote()">Cadastrar Lote</button>
     </section>
 
@@ -56,15 +57,18 @@
     <div class="modal-content">
       <h3>Endereçar Gaylord</h3>
 
-      <label>Lote
+      <label>
+        Lote:
         <select id="modalLote"></select>
       </label>
 
-      <label>Volume
+      <label>
+        Volume:
         <input id="modalVolume" type="text">
       </label>
 
-      <label>RZ
+      <label>
+        RZ:
         <input id="modalRz" type="text">
       </label>
 
@@ -78,7 +82,7 @@
 
   <!-- JS -->
   <script src="js/supabase.js"></script>
-  <!-- <script src="js/guard.js"></script> -->
+  <script src="js/guard.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/header.js"></script>
   <script src="js/script.js"></script>
