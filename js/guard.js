@@ -1,10 +1,11 @@
-// Esconde a página até validar login
-document.body.style.display = 'none'
+document.addEventListener('DOMContentLoaded', () => {
+  const user = localStorage.getItem('user'); // provisório
 
-supabase.auth.onAuthStateChange((event, session) => {
-  if (!session) {
-    window.location.replace('login.html')
-  } else {
-    document.body.style.display = 'block'
+  const isLoginPage = window.location.pathname.includes('login');
+
+  if (!user && !isLoginPage) {
+    // ainda não força redirect enquanto está testando
+    console.warn('Usuário não autenticado (guard desativado para testes)');
+    return;
   }
-})
+});
