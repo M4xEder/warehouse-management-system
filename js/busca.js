@@ -14,15 +14,32 @@ window.limparBusca = function () {
 
 */
 
+// ===============================
+// BUSCA.JS — LOTE | RZ | VOLUME
+// ===============================
+
 window.buscar = function () {
-  const termo = document.getElementById('buscaInput').value.toLowerCase();
+  const input = document.getElementById('buscaInput');
+  if (!input) return;
 
-  document.querySelectorAll('.posicao').forEach(p => {
-    p.classList.remove('highlight');
+  const termo = input.value.trim().toLowerCase();
 
-    const info = p.title?.toLowerCase() || '';
-    if (termo && info.includes(termo)) {
-      p.classList.add('highlight');
+  // limpa destaque anterior
+  limparBusca();
+
+  if (!termo) return;
+
+  document.querySelectorAll('.posicao').forEach(posEl => {
+    const title = (posEl.title || '').toLowerCase();
+
+    if (title.includes(termo)) {
+      posEl.classList.add('highlight');
     }
   });
+};
+
+window.limparBusca = function () {
+  document
+    .querySelectorAll('.posicao.highlight')
+    .forEach(el => el.classList.remove('highlight'));
 };
