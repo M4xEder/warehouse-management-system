@@ -1,32 +1,57 @@
-body {
+/* RESET BÁSICO */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: auto;
+  overflow-y: auto;
   font-family: Arial, sans-serif;
-  padding: 20px;
   background: #f5f5f5;
 }
 
+/* CONTAINER PRINCIPAL */
+#app {
+  position: relative;
+  z-index: 1;
+  padding: 20px;
+}
+
+/* TÍTULOS */
 h1, h2 {
   margin-bottom: 10px;
 }
 
+/* BUSCA */
+.busca {
+  margin-bottom: 20px;
+}
+
+.busca input {
+  padding: 6px;
+}
+
+/* CADASTROS */
 .cadastros input {
   margin: 4px;
   padding: 6px;
 }
 
+/* BOTÕES */
 button {
   padding: 6px 10px;
   cursor: pointer;
   margin-left: 4px;
 }
 
-.busca {
-  margin-bottom: 20px;
-}
-
+/* MAPA */
 #mapa {
   margin-top: 20px;
 }
 
+/* ÁREA */
 .area {
   background: #fff;
   padding: 10px;
@@ -34,14 +59,17 @@ button {
   border-radius: 6px;
 }
 
+/* RUA */
 .rua {
   margin-top: 8px;
 }
 
+/* POSIÇÕES */
 .posicoes {
   display: flex;
   gap: 4px;
   margin-top: 5px;
+  flex-wrap: wrap;
 }
 
 .posicao {
@@ -66,6 +94,7 @@ button {
   100% { outline-color: red; }
 }
 
+/* DASHBOARD */
 .lote-card {
   background: #fff;
   padding: 10px;
@@ -73,6 +102,7 @@ button {
   margin-bottom: 10px;
 }
 
+/* BARRA DE PROGRESSO */
 .progress-bar {
   background: #ddd;
   height: 10px;
@@ -85,6 +115,7 @@ button {
   border-radius: 4px;
 }
 
+/* MODAL */
 .modal {
   position: fixed;
   inset: 0;
@@ -92,6 +123,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 1000;
 }
 
 .modal-content {
@@ -111,6 +143,7 @@ button {
   gap: 6px;
 }
 
+/* HISTÓRICO */
 .historico-item {
   background: #f9f9f9;
   border: 1px solid #ccc;
@@ -119,11 +152,20 @@ button {
   border-radius: 4px;
 }
 
+/* ========================= */
+/* HEADER (CRÍTICO) */
+/* ========================= */
+
+#header {
+  position: relative;
+  z-index: 10;
+}
+
 .app-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 20px;
+  padding: 12px 20px;
   background: #1f2933;
   color: #fff;
 }
@@ -141,4 +183,9 @@ button {
   cursor: pointer;
   font-size: 14px;
   text-decoration: none;
+}
+
+.app-header a:hover,
+.app-header button:hover {
+  opacity: 0.8;
 }
