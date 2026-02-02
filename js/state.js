@@ -1,20 +1,39 @@
-// Estado global do sistema
+// ==================================
+// STATE.JS — ESTADO GLOBAL
+// ==================================
+
 window.state = {
   areas: [],
   lotes: [],
-  historico: []
+  historicoExpedidos: []
 };
 
-// Carregar do localStorage
+const STORAGE_KEY = 'gaylords-state';
+
+// ===============================
+// LOAD
+// ===============================
 window.loadState = function () {
-  state.areas = JSON.parse(localStorage.getItem('areas')) || [];
-  state.lotes = JSON.parse(localStorage.getItem('lotes')) || [];
-  state.historico = JSON.parse(localStorage.getItem('historico')) || [];
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return;
+
+  try {
+    const data = JSON.parse(raw);
+
+    // garante estrutura
+    state.areas = Array.isArray(data.areas) ? data.areas : [];
+    state.lotes = Array.isArray(data.lotes) ? data.lotes : [];
+    state.historicoExpedidos = Array.isArray(data.historicoExpedidos)
+      ? data.historicoExpedidos
+      : [];
+  } catch (e) {
+    console.error('Erro ao carregar state:', e);
+  }
 };
 
-// Salvar no localStorage
+// ===============================
+// SAVE
+// ===============================
 window.saveState = function () {
-  localStorage.setItem('areas', JSON.stringify(state.areas));
-  localStorage.setItem('lotes', JSON.stringify(state.lotes));
-  localStorage.setItem('historico', JSON.stringify(state.historico));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 };
