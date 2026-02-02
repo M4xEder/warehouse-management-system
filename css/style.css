@@ -1,6 +1,4 @@
-* {
-  pointer-events: auto !important;
-}
+
 body {
   font-family: Arial, sans-serif;
   padding: 20px;
@@ -158,23 +156,4 @@ button {
 .app-header button:hover,
 .app-header a:hover {
   opacity: 0.8;
-}
-
-.app-header {
-  position: relative;
-  z-index: 10;
-}
-
-#header {
-  position: relative;
-  z-index: 10;
-}
-
-/* Garante que o sistema fique clicável */
-main, 
-#app, 
-#mapa, 
-#conteudo {
-  position: relative;
-  z-index: 1;
 }
