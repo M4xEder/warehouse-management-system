@@ -1,31 +1,48 @@
+// ==================================
+// DASHBOARD.JS — LOTES ATIVOS
+// ==================================
+
 window.renderDashboard = function () {
-  const dash = document.getElementById('dashboard');
-  dash.innerHTML = '';
+  const dashboard = document.getElementById('dashboard');
+  if (!dashboard) return;
+
+  dashboard.innerHTML = '';
+
+  if (!state.lotes || state.lotes.length === 0) {
+    dashboard.innerHTML = '<p>Nenhum lote cadastrado</p>';
+    return;
+  }
 
   state.lotes.forEach(lote => {
-    const div = document.createElement('div');
-    div.className = 'lote-card';
-    div.innerHTML = `
-      <strong>${lote.nome}</strong>
+    const usado = lote.usados || 0;
+    const total = lote.total || 0;
+    const perc = total > 0 ? Math.round((usado / total) * 100) : 0;
+
+    const card = document.createElement('div');
+    card.className = 'lote-card';
+
+    card.innerHTML = `
+      <strong>${lote.nome}</strong><br>
+      ${usado} / ${total}
       <div class="progress-bar">
-        <div class="progress-fill" style="width:${(lote.usados / lote.total) * 100}%; background:${lote.cor}"></div>
+        <div class="progress-fill" 
+             style="width:${perc}%; background:${lote.cor}">
+        </div>
       </div>
-      <button onclick="expedirLote('${lote.nome}')">Expedir</button>
+
+      <button onclick="alterarQuantidadeLote('${lote.id}')">
+        Alterar Quantidade
+      </button>
+
+      <button class="danger" onclick="excluirLote('${lote.id}')">
+        Excluir Lote
+      </button>
+
+      <button onclick="expedirLote('${lote.id}')">
+        Expedir
+      </button>
     `;
-    dash.appendChild(div);
+
+    dashboard.appendChild(card);
   });
-};
-
-window.expedirLote = function (nome) {
-  const lote = state.lotes.find(l => l.nome === nome);
-  if (!lote) return;
-
-  state.historico.push({
-    lote: nome,
-    data: dataAtual()
-  });
-
-  state.lotes = state.lotes.filter(l => l.nome !== nome);
-  saveState();
-  renderDashboard();
 };
