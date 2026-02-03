@@ -154,11 +154,10 @@ window.renderMapa = function () {
             `Volume: ${posicao.volume || '-'}`;
         }
 
-        // 🔑 CORREÇÃO CRÍTICA — ABERTURA DO MODAL
+        // Abrir modal ao clicar
         p.onclick = () => {
           const areaIndex = state.areas.findIndex(a => a.id === area.id);
           const ruaIndex = area.ruas.findIndex(r => r.id === rua.id);
-
           abrirModal(areaIndex, ruaIndex, posicaoIndex);
         };
 
@@ -178,7 +177,5 @@ window.renderMapa = function () {
   });
 
   // Atualiza dashboard se existir
-  if (typeof renderDashboard === 'function') {
-    renderDashboard();
-  }
+  if (typeof renderDashboard === 'function') renderDashboard();
 };
