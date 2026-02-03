@@ -4,20 +4,17 @@
 
 let modalContext = null;
 
-// -------------------------------
-// ABRIR MODAL (CHAMADO PELO MAPA)
-// -------------------------------
-function abrirModal(areaIndex, ruaIndex, posicaoIndex) {
+// ABRIR MODAL
+function abrirModal(areaIndex, ruaIndex, posIndex) {
   const modal = document.getElementById('modal');
   if (!modal) return;
 
   const area = state.areas[areaIndex];
   const rua = area.ruas[ruaIndex];
-  const posicao = rua.posicoes[posicaoIndex];
+  const posicao = rua.posicoes[posIndex];
 
-  modalContext = { areaIndex, ruaIndex, posicaoIndex };
+  modalContext = { areaIndex, ruaIndex, posIndex };
 
-  // Preenche select de lotes
   const select = document.getElementById('modalLote');
   select.innerHTML = '<option value="">Selecione</option>';
 
@@ -28,7 +25,6 @@ function abrirModal(areaIndex, ruaIndex, posicaoIndex) {
     select.appendChild(opt);
   });
 
-  // Se já ocupado, carrega dados
   if (posicao.ocupada) {
     select.value = posicao.lote;
     document.getElementById('modalRz').value = posicao.rz || '';
@@ -42,58 +38,43 @@ function abrirModal(areaIndex, ruaIndex, posicaoIndex) {
   modal.classList.remove('hidden');
 }
 
-// -------------------------------
 // FECHAR MODAL
-// -------------------------------
 function fecharModal() {
-  document.getElementById('modal').classList.add('hidden');
+  const modal = document.getElementById('modal');
+  if (!modal) return;
+  modal.classList.add('hidden');
   modalContext = null;
 }
 
-// -------------------------------
 // CONFIRMAR ENDEREÇAMENTO
-// -------------------------------
 function confirmarEndereco() {
   if (!modalContext) return;
 
-  const { areaIndex, ruaIndex, posicaoIndex } = modalContext;
+  const { areaIndex, ruaIndex, posIndex } = modalContext;
 
-  const loteNome = document.getElementById('modalLote').value;
+  const lote = document.getElementById('modalLote').value;
   const rz = document.getElementById('modalRz').value.trim();
   const volume = document.getElementById('modalVolume').value.trim();
 
-  if (!loteNome || !rz) {
-    alert('Lote e RZ são obrigatórios');
-    return;
-  }
+  if (!lote || !rz) return alert('Lote e RZ são obrigatórios');
 
-  const lote = state.lotes.find(l => l.nome === loteNome);
-  if (!lote) {
-    alert('Lote selecionado não existe');
-    return;
-  }
+  const posicao = state.areas[areaIndex].ruas[ruaIndex].posicoes[posIndex];
 
-  // Verifica se o lote está cheio
-  const usados = state.areas.reduce((acc, area) => {
-    area.ruas.forEach(rua => {
-      rua.posicoes.forEach(pos => {
-        if (pos.lote === loteNome) acc++;
-      });
-    });
+  // Verifica se lote está cheio
+  const loteInfo = state.lotes.find(l => l.nome === lote);
+  const usados = state.areas.reduce((acc, a) => {
+    a.ruas.forEach(r => r.posicoes.forEach(p => {
+      if (p.lote === lote) acc++;
+    }));
     return acc;
   }, 0);
 
-  if (!state.areas[areaIndex].ruas[ruaIndex].posicoes[posicaoIndex].ocupada && usados >= lote.total) {
-    alert(`Lote "${loteNome}" já atingiu sua capacidade máxima (${lote.total})`);
-    return;
+  if (loteInfo && usados >= loteInfo.total && posicao.lote !== lote) {
+    return alert(`Lote "${lote}" já está cheio`);
   }
 
-  // Salva posição
-  const posicao =
-    state.areas[areaIndex].ruas[ruaIndex].posicoes[posicaoIndex];
-
   posicao.ocupada = true;
-  posicao.lote = loteNome;
+  posicao.lote = lote;
   posicao.rz = rz;
   posicao.volume = volume || null;
 
@@ -102,18 +83,15 @@ function confirmarEndereco() {
   renderMapa();
 }
 
-// -------------------------------
 // REMOVER GAYLORD
-// -------------------------------
 function removerGaylord() {
   if (!modalContext) return;
 
-  const { areaIndex, ruaIndex, posicaoIndex } = modalContext;
+  const { areaIndex, ruaIndex, posIndex } = modalContext;
 
   if (!confirm('Remover gaylord deste endereço?')) return;
 
-  const posicao =
-    state.areas[areaIndex].ruas[ruaIndex].posicoes[posicaoIndex];
+  const posicao = state.areas[areaIndex].ruas[ruaIndex].posicoes[posIndex];
 
   posicao.ocupada = false;
   posicao.lote = null;
