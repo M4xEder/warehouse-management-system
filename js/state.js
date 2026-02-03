@@ -21,11 +21,11 @@ function loadState() {
 
     const parsed = JSON.parse(data);
 
-    // Garantias (evita state quebrado)
-    state.areas = parsed.areas || [];
-    state.lotes = parsed.lotes || [];
-    state.historicoExpedidos = parsed.historicoExpedidos || [];
-
+    state.areas = Array.isArray(parsed.areas) ? parsed.areas : [];
+    state.lotes = Array.isArray(parsed.lotes) ? parsed.lotes : [];
+    state.historicoExpedidos = Array.isArray(parsed.historicoExpedidos)
+      ? parsed.historicoExpedidos
+      : [];
   } catch (err) {
     console.error('Erro ao carregar state:', err);
     alert('Erro ao carregar dados salvos. O sistema será reiniciado.');
