@@ -1,110 +1,51 @@
-// =======================================
-// MODEL.JS
-// Define a estrutura oficial dos dados
-// =======================================
+// ===============================
+// MODEL + STATE GLOBAL
+// ===============================
 
-// ---------- POSIÇÃO (Gaylord) ----------
-/*
-{
-  id: number,
-  lote: string,      // NOME do lote
-  rz: string,
-  volume: string | null
-}
-*/
+const STORAGE_KEY = 'gaylord_state_v2';
 
-// ---------- RUA ----------
-/*
-{
-  nome: string,
-  posicoes: Posicao[]
-}
-*/
-
-// ---------- ÁREA ----------
-/*
-{
-  nome: string,
-  ruas: Rua[]
-}
-*/
-
-// ---------- LOTE ----------
-/*
-{
-  id: string,
-  nome: string,
-  total: number,
-  expedidos: number,
-  cor: string
-}
-*/
-
-// ---------- HISTÓRICO DE EXPEDIÇÃO ----------
-/*
-{
-  id: string,
-  lote: string,
-  quantidade: number,
-  data: string,
-  detalhes: {
-    area: string,
-    rua: string,
-    posicao: number,
-    rz: string,
-    volume: string
-  }[]
-}
-*/
-
-// ---------- STATE GLOBAL ----------
 window.state = {
-  areas: [],              // Áreas do mapa
-  lotes: [],              // Lotes ativos
-  historicoExpedidos: []  // Histórico
+  areas: [],
+  lotes: [],
+  historicoExpedidos: []
 };
 
-// ---------- STORAGE ----------
-const STORAGE_KEY = 'gaylord_state_v1';
-
-// ---------- LOAD ----------
+// ===============================
+// LOAD / SAVE
+// ===============================
 window.loadState = function () {
-  const data = localStorage.getItem(STORAGE_KEY);
-  if (!data) return;
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return;
 
   try {
-    const parsed = JSON.parse(data);
-    state.areas = parsed.areas || [];
-    state.lotes = parsed.lotes || [];
-    state.historicoExpedidos = parsed.historicoExpedidos || [];
+    const data = JSON.parse(raw);
+    state.areas = data.areas || [];
+    state.lotes = data.lotes || [];
+    state.historicoExpedidos = data.historicoExpedidos || [];
   } catch (e) {
     console.error('Erro ao carregar state', e);
   }
 };
 
-// ---------- SAVE ----------
 window.saveState = function () {
-  localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify({
-      areas: state.areas,
-      lotes: state.lotes,
-      historicoExpedidos: state.historicoExpedidos
-    })
-  );
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 };
 
-// ---------- HELPERS ----------
+// ===============================
+// HELPERS
+// ===============================
 window.gerarCor = function () {
   return `hsl(${Math.random() * 360}, 70%, 70%)`;
 };
 
+// ===============================
+// FACTORIES
+// ===============================
 window.criarLote = function (nome, total) {
   return {
     id: crypto.randomUUID(),
     nome,
     total,
-    expedidos: 0,
     cor: gerarCor()
   };
 };
@@ -116,16 +57,23 @@ window.criarArea = function (nome) {
   };
 };
 
-window.criarRua = function (nome, quantidade) {
+window.criarRua = function (nome, qtd) {
   return {
     nome,
-    posicoes: Array.from({ length: quantidade }, (_, i) => ({
-      id: i + 1,
+    posicoes: Array.from({ length: qtd }, (_, i) => ({
+      index: i,
       lote: '',
       rz: '',
       volume: ''
     }))
   };
+};
+
+// ===============================
+// UTILS
+// ===============================
+window.buscarLote = function (nome) {
+  return state.lotes.find(l => l.nome === nome);
 };
 
 window.posicaoOcupada = function (pos) {
