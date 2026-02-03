@@ -1,95 +1,112 @@
 // ===============================
-// MODEL.JS — REGRAS DO DOMÍNIO
+// MODAL.JS — ENDEREÇAMENTO
 // ===============================
 
-// ---------- POSIÇÃO ----------
-function criarPosicao() {
-  return {
-    lote: null,
-    rz: null,
-    volume: null,
-    ocupada: false
+let modalContext = null;
+
+// -------------------------------
+// ABRIR MODAL (CHAMADO PELO MAPA)
+// -------------------------------
+function abrirModal(areaIndex, ruaIndex, posicaoIndex) {
+  const modal = document.getElementById('modal');
+  if (!modal) return;
+
+  const area = state.areas[areaIndex];
+  const rua = area.ruas[ruaIndex];
+  const posicao = rua.posicoes[posicaoIndex];
+
+  modalContext = {
+    areaIndex,
+    ruaIndex,
+    posicaoIndex
   };
+
+  // Preenche select de lotes
+  const select = document.getElementById('modalLote');
+  select.innerHTML = '<option value="">Selecione</option>';
+
+  state.lotes.forEach(lote => {
+    const opt = document.createElement('option');
+    opt.value = lote.nome;
+    opt.textContent = lote.nome;
+    select.appendChild(opt);
+  });
+
+  // Se já ocupado, carrega dados
+  if (posicao.ocupada) {
+    select.value = posicao.lote;
+    document.getElementById('modalRz').value = posicao.rz || '';
+    document.getElementById('modalVolume').value = posicao.volume || '';
+  } else {
+    select.value = '';
+    document.getElementById('modalRz').value = '';
+    document.getElementById('modalVolume').value = '';
+  }
+
+  modal.classList.remove('hidden');
 }
 
-// ---------- RUA ----------
-function criarRua(nome, quantidade) {
-  return {
-    id: crypto.randomUUID(),
-    nome,
-    posicoes: Array.from(
-      { length: quantidade },
-      () => criarPosicao()
-    )
-  };
+// -------------------------------
+// FECHAR MODAL
+// -------------------------------
+function fecharModal() {
+  document.getElementById('modal').classList.add('hidden');
+  modalContext = null;
 }
 
-// ---------- ÁREA ----------
-function criarArea(nome) {
-  return {
-    id: crypto.randomUUID(),
-    nome,
-    ruas: []
-  };
+// -------------------------------
+// CONFIRMAR ENDEREÇAMENTO
+// -------------------------------
+function confirmarEndereco() {
+  if (!modalContext) return;
+
+  const { areaIndex, ruaIndex, posicaoIndex } = modalContext;
+
+  const lote = document.getElementById('modalLote').value;
+  const rz = document.getElementById('modalRz').value.trim();
+  const volume = document.getElementById('modalVolume').value.trim();
+
+  if (!lote || !rz) {
+    alert('Lote e RZ são obrigatórios');
+    return;
+  }
+
+  const posicao =
+    state.areas[areaIndex]
+      .ruas[ruaIndex]
+      .posicoes[posicaoIndex];
+
+  posicao.ocupada = true;
+  posicao.lote = lote;
+  posicao.rz = rz;
+  posicao.volume = volume || null;
+
+  saveState();
+  fecharModal();
+  renderMapa();
 }
 
-// ---------- LOTE ----------
-function criarLote(nome, total, cor) {
-  return {
-    id: crypto.randomUUID(),
-    nome,
-    total,
-    cor,
-    expedido: 0
-  };
+// -------------------------------
+// REMOVER GAYLORD
+// -------------------------------
+function removerGaylord() {
+  if (!modalContext) return;
+
+  const { areaIndex, ruaIndex, posicaoIndex } = modalContext;
+
+  if (!confirm('Remover gaylord deste endereço?')) return;
+
+  const posicao =
+    state.areas[areaIndex]
+      .ruas[ruaIndex]
+      .posicoes[posicaoIndex];
+
+  posicao.ocupada = false;
+  posicao.lote = null;
+  posicao.rz = null;
+  posicao.volume = null;
+
+  saveState();
+  fecharModal();
+  renderMapa();
 }
-
-// ===============================
-// OPERAÇÕES DE NEGÓCIO
-// ===============================
-
-function podeExcluirArea(area) {
-  return !area.ruas.some(rua =>
-    rua.posicoes.some(p => p.ocupada)
-  );
-}
-
-function podeExcluirRua(rua) {
-  return !rua.posicoes.some(p => p.ocupada);
-}
-
-function ocuparPosicao(pos, { lote, rz, volume }) {
-  pos.lote = lote;
-  pos.rz = rz;
-  pos.volume = volume || '';
-  pos.ocupada = true;
-}
-
-function liberarPosicao(pos) {
-  pos.lote = null;
-  pos.rz = null;
-  pos.volume = null;
-  pos.ocupada = false;
-}
-
-function expedirPosicao(pos) {
-  if (!pos.ocupada) return false;
-
-  liberarPosicao(pos);
-  return true;
-}
-
-// ===============================
-// EXPORT GLOBAL
-// ===============================
-window.Model = {
-  criarArea,
-  criarRua,
-  criarLote,
-  criarPosicao,
-  podeExcluirArea,
-  podeExcluirRua,
-  ocuparPosicao,
-  liberarPosicao,
-  expedirPosicao
-};
