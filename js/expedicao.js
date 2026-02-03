@@ -1,6 +1,6 @@
 // =======================================
 // EXPEDICAO.JS
-// Responsável por expedir lotes
+// Expedição total ou parcial de lotes
 // =======================================
 
 window.expedirLote = function (nomeLote) {
@@ -12,67 +12,69 @@ window.expedirLote = function (nomeLote) {
     return;
   }
 
-  const expedidos = [];
-  let quantidade = 0;
+  const detalhes = [];
+  let expedidos = 0;
 
-  // Percorre todo o mapa
+  // Total alocado ANTES da expedição
+  const totalAlocadoAntes = contarGaylordsDoLote(nomeLote);
+
+  // Percorre o mapa
   state.areas.forEach(area => {
     area.ruas.forEach(rua => {
       rua.posicoes.forEach((pos, index) => {
         if (pos.ocupada && pos.lote === nomeLote) {
-
-          // Guarda histórico
-          expedidos.push({
+          detalhes.push({
             area: area.nome,
             rua: rua.nome,
             posicao: index + 1,
-            rz: pos.rz || '-',
+            rz: pos.rz,
             volume: pos.volume || '-'
           });
 
-          // Libera posição
+          // limpa posição
           pos.ocupada = false;
           pos.lote = null;
           pos.rz = null;
           pos.volume = null;
 
-          quantidade++;
+          expedidos++;
         }
       });
     });
   });
 
-  if (quantidade === 0) {
-    alert('Nenhum gaylord encontrado para este lote');
+  if (expedidos === 0) {
+    alert('Nenhum gaylord alocado para este lote');
     return;
   }
 
-  // Garante histórico
-  if (!Array.isArray(state.historicoExpedidos)) {
-    state.historicoExpedidos = [];
-  }
+  // Define tipo da expedição
+  const tipo =
+    expedidos === totalAlocadoAntes ? 'TOTAL' : 'PARCIAL';
 
-  // Salva histórico
+  // Histórico
   state.historicoExpedidos.push({
     id: crypto.randomUUID(),
     lote: nomeLote,
-    quantidade,
+    tipo,
+    quantidade: expedidos,
     data: new Date().toLocaleDateString(),
     hora: new Date().toLocaleTimeString(),
-    detalhes: expedidos
+    detalhes
   });
 
-  // Remove lote ativo
-  state.lotes = state.lotes.filter(l => l.nome !== nomeLote);
+  // 🔑 SÓ REMOVE O LOTE SE FOR TOTAL
+  if (tipo === 'TOTAL') {
+    state.lotes = state.lotes.filter(l => l.nome !== nomeLote);
+  }
 
   saveState();
 
-  // Atualiza interface
   renderMapa();
   renderDashboard();
-  if (typeof renderExpedidos === 'function') {
-    renderExpedidos();
-  }
+  renderExpedidos();
 
-  alert(`Lote "${nomeLote}" expedido com sucesso (${quantidade})`);
+  alert(
+    `Expedição ${tipo} do lote "${nomeLote}" (${expedidos})`
+  );
 };
