@@ -1,103 +1,68 @@
-// ========================================
+// =======================================
 // EXPEDICAO.JS
-// Responsável apenas por:
-// - Expedir lote
-// - Registrar histórico
-// - Renderizar área de expedição
-// ========================================
+// Responsável por expedir lotes
+// =======================================
 
-// ----------------------------------------
-// EXPEDIR LOTE
-// ----------------------------------------
-window.expedirLote = function (loteId) {
-  const lote = state.lotes.find(l => l.id === loteId);
+window.expedirLote = function (nomeLote) {
+  if (!nomeLote) return;
+
+  const lote = state.lotes.find(l => l.nome === nomeLote);
   if (!lote) {
     alert('Lote não encontrado');
     return;
   }
 
-  const removidos = [];
+  const expedidos = [];
+  let quantidade = 0;
 
-  // percorre mapa
+  // Percorre todo o mapa
   state.areas.forEach(area => {
     area.ruas.forEach(rua => {
-      rua.posicoes = rua.posicoes.filter(pos => {
-        //  comparação correta pelo NOME do lote
-        if (pos.lote === lote.nome) {
-          removidos.push({
+      rua.posicoes.forEach((pos, index) => {
+        if (pos.lote === nomeLote) {
+          expedidos.push({
             area: area.nome,
             rua: rua.nome,
-            posicao: pos.id,
-            rz: pos.rz || '',
-            volume: pos.volume || ''
+            posicao: index + 1,
+            rz: pos.rz,
+            volume: pos.volume || '-'
           });
-          return false; // remove do mapa
+
+          // limpa posição
+          pos.lote = '';
+          pos.rz = '';
+          pos.volume = '';
+
+          quantidade++;
         }
-        return true;
       });
     });
   });
 
-  if (removidos.length === 0) {
+  if (quantidade === 0) {
     alert('Nenhum gaylord encontrado para este lote');
     return;
   }
 
-  // atualiza lote
-  lote.expedidos += removidos.length;
-
-  // registra histórico
+  // Salva histórico
   state.historicoExpedidos.push({
     id: crypto.randomUUID(),
-    lote: lote.nome,
-    quantidade: removidos.length,
-    data: new Date().toLocaleString('pt-BR'),
-    detalhes: removidos
+    lote: nomeLote,
+    quantidade,
+    data: new Date().toLocaleDateString(),
+    hora: new Date().toLocaleTimeString(),
+    detalhes: expedidos
   });
+
+  // Remove lote ativo
+  state.lotes = state.lotes.filter(l => l.nome !== nomeLote);
 
   saveState();
 
-  // re-render geral
+  // Re-render
   renderMapa();
   renderDashboard();
-  renderExpedicao();
+  renderExpedidos();
 
-  alert(`Lote "${lote.nome}" expedido (${removidos.length} volumes)`);
-};
-
-// ----------------------------------------
-// RENDER EXPEDIÇÃO
-// ----------------------------------------
-window.renderExpedicao = function () {
-  const container = document.getElementById('lotesExpedidos');
-  if (!container) return;
-
-  container.innerHTML = '';
-
-  if (!state.historicoExpedidos || state.historicoExpedidos.length === 0) {
-    container.innerHTML = '<p>Nenhum lote expedido.</p>';
-    return;
-  }
-
-  state.historicoExpedidos.forEach(item => {
-    const card = document.createElement('div');
-    card.className = 'lote-card';
-
-    card.innerHTML = `
-      <strong>Lote:</strong> ${item.lote}<br>
-      <strong>Quantidade:</strong> ${item.quantidade}<br>
-      <strong>Data:</strong> ${item.data}
-      <details style="margin-top:6px;">
-        <summary>Ver detalhes</summary>
-        ${item.detalhes.map(d => `
-          <div class="historico-item">
-            Área: ${d.area} | Rua: ${d.rua} | Posição: ${d.posicao}<br>
-            RZ: ${d.rz || '-'} | Volume: ${d.volume || '-'}
-          </div>
-        `).join('')}
-      </details>
-    `;
-
-    container.appendChild(card);
-  });
+  alert(`Lote "${nomeLote}" expedido com sucesso (${quantidade})`);
 };
