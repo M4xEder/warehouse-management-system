@@ -4,24 +4,22 @@
 
 console.log('lotes.js carregado');
 
-// ===============================
-// GERAR COR AUTOMÁTICA
-// ===============================
+// -------------------------------
+// GERAR COR FIXA POR LOTE
+// -------------------------------
 function gerarCor() {
   return `hsl(${Math.random() * 360}, 70%, 65%)`;
 }
 
-// ===============================
+// -------------------------------
 // CRIAR LOTE
-// ===============================
+// -------------------------------
 window.cadastrarLote = function () {
-  console.log('cadastrarLote disparado');
-
   const nomeInput = document.getElementById('loteNome');
   const totalInput = document.getElementById('loteTotal');
 
   if (!nomeInput || !totalInput) {
-    alert('Campos de lote não encontrados no HTML');
+    alert('Campos de lote não encontrados');
     return;
   }
 
@@ -56,5 +54,7 @@ window.cadastrarLote = function () {
     renderDashboard();
   }
 
-  alert(`Lote "${nome}" criado com sucesso`);
+  renderMapa();
+
+  console.log('Lote criado:', lote);
 };
