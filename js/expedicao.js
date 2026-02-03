@@ -1,27 +1,36 @@
 // =======================================
-// EXPEDICAO.JS — EXPEDIÇÃO DE LOTES
+// EXPEDICAO.JS
+// Responsável por expedir lotes
 // =======================================
 
 window.expedirLote = function (nomeLote) {
-  if (!nomeLote) return alert('Nenhum lote selecionado');
+  if (!nomeLote) return;
 
   const lote = state.lotes.find(l => l.nome === nomeLote);
-  if (!lote) return alert('Lote não encontrado');
+  if (!lote) {
+    alert('Lote não encontrado');
+    return;
+  }
 
   const expedidos = [];
   let quantidade = 0;
 
+  // Percorre todo o mapa
   state.areas.forEach(area => {
     area.ruas.forEach(rua => {
-      rua.posicoes.forEach(pos => {
-        if (pos.lote === nomeLote) {
+      rua.posicoes.forEach((pos, index) => {
+        if (pos.ocupada && pos.lote === nomeLote) {
+
+          // Guarda histórico
           expedidos.push({
             area: area.nome,
             rua: rua.nome,
-            rz: pos.rz,
+            posicao: index + 1,
+            rz: pos.rz || '-',
             volume: pos.volume || '-'
           });
 
+          // Libera posição
           pos.ocupada = false;
           pos.lote = null;
           pos.rz = null;
@@ -33,8 +42,17 @@ window.expedirLote = function (nomeLote) {
     });
   });
 
-  if (quantidade === 0) return alert('Nenhum gaylord encontrado para este lote');
+  if (quantidade === 0) {
+    alert('Nenhum gaylord encontrado para este lote');
+    return;
+  }
 
+  // Garante histórico
+  if (!Array.isArray(state.historicoExpedidos)) {
+    state.historicoExpedidos = [];
+  }
+
+  // Salva histórico
   state.historicoExpedidos.push({
     id: crypto.randomUUID(),
     lote: nomeLote,
@@ -44,38 +62,17 @@ window.expedirLote = function (nomeLote) {
     detalhes: expedidos
   });
 
+  // Remove lote ativo
   state.lotes = state.lotes.filter(l => l.nome !== nomeLote);
 
   saveState();
+
+  // Atualiza interface
   renderMapa();
   renderDashboard();
-  renderExpedidos();
-
-  alert(`Lote "${nomeLote}" expedido com sucesso (${quantidade})`);
-};
-
-// FUNÇÃO PARA RENDERIZAR HISTÓRICO
-window.renderExpedidos = function () {
-  const container = document.getElementById('lotesExpedidos');
-  if (!container) return;
-
-  container.innerHTML = '';
-
-  if (state.historicoExpedidos.length === 0) {
-    container.innerHTML = '<p>Nenhum lote expedido</p>';
-    return;
+  if (typeof renderExpedidos === 'function') {
+    renderExpedidos();
   }
 
-  state.historicoExpedidos.forEach(h => {
-    const div = document.createElement('div');
-    div.className = 'historico-item';
-
-    div.innerHTML = `
-      <strong>Lote: ${h.lote}</strong> (${h.quantidade})
-      <br>Data: ${h.data} ${h.hora}
-      <br>Detalhes: ${h.detalhes.map(d => `Área: ${d.area}, Rua: ${d.rua}, RZ: ${d.rz}, Volume: ${d.volume}`).join('<br>')}
-    `;
-
-    container.appendChild(div);
-  });
+  alert(`Lote "${nomeLote}" expedido com sucesso (${quantidade})`);
 };
