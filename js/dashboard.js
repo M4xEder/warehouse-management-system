@@ -72,6 +72,44 @@ window.renderDashboard = function () {
   });
 };
 
+// =======================================
+// ALTERAR QUANTIDADE DO LOTE
+// =======================================
+
+window.alterarQuantidadeLote = function (nomeLote) {
+  const lote = state.lotes.find(l => l.nome === nomeLote);
+  if (!lote) return;
+
+  const alocados = contarGaylordsDoLote(nomeLote);
+
+  const novoTotal = Number(
+    prompt(
+      `Nova quantidade para o lote "${nomeLote}"\n` +
+      `Alocados: ${alocados}`,
+      lote.total
+    )
+  );
+
+  if (isNaN(novoTotal) || novoTotal <= 0) {
+    alert('Quantidade inválida');
+    return;
+  }
+
+  if (novoTotal < alocados) {
+    alert(
+      `Quantidade não pode ser menor que os já alocados (${alocados})`
+    );
+    return;
+  }
+
+  lote.total = novoTotal;
+
+  saveState();
+  renderDashboard();
+
+  alert(`Quantidade do lote "${nomeLote}" atualizada com sucesso`);
+};
+
 // -------------------------------
 // EXCLUIR LOTE (SOMENTE SE VAZIO)
 // -------------------------------
