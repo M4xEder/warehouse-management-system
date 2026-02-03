@@ -15,11 +15,7 @@ function abrirModal(areaIndex, ruaIndex, posicaoIndex) {
   const rua = area.ruas[ruaIndex];
   const posicao = rua.posicoes[posicaoIndex];
 
-  modalContext = {
-    areaIndex,
-    ruaIndex,
-    posicaoIndex
-  };
+  modalContext = { areaIndex, ruaIndex, posicaoIndex };
 
   // Preenche select de lotes
   const select = document.getElementById('modalLote');
@@ -62,22 +58,42 @@ function confirmarEndereco() {
 
   const { areaIndex, ruaIndex, posicaoIndex } = modalContext;
 
-  const lote = document.getElementById('modalLote').value;
+  const loteNome = document.getElementById('modalLote').value;
   const rz = document.getElementById('modalRz').value.trim();
   const volume = document.getElementById('modalVolume').value.trim();
 
-  if (!lote || !rz) {
+  if (!loteNome || !rz) {
     alert('Lote e RZ são obrigatórios');
     return;
   }
 
+  const lote = state.lotes.find(l => l.nome === loteNome);
+  if (!lote) {
+    alert('Lote selecionado não existe');
+    return;
+  }
+
+  // Verifica se o lote está cheio
+  const usados = state.areas.reduce((acc, area) => {
+    area.ruas.forEach(rua => {
+      rua.posicoes.forEach(pos => {
+        if (pos.lote === loteNome) acc++;
+      });
+    });
+    return acc;
+  }, 0);
+
+  if (!state.areas[areaIndex].ruas[ruaIndex].posicoes[posicaoIndex].ocupada && usados >= lote.total) {
+    alert(`Lote "${loteNome}" já atingiu sua capacidade máxima (${lote.total})`);
+    return;
+  }
+
+  // Salva posição
   const posicao =
-    state.areas[areaIndex]
-      .ruas[ruaIndex]
-      .posicoes[posicaoIndex];
+    state.areas[areaIndex].ruas[ruaIndex].posicoes[posicaoIndex];
 
   posicao.ocupada = true;
-  posicao.lote = lote;
+  posicao.lote = loteNome;
   posicao.rz = rz;
   posicao.volume = volume || null;
 
@@ -97,9 +113,7 @@ function removerGaylord() {
   if (!confirm('Remover gaylord deste endereço?')) return;
 
   const posicao =
-    state.areas[areaIndex]
-      .ruas[ruaIndex]
-      .posicoes[posicaoIndex];
+    state.areas[areaIndex].ruas[ruaIndex].posicoes[posicaoIndex];
 
   posicao.ocupada = false;
   posicao.lote = null;
