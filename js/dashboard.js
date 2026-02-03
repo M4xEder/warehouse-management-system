@@ -9,6 +9,8 @@
 window.contarGaylordsDoLote = function (nomeLote) {
   let total = 0;
 
+  if (!state.areas) return 0;
+
   state.areas.forEach(area => {
     area.ruas.forEach(rua => {
       rua.posicoes.forEach(pos => {
@@ -31,14 +33,15 @@ window.renderDashboard = function () {
 
   dashboard.innerHTML = '';
 
-  if (!state.lotes || state.lotes.length === 0) {
+  if (!Array.isArray(state.lotes) || state.lotes.length === 0) {
     dashboard.innerHTML = '<p>Nenhum lote ativo</p>';
     return;
   }
 
   state.lotes.forEach(lote => {
     const usados = contarGaylordsDoLote(lote.nome);
-    const total = lote.total;
+    const total = lote.total || 0;
+
     const percentual =
       total > 0 ? Math.round((usados / total) * 100) : 0;
 
@@ -47,17 +50,25 @@ window.renderDashboard = function () {
 
     card.innerHTML = `
       <strong>${lote.nome}</strong><br>
-      ${usados} / ${total}
+      <small>${usados} / ${total} alocados</small>
 
       <div class="progress-bar">
-        <div class="progress-fill"
-             style="width:${percentual}%; background:${lote.cor}">
+        <div
+          class="progress-fill"
+          style="
+            width:${percentual}%;
+            background:${lote.cor || '#999'};
+          ">
         </div>
       </div>
 
-      <div style="margin-top:6px">
+      <div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">
         <button onclick="expedirLote('${lote.nome}')">
           Expedir
+        </button>
+
+        <button onclick="alterarQuantidadeLote('${lote.nome}')">
+          Alterar Quantidade
         </button>
 
         <button
@@ -75,17 +86,19 @@ window.renderDashboard = function () {
 // =======================================
 // ALTERAR QUANTIDADE DO LOTE
 // =======================================
-
 window.alterarQuantidadeLote = function (nomeLote) {
   const lote = state.lotes.find(l => l.nome === nomeLote);
-  if (!lote) return;
+  if (!lote) {
+    alert('Lote não encontrado');
+    return;
+  }
 
   const alocados = contarGaylordsDoLote(nomeLote);
 
   const novoTotal = Number(
     prompt(
       `Nova quantidade para o lote "${nomeLote}"\n` +
-      `Alocados: ${alocados}`,
+      `Já alocados: ${alocados}`,
       lote.total
     )
   );
@@ -117,7 +130,7 @@ window.excluirLote = function (nomeLote) {
   const usados = contarGaylordsDoLote(nomeLote);
 
   if (usados > 0) {
-    alert('Não é possível excluir. Existem gaylords alocadas.');
+    alert('Não é possível excluir. Existem gaylords alocados.');
     return;
   }
 
@@ -127,5 +140,5 @@ window.excluirLote = function (nomeLote) {
 
   saveState();
   renderDashboard();
-  renderMapa();
+  if (typeof renderMapa === 'function') renderMapa();
 };
