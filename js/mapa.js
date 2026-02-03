@@ -10,8 +10,7 @@ function criarPosicao() {
     ocupada: false,
     lote: null,
     rz: null,
-    volume: null,
-    highlight: false
+    volume: null
   };
 }
 
@@ -19,7 +18,7 @@ function criarRua(nome, qtd) {
   return {
     id: crypto.randomUUID(),
     nome,
-    posicoes: Array.from({ length: qtd }, () => criarPosicao())
+    posicoes: Array.from({ length: qtd }, criarPosicao)
   };
 }
 
@@ -119,7 +118,7 @@ window.renderMapa = function () {
 
   mapa.innerHTML = '';
 
-  state.areas.forEach((area, areaIndex) => {
+  state.areas.forEach(area => {
     const areaDiv = document.createElement('div');
     areaDiv.className = 'area';
 
@@ -128,7 +127,7 @@ window.renderMapa = function () {
       <button onclick="excluirArea('${area.id}')">Excluir Área</button>
     `;
 
-    area.ruas.forEach((rua, ruaIndex) => {
+    area.ruas.forEach(rua => {
       const ruaDiv = document.createElement('div');
       ruaDiv.className = 'rua';
 
@@ -144,9 +143,9 @@ window.renderMapa = function () {
         const p = document.createElement('div');
         p.className = 'posicao';
 
-        // ===============================
+        // ----------------------------
         // POSIÇÃO OCUPADA
-        // ===============================
+        // ----------------------------
         if (posicao.ocupada) {
           p.classList.add('ocupada');
 
@@ -161,17 +160,20 @@ window.renderMapa = function () {
             `Volume: ${posicao.volume || '-'}`;
         }
 
-        // ===============================
-        // DESTAQUE DE BUSCA
-        // ===============================
-        if (posicao.highlight) {
+        // ----------------------------
+        // DESTAQUE DA BUSCA
+        // ----------------------------
+        if (posicao._highlight) {
           p.classList.add('highlight');
         }
 
-        // ===============================
-        // CLICK → MODAL
-        // ===============================
+        // ----------------------------
+        // CLICK → ABRIR MODAL
+        // ----------------------------
         p.onclick = () => {
+          const areaIndex = state.areas.findIndex(a => a.id === area.id);
+          const ruaIndex = area.ruas.findIndex(r => r.id === rua.id);
+
           abrirModal(areaIndex, ruaIndex, posicaoIndex);
         };
 
@@ -190,7 +192,7 @@ window.renderMapa = function () {
     mapa.appendChild(areaDiv);
   });
 
-  // Atualiza dashboard se existir
+  // Mantém dashboard sincronizado
   if (typeof renderDashboard === 'function') {
     renderDashboard();
   }
