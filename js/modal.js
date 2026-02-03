@@ -1,81 +1,95 @@
 // ===============================
-// MODEL + STATE GLOBAL
+// MODEL.JS — REGRAS DO DOMÍNIO
 // ===============================
 
-const STORAGE_KEY = 'gaylord_state_v2';
+// ---------- POSIÇÃO ----------
+function criarPosicao() {
+  return {
+    lote: null,
+    rz: null,
+    volume: null,
+    ocupada: false
+  };
+}
 
-window.state = {
-  areas: [],
-  lotes: [],
-  historicoExpedidos: []
-};
+// ---------- RUA ----------
+function criarRua(nome, quantidade) {
+  return {
+    id: crypto.randomUUID(),
+    nome,
+    posicoes: Array.from(
+      { length: quantidade },
+      () => criarPosicao()
+    )
+  };
+}
 
-// ===============================
-// LOAD / SAVE
-// ===============================
-window.loadState = function () {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return;
+// ---------- ÁREA ----------
+function criarArea(nome) {
+  return {
+    id: crypto.randomUUID(),
+    nome,
+    ruas: []
+  };
+}
 
-  try {
-    const data = JSON.parse(raw);
-    state.areas = data.areas || [];
-    state.lotes = data.lotes || [];
-    state.historicoExpedidos = data.historicoExpedidos || [];
-  } catch (e) {
-    console.error('Erro ao carregar state', e);
-  }
-};
-
-window.saveState = function () {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-};
-
-// ===============================
-// HELPERS
-// ===============================
-window.gerarCor = function () {
-  return `hsl(${Math.random() * 360}, 70%, 70%)`;
-};
-
-// ===============================
-// FACTORIES
-// ===============================
-window.criarLote = function (nome, total) {
+// ---------- LOTE ----------
+function criarLote(nome, total, cor) {
   return {
     id: crypto.randomUUID(),
     nome,
     total,
-    cor: gerarCor()
+    cor,
+    expedido: 0
   };
-};
-
-window.criarArea = function (nome) {
-  return {
-    nome,
-    ruas: []
-  };
-};
-
-window.criarRua = function (nome, qtd) {
-  return {
-    nome,
-    posicoes: Array.from({ length: qtd }, (_, i) => ({
-      index: i,
-      lote: '',
-      rz: '',
-      volume: ''
-    }))
-  };
-};
+}
 
 // ===============================
-// UTILS
+// OPERAÇÕES DE NEGÓCIO
 // ===============================
-window.buscarLote = function (nome) {
-  return state.lotes.find(l => l.nome === nome);
-};
 
-window.posicaoOcupada = function (pos) {
-  return pos.lote && pos.lote !== '';
+function podeExcluirArea(area) {
+  return !area.ruas.some(rua =>
+    rua.posicoes.some(p => p.ocupada)
+  );
+}
+
+function podeExcluirRua(rua) {
+  return !rua.posicoes.some(p => p.ocupada);
+}
+
+function ocuparPosicao(pos, { lote, rz, volume }) {
+  pos.lote = lote;
+  pos.rz = rz;
+  pos.volume = volume || '';
+  pos.ocupada = true;
+}
+
+function liberarPosicao(pos) {
+  pos.lote = null;
+  pos.rz = null;
+  pos.volume = null;
+  pos.ocupada = false;
+}
+
+function expedirPosicao(pos) {
+  if (!pos.ocupada) return false;
+
+  liberarPosicao(pos);
+  return true;
+}
+
+// ===============================
+// EXPORT GLOBAL
+// ===============================
+window.Model = {
+  criarArea,
+  criarRua,
+  criarLote,
+  criarPosicao,
+  podeExcluirArea,
+  podeExcluirRua,
+  ocuparPosicao,
+  liberarPosicao,
+  expedirPosicao
 };
