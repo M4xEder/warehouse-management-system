@@ -1,45 +1,61 @@
-/* window.buscar = function () {
-  const termo = document.getElementById('buscaInput').value.toLowerCase();
-  document.querySelectorAll('.posicao').forEach(p => {
-    p.classList.remove('highlight');
-    if (termo && p.dataset?.info?.includes(termo)) {
-      p.classList.add('highlight');
-    }
-  });
-};
-
-window.limparBusca = function () {
-  document.querySelectorAll('.posicao').forEach(p => p.classList.remove('highlight'));
-};
-
-*/
-
 // ===============================
-// BUSCA.JS — LOTE | RZ | VOLUME
+// BUSCA.JS
+// Busca e destaque no mapa
 // ===============================
 
 window.buscar = function () {
-  const input = document.getElementById('buscaInput');
-  if (!input) return;
+  const termo = document
+    .getElementById('buscaInput')
+    .value
+    .trim()
+    .toLowerCase();
 
-  const termo = input.value.trim().toLowerCase();
+  if (!termo) {
+    alert('Digite algo para buscar');
+    return;
+  }
 
-  // limpa destaque anterior
-  limparBusca();
+  let encontrou = false;
 
-  if (!termo) return;
+  state.areas.forEach(area => {
+    area.ruas.forEach(rua => {
+      rua.posicoes.forEach(posicao => {
+        if (!posicao.ocupada) return;
 
-  document.querySelectorAll('.posicao').forEach(posEl => {
-    const title = (posEl.title || '').toLowerCase();
+        const match =
+          (posicao.lote && posicao.lote.toLowerCase().includes(termo)) ||
+          (posicao.rz && posicao.rz.toLowerCase().includes(termo)) ||
+          (posicao.volume && posicao.volume.toLowerCase().includes(termo));
 
-    if (title.includes(termo)) {
-      posEl.classList.add('highlight');
-    }
+        if (match) {
+          posicao.highlight = true;
+          encontrou = true;
+        } else {
+          posicao.highlight = false;
+        }
+      });
+    });
   });
+
+  if (!encontrou) {
+    alert('Nenhum resultado encontrado');
+  }
+
+  renderMapa();
 };
 
+// ===============================
+// LIMPAR DESTAQUE
+// ===============================
 window.limparBusca = function () {
-  document
-    .querySelectorAll('.posicao.highlight')
-    .forEach(el => el.classList.remove('highlight'));
+  state.areas.forEach(area => {
+    area.ruas.forEach(rua => {
+      rua.posicoes.forEach(posicao => {
+        delete posicao.highlight;
+      });
+    });
+  });
+
+  document.getElementById('buscaInput').value = '';
+  renderMapa();
 };
