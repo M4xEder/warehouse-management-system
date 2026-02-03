@@ -1,35 +1,36 @@
 // =======================================
-// DASHBOARD.JS — Gestão e visualização de Lotes
+// DASHBOARD.JS — GESTÃO E VISUALIZAÇÃO DE LOTES
 // =======================================
 
-// ---------- CONTADOR DE USADOS ----------
 window.contarGaylordsDoLote = function (nomeLote) {
   let total = 0;
-  state.areas.forEach(area =>
-    area.ruas.forEach(rua =>
+
+  state.areas.forEach(area => {
+    area.ruas.forEach(rua => {
       rua.posicoes.forEach(pos => {
         if (pos.lote === nomeLote) total++;
-      })
-    )
-  );
+      });
+    });
+  });
+
   return total;
 };
 
-// ---------- EXCLUIR LOTE ----------
 window.excluirLote = function (nomeLote) {
   const usados = contarGaylordsDoLote(nomeLote);
   if (usados > 0) {
     alert('Não é possível excluir. Existem gaylords alocadas.');
     return;
   }
+
   if (!confirm(`Excluir lote "${nomeLote}"?`)) return;
 
   state.lotes = state.lotes.filter(l => l.nome !== nomeLote);
+
   saveState();
   renderDashboard();
 };
 
-// ---------- RENDER DASHBOARD ----------
 window.renderDashboard = function () {
   const dashboard = document.getElementById('dashboard');
   if (!dashboard) return;
