@@ -1,7 +1,7 @@
-// ===============================
+// =======================================
 // BUSCA.JS
-// Busca e destaque no mapa
-// ===============================
+// Busca e destaque de gaylords no mapa
+// =======================================
 
 window.buscar = function () {
   const termo = document
@@ -11,47 +11,48 @@ window.buscar = function () {
     .toLowerCase();
 
   if (!termo) {
-    alert('Digite algo para buscar');
+    alert('Informe um termo para busca');
     return;
   }
 
-  let encontrou = false;
+  let encontrados = 0;
 
   state.areas.forEach(area => {
     area.ruas.forEach(rua => {
-      rua.posicoes.forEach(posicao => {
-        if (!posicao.ocupada) return;
+      rua.posicoes.forEach(pos => {
+        if (!pos.ocupada) return;
 
         const match =
-          (posicao.lote && posicao.lote.toLowerCase().includes(termo)) ||
-          (posicao.rz && posicao.rz.toLowerCase().includes(termo)) ||
-          (posicao.volume && posicao.volume.toLowerCase().includes(termo));
+          (pos.lote && pos.lote.toLowerCase().includes(termo)) ||
+          (pos.rz && pos.rz.toLowerCase().includes(termo)) ||
+          (pos.volume && pos.volume.toLowerCase().includes(termo));
 
         if (match) {
-          posicao.highlight = true;
-          encontrou = true;
+          pos._highlight = true;
+          encontrados++;
         } else {
-          posicao.highlight = false;
+          pos._highlight = false;
         }
       });
     });
   });
 
-  if (!encontrou) {
+  if (encontrados === 0) {
     alert('Nenhum resultado encontrado');
   }
 
   renderMapa();
 };
 
-// ===============================
-// LIMPAR DESTAQUE
-// ===============================
+// =======================================
+// LIMPAR BUSCA
+// =======================================
+
 window.limparBusca = function () {
   state.areas.forEach(area => {
     area.ruas.forEach(rua => {
-      rua.posicoes.forEach(posicao => {
-        delete posicao.highlight;
+      rua.posicoes.forEach(pos => {
+        delete pos._highlight;
       });
     });
   });
