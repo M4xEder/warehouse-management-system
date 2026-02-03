@@ -1,130 +1,133 @@
-// ==================================
-// MODAL.JS — ENDEREÇAMENTO
-// ==================================
+// =======================================
+// MODEL.JS
+// Define a estrutura oficial dos dados
+// =======================================
 
-let contextoModal = null;
-
+// ---------- POSIÇÃO (Gaylord) ----------
 /*
- contextoModal = {
-   area,
-   rua,
-   posicao,
-   index
- }
+{
+  id: number,
+  lote: string,      // NOME do lote
+  rz: string,
+  volume: string | null
+}
 */
 
-// ===============================
-// ABRIR MODAL
-// ===============================
-window.abrirModal = function (ctx) {
-  contextoModal = ctx;
+// ---------- RUA ----------
+/*
+{
+  nome: string,
+  posicoes: Posicao[]
+}
+*/
 
-  const modal = document.getElementById('modal');
-  const selectLote = document.getElementById('modalLote');
-  const inputRz = document.getElementById('modalRz');
-  const inputVolume = document.getElementById('modalVolume');
+// ---------- ÁREA ----------
+/*
+{
+  nome: string,
+  ruas: Rua[]
+}
+*/
 
-  if (!modal || !selectLote || !inputRz || !inputVolume) {
-    console.error('Modal: elementos não encontrados');
-    return;
-  }
+// ---------- LOTE ----------
+/*
+{
+  id: string,
+  nome: string,
+  total: number,
+  expedidos: number,
+  cor: string
+}
+*/
 
-  // popula lotes
-  selectLote.innerHTML = '<option value="">Selecione o lote</option>';
-  state.lotes.forEach(lote => {
-    const opt = document.createElement('option');
-    opt.value = lote.nome;
-    opt.textContent = lote.nome;
-    selectLote.appendChild(opt);
-  });
+// ---------- HISTÓRICO DE EXPEDIÇÃO ----------
+/*
+{
+  id: string,
+  lote: string,
+  quantidade: number,
+  data: string,
+  detalhes: {
+    area: string,
+    rua: string,
+    posicao: number,
+    rz: string,
+    volume: string
+  }[]
+}
+*/
 
-  const pos = ctx.posicao;
-
-  // se já ocupado
-  if (pos.ocupada) {
-    selectLote.value = pos.lote;
-    inputRz.value = pos.rz || '';
-    inputVolume.value = pos.volume || '';
-  } else {
-    selectLote.value = '';
-    inputRz.value = '';
-    inputVolume.value = '';
-  }
-
-  modal.classList.remove('hidden');
+// ---------- STATE GLOBAL ----------
+window.state = {
+  areas: [],              // Áreas do mapa
+  lotes: [],              // Lotes ativos
+  historicoExpedidos: []  // Histórico
 };
 
-// ===============================
-// FECHAR MODAL
-// ===============================
-window.fecharModal = function () {
-  const modal = document.getElementById('modal');
-  modal.classList.add('hidden');
-  contextoModal = null;
+// ---------- STORAGE ----------
+const STORAGE_KEY = 'gaylord_state_v1';
+
+// ---------- LOAD ----------
+window.loadState = function () {
+  const data = localStorage.getItem(STORAGE_KEY);
+  if (!data) return;
+
+  try {
+    const parsed = JSON.parse(data);
+    state.areas = parsed.areas || [];
+    state.lotes = parsed.lotes || [];
+    state.historicoExpedidos = parsed.historicoExpedidos || [];
+  } catch (e) {
+    console.error('Erro ao carregar state', e);
+  }
 };
 
-// ===============================
-// CONFIRMAR ENDEREÇAMENTO
-// ===============================
-window.confirmarEndereco = function () {
-  if (!contextoModal) return;
-
-  const selectLote = document.getElementById('modalLote');
-  const inputRz = document.getElementById('modalRz');
-  const inputVolume = document.getElementById('modalVolume');
-
-  const loteNome = selectLote.value;
-  const rz = inputRz.value.trim();
-  const volume = inputVolume.value.trim();
-
-  if (!loteNome) return alert('Selecione um lote');
-  if (!rz) return alert('RZ é obrigatório');
-
-  const lote = state.lotes.find(l => l.nome === loteNome);
-  if (!lote) return alert('Lote não encontrado');
-
-  const pos = contextoModal.posicao;
-
-  // se estava vazio, incrementa
-  if (!pos.ocupada) {
-    if (lote.usados >= lote.total) {
-      return alert(`Lote "${lote.nome}" já está completo`);
-    }
-    lote.usados++;
-  }
-
-  pos.ocupada = true;
-  pos.lote = loteNome;
-  pos.rz = rz;
-  pos.volume = volume || null;
-
-  saveState();
-  fecharModal();
-  renderMapa();
+// ---------- SAVE ----------
+window.saveState = function () {
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify({
+      areas: state.areas,
+      lotes: state.lotes,
+      historicoExpedidos: state.historicoExpedidos
+    })
+  );
 };
 
-// ===============================
-// REMOVER GAYLORD
-// ===============================
-window.removerGaylord = function () {
-  if (!contextoModal) return;
+// ---------- HELPERS ----------
+window.gerarCor = function () {
+  return `hsl(${Math.random() * 360}, 70%, 70%)`;
+};
 
-  const pos = contextoModal.posicao;
-  if (!pos.ocupada) return alert('Posição vazia');
+window.criarLote = function (nome, total) {
+  return {
+    id: crypto.randomUUID(),
+    nome,
+    total,
+    expedidos: 0,
+    cor: gerarCor()
+  };
+};
 
-  if (!confirm('Remover gaylord desta posição?')) return;
+window.criarArea = function (nome) {
+  return {
+    nome,
+    ruas: []
+  };
+};
 
-  const lote = state.lotes.find(l => l.nome === pos.lote);
-  if (lote && lote.usados > 0) {
-    lote.usados--;
-  }
+window.criarRua = function (nome, quantidade) {
+  return {
+    nome,
+    posicoes: Array.from({ length: quantidade }, (_, i) => ({
+      id: i + 1,
+      lote: '',
+      rz: '',
+      volume: ''
+    }))
+  };
+};
 
-  pos.ocupada = false;
-  pos.lote = null;
-  pos.rz = null;
-  pos.volume = null;
-
-  saveState();
-  fecharModal();
-  renderMapa();
+window.posicaoOcupada = function (pos) {
+  return pos.lote && pos.lote !== '';
 };
