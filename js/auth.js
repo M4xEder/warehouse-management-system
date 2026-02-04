@@ -1,1 +1,2 @@
-window.location.href = 'index.html'
+window.location.href = 'relatorios.html'
+/* 'index.html'*/
