@@ -1,144 +1,122 @@
 // =======================================
 // EXPEDICAO.JS
-// Expedição parcial e total com histórico
 // =======================================
 
-let gaylordsSelecionados = [];
-let loteAtualExpedicao = null;
+let contextoExpedicao = {
+  lote: null,
+  selecionados: []
+};
 
 // -------------------------------
-// ABRIR MODAL DE EXPEDIÇÃO
+// ABRIR MODAL
 // -------------------------------
 window.abrirModalExpedicao = function (nomeLote) {
-  loteAtualExpedicao = nomeLote;
-  gaylordsSelecionados = [];
-
+  const modal = document.getElementById('modalExpedicao');
   const lista = document.getElementById('listaExpedicao');
+
+  contextoExpedicao.lote = nomeLote;
+  contextoExpedicao.selecionados = [];
+
   lista.innerHTML = '';
 
   state.areas.forEach(area => {
     area.ruas.forEach(rua => {
       rua.posicoes.forEach((pos, index) => {
         if (pos.ocupada && pos.lote === nomeLote) {
-          const id = `${area.nome}-${rua.nome}-${index}`;
+          const id = crypto.randomUUID();
 
-          const div = document.createElement('div');
-          div.innerHTML = `
-            <label>
+          lista.innerHTML += `
+            <label style="display:block; margin-bottom:4px">
               <input type="checkbox"
-                data-id="${id}"
-                data-area="${area.nome}"
-                data-rua="${rua.nome}"
-                data-index="${index}">
-              Área: ${area.nome} |
-              Rua: ${rua.nome} |
-              Posição: ${index + 1} |
-              RZ: ${pos.rz || '-'} |
-              Volume: ${pos.volume || '-'}
+                     data-area="${area.nome}"
+                     data-rua="${rua.nome}"
+                     data-posicao="${index + 1}"
+                     data-rz="${pos.rz || ''}"
+                     data-volume="${pos.volume || ''}">
+              Área ${area.nome} | Rua ${rua.nome} |
+              Pos ${index + 1} |
+              RZ ${pos.rz || '-'} |
+              Vol ${pos.volume || '-'}
             </label>
           `;
-
-          lista.appendChild(div);
         }
       });
     });
   });
 
-  document.getElementById('modalExpedicao').classList.remove('hidden');
-};
-
-// -------------------------------
-// SELEÇÃO
-// -------------------------------
-window.selecionarTodosGaylords = function () {
-  document
-    .querySelectorAll('#listaExpedicao input[type="checkbox"]')
-    .forEach(cb => cb.checked = true);
-};
-
-window.desmarcarTodosGaylords = function () {
-  document
-    .querySelectorAll('#listaExpedicao input[type="checkbox"]')
-    .forEach(cb => cb.checked = false);
+  modal.classList.remove('hidden');
 };
 
 // -------------------------------
 // CONFIRMAR EXPEDIÇÃO
 // -------------------------------
 window.confirmarExpedicao = function () {
-  const checkboxes =
+  const checks =
     document.querySelectorAll('#listaExpedicao input:checked');
 
-  if (checkboxes.length === 0) {
+  if (!checks.length) {
     alert('Selecione ao menos uma gaylord');
+    return;
+  }
+
+  const saldo = calcularSaldoLote(contextoExpedicao.lote);
+
+  if (checks.length > saldo) {
+    alert(`Saldo insuficiente (${saldo})`);
     return;
   }
 
   const detalhes = [];
 
-  checkboxes.forEach(cb => {
-    const area = state.areas.find(a => a.nome === cb.dataset.area);
-    const rua = area.ruas.find(r => r.nome === cb.dataset.rua);
-    const pos = rua.posicoes[cb.dataset.index];
-
+  checks.forEach(c => {
     detalhes.push({
-      area: area.nome,
-      rua: rua.nome,
-      posicao: Number(cb.dataset.index) + 1,
-      rz: pos.rz,
-      volume: pos.volume
+      area: c.dataset.area,
+      rua: c.dataset.rua,
+      posicao: c.dataset.posicao,
+      rz: c.dataset.rz,
+      volume: c.dataset.volume
     });
 
-    // LIMPA A POSIÇÃO
-    pos.ocupada = false;
-    pos.lote = '';
-    pos.rz = '';
-    pos.volume = '';
+    // limpa do mapa
+    state.areas.forEach(a => {
+      a.ruas.forEach(r => {
+        r.posicoes.forEach(p => {
+          if (
+            p.lote === contextoExpedicao.lote &&
+            p.rz === c.dataset.rz &&
+            p.volume === c.dataset.volume
+          ) {
+            p.ocupada = false;
+            p.lote = null;
+            p.rz = null;
+            p.volume = null;
+          }
+        });
+      });
+    });
   });
-
-  const quantidadeExpedida = detalhes.length;
-
-  const totalDoLote =
-    state.lotes.find(l => l.nome === loteAtualExpedicao)?.total || 0;
-
-  const totalJaExpedido = state.historicoExpedidos
-    .filter(e => e.lote === loteAtualExpedicao)
-    .reduce((acc, e) => acc + e.quantidadeExpedida, 0);
-
-  const novoTotal = totalJaExpedido + quantidadeExpedida;
-
-  if (novoTotal > totalDoLote) {
-    alert('Quantidade expedida excede o total do lote');
-    return;
-  }
 
   state.historicoExpedidos.push({
     id: crypto.randomUUID(),
-    lote: loteAtualExpedicao,
-    tipo: novoTotal === totalDoLote ? 'TOTAL' : 'PARCIAL',
-    quantidadeExpedida,
-    quantidadeTotal: totalDoLote,
+    lote: contextoExpedicao.lote,
+    tipo: checks.length === saldo ? 'TOTAL' : 'PARCIAL',
+    quantidadeExpedida: checks.length,
+    quantidadeTotal: saldo,
     data: new Date().toLocaleDateString(),
     hora: new Date().toLocaleTimeString(),
     detalhes
   });
 
-  // REMOVE O LOTE SOMENTE SE COMPLETO
-  if (novoTotal === totalDoLote) {
-    state.lotes = state.lotes.filter(l => l.nome !== loteAtualExpedicao);
-  }
-
   saveState();
-
   fecharModalExpedicao();
   renderMapa();
   renderDashboard();
   renderExpedidos();
-
-  alert(`Expedição registrada com sucesso (${quantidadeExpedida})`);
 };
 
 // -------------------------------
 window.fecharModalExpedicao = function () {
-  document.getElementById('modalExpedicao').classList.add('hidden');
+  document
+    .getElementById('modalExpedicao')
+    .classList.add('hidden');
 };
