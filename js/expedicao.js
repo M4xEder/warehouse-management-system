@@ -1,150 +1,83 @@
 // =======================================
 // EXPEDICAO.JS
-// Expedição TOTAL ou PARCIAL com seleção
+// Expedição total ou parcial de lotes
 // =======================================
-
-let expedicaoContext = {
-  lote: null,
-  itens: []
-};
-
-// -------------------------------
-// LISTAR GAYLORDS DO LOTE
-// -------------------------------
-function listarGaylordsDoLote(nomeLote) {
-  const lista = [];
-
-  state.areas.forEach((area, areaIndex) => {
-    area.ruas.forEach((rua, ruaIndex) => {
-      rua.posicoes.forEach((pos, posicaoIndex) => {
-        if (pos.ocupada && pos.lote === nomeLote) {
-          lista.push({
-            areaIndex,
-            ruaIndex,
-            posicaoIndex,
-            area: area.nome,
-            rua: rua.nome,
-            posicao: posicaoIndex + 1,
-            rz: pos.rz,
-            volume: pos.volume || '-'
-          });
-        }
-      });
-    });
-  });
-
-  return lista;
-}
 
 // -------------------------------
 // ABRIR MODAL DE EXPEDIÇÃO
 // -------------------------------
 window.expedirLote = function (nomeLote) {
-  
-  <div class="acoes-expedicao">
-  <button type="button" onclick="selecionarTodosGaylords()">
-    Selecionar todos
-  </button>
+  const lote = state.lotes.find(l => l.nome === nomeLote);
+  if (!lote) {
+    alert('Lote não encontrado');
+    return;
+  }
 
-  <button type="button" onclick="desmarcarTodosGaylords()">
-    Desmarcar todos
-  </button>
-</div>
-  const itens = listarGaylordsDoLote(nomeLote);
+  const modal = document.getElementById('modalExpedicao');
+  const lista = document.getElementById('listaExpedicao');
 
-  if (itens.length === 0) {
+  if (!modal || !lista) {
+    alert('Modal de expedição não encontrado');
+    return;
+  }
+
+  lista.innerHTML = '';
+
+  let encontrou = false;
+
+  state.areas.forEach((area, areaIndex) => {
+    area.ruas.forEach((rua, ruaIndex) => {
+      rua.posicoes.forEach((pos, posicaoIndex) => {
+        if (pos.ocupada && pos.lote === nomeLote) {
+          encontrou = true;
+
+          const item = document.createElement('div');
+          item.className = 'expedicao-item';
+
+          item.innerHTML = `
+            <label>
+              <input
+                type="checkbox"
+                class="expedicao-checkbox"
+                data-area="${areaIndex}"
+                data-rua="${ruaIndex}"
+                data-posicao="${posicaoIndex}"
+                checked
+              />
+              Área: <strong>${area.nome}</strong> |
+              Rua: <strong>${rua.nome}</strong> |
+              Posição: <strong>${posicaoIndex + 1}</strong> |
+              RZ: <strong>${pos.rz}</strong> |
+              Volume: <strong>${pos.volume || '-'}</strong>
+            </label>
+          `;
+
+          lista.appendChild(item);
+        }
+      });
+    });
+  });
+
+  if (!encontrou) {
     alert('Nenhuma gaylord encontrada para este lote');
     return;
   }
 
-  expedicaoContext.lote = nomeLote;
-  expedicaoContext.itens = itens;
-
-  renderModalExpedicao();
-};
-
-// -------------------------------
-// RENDER MODAL EXPEDIÇÃO
-// -------------------------------
-function renderModalExpedicao() {
-  let modal = document.getElementById('modalExpedicao');
-
-  // Cria modal se não existir
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'modalExpedicao';
-    modal.className = 'modal';
-
-    modal.innerHTML = `
-      <div class="modal-content" style="max-width:800px">
-        <h3>Expedição - Selecionar Gaylords</h3>
-
-        <table class="tabela-expedicao">
-          <thead>
-            <tr>
-              <th></th>
-              <th>Área</th>
-              <th>Rua</th>
-              <th>Posição</th>
-              <th>RZ</th>
-              <th>Volume</th>
-            </tr>
-          </thead>
-          <tbody id="expedicaoLista"></tbody>
-        </table>
-
-        <div class="acoes">
-          <button onclick="confirmarExpedicao()">Confirmar Expedição</button>
-          <button onclick="fecharModalExpedicao()">Cancelar</button>
-        </div>
-      </div>
-    `;
-
-    document.body.appendChild(modal);
-  }
-
-  const tbody = document.getElementById('expedicaoLista');
-  tbody.innerHTML = '';
-
-  expedicaoContext.itens.forEach((item, index) => {
-    const tr = document.createElement('tr');
-
-    tr.innerHTML = `
-      <td>
-        <input type="checkbox" data-index="${index}">
-      </td>
-      <td>${item.area}</td>
-      <td>${item.rua}</td>
-      <td>${item.posicao}</td>
-      <td>${item.rz}</td>
-      <td>${item.volume}</td>
-    `;
-
-    tbody.appendChild(tr);
-  });
-
+  modal.dataset.lote = nomeLote;
   modal.classList.remove('hidden');
-}
-
-// -------------------------------
-// FECHAR MODAL
-// -------------------------------
-function fecharModalExpedicao() {
-  const modal = document.getElementById('modalExpedicao');
-  if (modal) modal.classList.add('hidden');
-
-  expedicaoContext = {
-    lote: null,
-    itens: []
-  };
-}
+};
 
 // -------------------------------
 // CONFIRMAR EXPEDIÇÃO
 // -------------------------------
-function confirmarExpedicao() {
+window.confirmarExpedicao = function () {
+  const modal = document.getElementById('modalExpedicao');
+  const nomeLote = modal.dataset.lote;
+
+  if (!nomeLote) return;
+
   const checks = document.querySelectorAll(
-    '#expedicaoLista input[type="checkbox"]:checked'
+    '.expedicao-checkbox:checked'
   );
 
   if (checks.length === 0) {
@@ -152,53 +85,88 @@ function confirmarExpedicao() {
     return;
   }
 
-  const selecionadas = [];
+  const detalhes = [];
 
-  checks.forEach(check => {
-    const idx = Number(check.dataset.index);
-    selecionadas.push(expedicaoContext.itens[idx]);
-  });
+  checks.forEach(cb => {
+    const areaIndex = Number(cb.dataset.area);
+    const ruaIndex = Number(cb.dataset.rua);
+    const posicaoIndex = Number(cb.dataset.posicao);
 
-  // Remove somente as selecionadas
-  selecionadas.forEach(item => {
     const pos =
-      state.areas[item.areaIndex]
-        .ruas[item.ruaIndex]
-        .posicoes[item.posicaoIndex];
+      state.areas[areaIndex]
+        .ruas[ruaIndex]
+        .posicoes[posicaoIndex];
 
+    detalhes.push({
+      area: state.areas[areaIndex].nome,
+      rua: state.areas[areaIndex].ruas[ruaIndex].nome,
+      posicao: posicaoIndex + 1,
+      rz: pos.rz,
+      volume: pos.volume || '-'
+    });
+
+    // limpa posição
     pos.ocupada = false;
     pos.lote = null;
     pos.rz = null;
     pos.volume = null;
   });
 
+  // Verifica se foi total ou parcial
+  const restantes = contarGaylordsDoLote(nomeLote);
+  const tipo = restantes === 0 ? 'TOTAL' : 'PARCIAL';
+
   // Histórico
   state.historicoExpedidos.push({
     id: crypto.randomUUID(),
-    lote: expedicaoContext.lote,
-    tipo: selecionadas.length === expedicaoContext.itens.length
-      ? 'TOTAL'
-      : 'PARCIAL',
-    quantidade: selecionadas.length,
+    lote: nomeLote,
+    tipo,
+    quantidade: detalhes.length,
     data: new Date().toLocaleDateString(),
     hora: new Date().toLocaleTimeString(),
-    detalhes: selecionadas
+    detalhes
   });
 
-  // Remove lote somente se não sobrar nenhuma
-  const restantes = listarGaylordsDoLote(expedicaoContext.lote);
-  if (restantes.length === 0) {
-    state.lotes = state.lotes.filter(
-      l => l.nome !== expedicaoContext.lote
-    );
+  // Se foi total, remove o lote
+  if (restantes === 0) {
+    state.lotes = state.lotes.filter(l => l.nome !== nomeLote);
   }
 
   saveState();
-  fecharModalExpedicao();
 
+  fecharModalExpedicao();
   renderMapa();
   renderDashboard();
-  renderExpedidos();
+  if (typeof renderExpedidos === 'function') {
+    renderExpedidos();
+  }
 
-  alert('Expedição realizada com sucesso');
-}
+  alert(
+    `Expedição ${tipo} realizada\n` +
+    `Quantidade: ${detalhes.length}`
+  );
+};
+
+// -------------------------------
+// FECHAR MODAL
+// -------------------------------
+window.fecharModalExpedicao = function () {
+  const modal = document.getElementById('modalExpedicao');
+  modal.classList.add('hidden');
+  modal.dataset.lote = '';
+};
+
+// -------------------------------
+// SELECIONAR / DESMARCAR TODOS
+// -------------------------------
+window.selecionarTodosGaylords = function () {
+  document
+    .querySelectorAll('.expedicao-checkbox')
+    .forEach(cb => (cb.checked = true));
+};
+
+window.desmarcarTodosGaylords = function () {
+  document
+    .querySelectorAll('.expedicao-checkbox')
+    .forEach(cb => (cb.checked = false));
+};
