@@ -1,66 +1,116 @@
 // =======================================
-// EXPORTAÇÃO DE EXPEDIÇÃO
-// CSV / EXCEL
+// EXPORTACAO-EXPEDICAO.JS
+// Exportação de relatórios (CSV)
 // =======================================
 
-function montarDadosExpedicao() {
-  const linhas = [];
+// -------------------------------
+// EXPORTAR TODAS AS EXPEDIÇÕES
+// -------------------------------
+window.exportarTodasExpedicoesCSV = function () {
+  if (!state.historicoExpedidos || state.historicoExpedidos.length === 0) {
+    alert('Nenhuma expedição para exportar');
+    return;
+  }
 
-  if (!state.historicoExpedidos) return linhas;
+  let linhas = [];
+  linhas.push([
+    'Lote',
+    'Tipo',
+    'Área',
+    'Rua',
+    'Posição',
+    'RZ',
+    'Volume',
+    'Data',
+    'Hora'
+  ].join(';'));
 
   state.historicoExpedidos.forEach(exp => {
     exp.detalhes.forEach(d => {
-      linhas.push({
-        Lote: exp.lote,
-        Tipo: exp.tipo,
-        Data: exp.data,
-        Hora: exp.hora,
-        Área: d.area,
-        Rua: d.rua,
-        Posição: d.posicao,
-        RZ: d.rz || '',
-        Volume: d.volume || ''
-      });
+      linhas.push([
+        exp.lote,
+        exp.tipo,
+        d.area,
+        d.rua,
+        d.posicao,
+        d.rz || '',
+        d.volume || '',
+        exp.data,
+        exp.hora
+      ].join(';'));
     });
   });
 
-  return linhas;
-}
+  gerarCSV(linhas, 'relatorio-expedicoes.csv');
+};
 
-// CSV
-window.exportarCSVExpedicao = function () {
-  const dados = montarDadosExpedicao();
-  if (dados.length === 0) {
-    alert('Nenhum dado para exportar');
+// -------------------------------
+// EXPORTAR APENAS UM LOTE
+// -------------------------------
+window.exportarExpedicaoPorLote = function (nomeLote) {
+  if (!nomeLote) {
+    alert('Lote não informado');
     return;
   }
 
-  const headers = Object.keys(dados[0]).join(';');
-  const linhas = dados.map(d =>
-    Object.values(d).join(';')
+  const registros = state.historicoExpedidos.filter(
+    e => e.lote === nomeLote
   );
 
-  const csv = [headers, ...linhas].join('\n');
-
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement('a');
-
-  link.href = URL.createObjectURL(blob);
-  link.download = 'relatorio-expedicao.csv';
-  link.click();
-};
-
-// Excel
-window.exportarExcelExpedicao = function () {
-  const dados = montarDadosExpedicao();
-  if (dados.length === 0) {
-    alert('Nenhum dado para exportar');
+  if (registros.length === 0) {
+    alert('Nenhuma expedição encontrada para este lote');
     return;
   }
 
-  const ws = XLSX.utils.json_to_sheet(dados);
-  const wb = XLSX.utils.book_new();
+  let linhas = [];
+  linhas.push([
+    'Lote',
+    'Tipo',
+    'Área',
+    'Rua',
+    'Posição',
+    'RZ',
+    'Volume',
+    'Data',
+    'Hora'
+  ].join(';'));
 
-  XLSX.utils.book_append_sheet(wb, ws, 'Expedições');
-  XLSX.writeFile(wb, 'relatorio-expedicao.xlsx');
+  registros.forEach(exp => {
+    exp.detalhes.forEach(d => {
+      linhas.push([
+        exp.lote,
+        exp.tipo,
+        d.area,
+        d.rua,
+        d.posicao,
+        d.rz || '',
+        d.volume || '',
+        exp.data,
+        exp.hora
+      ].join(';'));
+    });
+  });
+
+  gerarCSV(
+    linhas,
+    `relatorio-expedicao-${nomeLote}.csv`
+  );
 };
+
+// -------------------------------
+// GERADOR CSV (UTIL)
+// -------------------------------
+function gerarCSV(linhas, nomeArquivo) {
+  const csv = linhas.join('\n');
+  const blob = new Blob([csv], {
+    type: 'text/csv;charset=utf-8;'
+  });
+
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = nomeArquivo;
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
