@@ -40,6 +40,16 @@ function listarGaylordsDoLote(nomeLote) {
 // ABRIR MODAL DE EXPEDIÇÃO
 // -------------------------------
 window.expedirLote = function (nomeLote) {
+  
+  <div class="acoes-expedicao">
+  <button type="button" onclick="selecionarTodosGaylords()">
+    Selecionar todos
+  </button>
+
+  <button type="button" onclick="desmarcarTodosGaylords()">
+    Desmarcar todos
+  </button>
+</div>
   const itens = listarGaylordsDoLote(nomeLote);
 
   if (itens.length === 0) {
