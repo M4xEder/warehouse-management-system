@@ -7,7 +7,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (!Array.isArray(state.areas)) state.areas = [];
   if (!Array.isArray(state.lotes)) state.lotes = [];
-  if (!Array.isArray(state.historicoExpedidos)) state.historicoExpedidos = [];
+  if (!Array.isArray(state.historicoExpedidos))
+    state.historicoExpedidos = [];
+
+  //  LIMPA ESTADOS VISUAIS TEMPORÁRIOS
+  if (typeof limparDestaques === 'function') {
+    limparDestaques();
+  }
 
   if (typeof renderMapa === 'function') renderMapa();
   if (typeof renderDashboard === 'function') renderDashboard();
