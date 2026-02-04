@@ -1,6 +1,6 @@
 // =======================================
 // RELATORIOS-EXPEDICAO.JS
-// Histórico e detalhes de expedição
+// Histórico, detalhes e exclusão
 // =======================================
 
 // -------------------------------
@@ -26,6 +26,7 @@ window.renderExpedidos = function () {
 
     div.innerHTML = `
       <strong>Lote:</strong> ${exp.lote}
+
       <span style="
         background:${badgeColor};
         color:#fff;
@@ -36,24 +37,58 @@ window.renderExpedidos = function () {
       ">
         ${exp.tipo}
       </span>
+
       <br>
       <strong>Quantidade:</strong>
       ${exp.quantidadeExpedida} de ${exp.quantidadeTotal}
+
       <br>
       <strong>Data:</strong> ${exp.data} ${exp.hora}
-      <br><br>
-      <button onclick="abrirDetalhesExpedicao('${exp.id}')">
-        Ver detalhes
-      </button>
+
+      <div style="margin-top:8px">
+        <button onclick="abrirDetalhesExpedicao('${exp.id}')">
+          Ver detalhes
+        </button>
+
+        <button
+          class="danger"
+          onclick="excluirRegistroExpedicao('${exp.id}')">
+          Excluir
+        </button>
+      </div>
     `;
 
     container.appendChild(div);
   });
 };
 
-// -------------------------------
-// ABRIR DETALHES
-// -------------------------------
+// =======================================
+// EXCLUIR REGISTRO DE EXPEDIÇÃO
+// =======================================
+window.excluirRegistroExpedicao = function (id) {
+  const exp = state.historicoExpedidos.find(e => e.id === id);
+  if (!exp) {
+    alert('Registro não encontrado');
+    return;
+  }
+
+  if (
+    !confirm(
+      `Deseja excluir o histórico do lote "${exp.lote}"?\n` +
+      `Esta ação não poderá ser desfeita.`
+    )
+  ) return;
+
+  state.historicoExpedidos =
+    state.historicoExpedidos.filter(e => e.id !== id);
+
+  saveState();
+  renderExpedidos();
+};
+
+// =======================================
+// MODAL DETALHES
+// =======================================
 window.abrirDetalhesExpedicao = function (id) {
   const exp = state.historicoExpedidos.find(e => e.id === id);
   if (!exp) {
@@ -95,10 +130,10 @@ window.abrirDetalhesExpedicao = function (id) {
     ">
   `;
 
-  exp.detalhes.forEach((d, i) => {
+  exp.detalhes.forEach((d, index) => {
     html += `
-      <div style="border-bottom:1px solid #eee; padding:6px 0;">
-        <strong>${i + 1}.</strong>
+      <div style="border-bottom:1px solid #eee; padding:6px 0">
+        <strong>${index + 1}.</strong>
         Área: ${d.area} |
         Rua: ${d.rua} |
         Posição: ${d.posicao}<br>
@@ -117,9 +152,6 @@ window.abrirDetalhesExpedicao = function (id) {
     .classList.remove('hidden');
 };
 
-// -------------------------------
-// FECHAR DETALHES
-// -------------------------------
 window.fecharDetalhesExpedicao = function () {
   document
     .getElementById('modalDetalhesExpedicao')
