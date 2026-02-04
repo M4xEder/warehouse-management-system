@@ -5,41 +5,57 @@
   <title>Relatórios de Expedição</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <!-- CSS -->
   <link rel="stylesheet" href="css/style.css">
+
+  <!-- SheetJS (Excel) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
+  <!-- HEADER -->
   <div id="header"></div>
 
   <main id="app">
+
     <h1>Relatórios de Expedição</h1>
 
-    <div style="margin-bottom: 20px">
-      <button onclick="exportarCSVExpedicao()">
-        Exportar CSV
+    <!-- ================= EXPORTAÇÃO COMPLETA ================= -->
+    <section class="cadastros">
+      <h2>Exportar todos os lotes</h2>
+      <p>
+        Gera um arquivo Excel com <strong>uma aba para cada lote</strong>,
+        contendo expedidos, parciais e não expedidos.
+      </p>
+      <button onclick="exportarRelatorioExcel()">
+        📊 Exportar todos os lotes
       </button>
+    </section>
 
-      <button onclick="exportarExcelExpedicao()">
-        Exportar Excel
+    <hr style="margin:30px 0">
+
+    <!-- ================= EXPORTAÇÃO POR LOTE ================= -->
+    <section class="cadastros">
+      <h2>Exportar lote específico</h2>
+
+      <select id="selectLoteRelatorio">
+        <option value="">Selecione um lote</option>
+      </select>
+
+      <button onclick="exportarRelatorioLote()">
+        📄 Exportar lote selecionado
       </button>
-    </div>
+    </section>
 
-    <div id="previewRelatorio"></div>
   </main>
 
-  <!-- Infra -->
+  <!-- JS BASE -->
   <script src="js/supabase.js"></script>
   <script src="js/header.js"></script>
-
-  <!-- ESTADO (obrigatório) -->
   <script src="js/state.js"></script>
 
-  <!-- Biblioteca Excel -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <!-- RELATÓRIO -->
+  <script src="js/relatorios-expedicao.js"></script>
 
-  <!-- Relatórios -->
-
-<script src="js/relatorios-expedicao.js"></script>
-<script src="js/exportacao-expedicao.js"></script>
 </body>
 </html>
