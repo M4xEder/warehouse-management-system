@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Mapa de Gaylords</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- CSS -->
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
 
@@ -23,28 +23,28 @@
         type="text"
         id="buscaInput"
         placeholder="Buscar por lote, RZ ou volume"
-      >
+      />
       <button onclick="buscar()">Buscar</button>
       <button onclick="limparBusca()">Limpar Destaque</button>
     </div>
 
-    <!-- ================= CADASTRO DE ÁREA ================= -->
+    <!-- ================= CADASTROS ================= -->
+
     <section class="cadastros">
       <h2>Cadastrar Área</h2>
-      <input id="areaNome" placeholder="Nome da área">
+      <input id="areaNome" placeholder="Nome da área" />
       <button onclick="cadastrarArea()">Cadastrar Área</button>
     </section>
 
-    <!-- ================= CADASTRO DE LOTE ================= -->
     <section class="cadastros">
       <h2>Cadastrar Lote</h2>
-      <input id="loteNome" placeholder="Nome do lote">
+      <input id="loteNome" placeholder="Nome do lote" />
       <input
         id="loteTotal"
         type="number"
-        placeholder="Quantidade total"
         min="1"
-      >
+        placeholder="Quantidade total"
+      />
       <button onclick="cadastrarLote()">Cadastrar Lote</button>
     </section>
 
@@ -61,9 +61,7 @@
 
   </main>
 
-  <!-- ================================================= -->
-  <!-- ================= MODAL ENDEREÇO ================= -->
-  <!-- ================================================= -->
+  <!-- ================= MODAL ENDEREÇAMENTO ================= -->
   <div id="modal" class="modal hidden">
     <div class="modal-content">
       <h3>Endereçar Gaylord</h3>
@@ -75,12 +73,12 @@
 
       <label>
         Volume:
-        <input id="modalVolume" type="text">
+        <input id="modalVolume" type="text" />
       </label>
 
       <label>
         RZ:
-        <input id="modalRz" type="text">
+        <input id="modalRz" type="text" />
       </label>
 
       <div class="acoes">
@@ -91,57 +89,55 @@
     </div>
   </div>
 
-  <!-- ================================================= -->
   <!-- ================= MODAL EXPEDIÇÃO ================= -->
-  <!-- ================================================= -->
   <div id="modalExpedicao" class="modal hidden">
-    <div class="modal-content" style="width:500px; max-height:80vh; overflow-y:auto;">
+    <div
+      class="modal-content"
+      style="width: 500px; max-height: 80vh; overflow-y: auto;"
+    >
       <h3>Expedir Gaylords do Lote</h3>
 
-      <p style="font-size:14px; margin-bottom:10px">
+      <p style="font-size: 14px;">
         Selecione quais gaylords serão expedidas
       </p>
 
-      <div style="margin-bottom:10px">
+      <div style="margin-bottom: 10px;">
         <button onclick="selecionarTodosGaylords()">Selecionar todos</button>
         <button onclick="desmarcarTodosGaylords()">Desmarcar todos</button>
       </div>
 
-      <!-- LISTA DINÂMICA -->
       <div id="listaExpedicao"></div>
 
-      <div class="acoes" style="margin-top:15px">
+      <div class="acoes" style="margin-top: 15px;">
         <button onclick="confirmarExpedicao()">Confirmar Expedição</button>
         <button onclick="fecharModalExpedicao()">Cancelar</button>
       </div>
     </div>
   </div>
 
-  <!-- ================================================= -->
-  <!-- ============ MODAL DETALHES EXPEDIÇÃO ============ -->
-  <!-- ================================================= -->
+  <!-- ================= MODAL DETALHES EXPEDIÇÃO ================= -->
   <div id="modalDetalhesExpedicao" class="modal hidden">
-    <div class="modal-content" style="max-width:600px">
+    <div class="modal-content" style="max-width: 600px;">
       <h3>Detalhes da Expedição</h3>
 
       <div id="conteudoDetalhesExpedicao"></div>
 
-      <div style="margin-top:12px; text-align:right">
+      <div style="margin-top: 12px; text-align: right;">
         <button onclick="fecharDetalhesExpedicao()">Fechar</button>
       </div>
     </div>
   </div>
 
-  <!-- ================= JS ================= -->
+  <!-- ================= SCRIPTS ================= -->
 
-  <!-- Infra / Header -->
+  <!-- Infra -->
   <script src="js/supabase.js"></script>
   <script src="js/header.js"></script>
 
-  <!-- Estado (SEMPRE PRIMEIRO) -->
+  <!-- Estado (sempre primeiro) -->
   <script src="js/state.js"></script>
 
-  <!-- Módulos base -->
+  <!-- Base -->
   <script src="js/lotes.js"></script>
   <script src="js/mapa.js"></script>
   <script src="js/modal.js"></script>
@@ -151,6 +147,7 @@
   <script src="js/dashboard.js"></script>
   <script src="js/expedicao.js"></script>
   <script src="js/relatorios-expedicao.js"></script>
+  <script src="js/exportacao-expedicao.js"></script>
 
   <!-- Bootstrap -->
   <script src="js/main.js"></script>
