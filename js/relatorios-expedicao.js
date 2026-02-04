@@ -1,7 +1,6 @@
 // =======================================
 // RELATORIOS-EXPEDICAO.JS
-// Histórico de expedições
-// =======================================
+// Histórico expedição
 
 window.renderExpedidos = function () {
   const container = document.getElementById('lotesExpedidos');
@@ -9,62 +8,38 @@ window.renderExpedidos = function () {
 
   container.innerHTML = '';
 
-  if (
-    !state.historicoExpedidos ||
-    state.historicoExpedidos.length === 0
-  ) {
-    container.innerHTML = '<p>Nenhuma expedição registrada</p>';
+  if (!state.historicoExpedidos.length) {
+    container.innerHTML = '<p>Nenhuma expedição realizada</p>';
     return;
   }
 
   state.historicoExpedidos.forEach(exp => {
-    const card = document.createElement('div');
-    card.className = 'lote-card';
+    const badgeColor =
+      exp.tipo === 'TOTAL' ? '#16a34a' : '#ca8a04';
 
-    const tipo =
-      exp.quantidade === exp.detalhes.length
-        ? 'TOTAL'
-        : 'PARCIAL';
+    const div = document.createElement('div');
+    div.className = 'historico-item';
 
-    card.innerHTML = `
-      <strong>Lote:</strong> ${exp.lote}<br>
-      <strong>Data:</strong> ${exp.data} ${exp.hora}<br>
-      <strong>Tipo:</strong> ${tipo}<br>
-      <strong>Quantidade:</strong> ${exp.quantidade}
-
-      <details style="margin-top:8px">
-        <summary>Ver gaylords expedidas</summary>
-        ${renderDetalhes(exp.detalhes)}
-      </details>
+    div.innerHTML = `
+      <strong>${exp.lote}</strong>
+      <span
+        style="
+          background:${badgeColor};
+          color:#fff;
+          padding:2px 6px;
+          border-radius:4px;
+          font-size:12px;
+          margin-left:6px;
+        "
+      >
+        ${exp.tipo}
+      </span>
+      <br>
+      ${exp.quantidadeExpedida} de ${exp.quantidadeTotal}
+      <br>
+      ${exp.data} ${exp.hora}
     `;
 
-    container.appendChild(card);
+    container.appendChild(div);
   });
 };
-
-// -------------------------------
-// DETALHES DAS GAYLORDS
-// -------------------------------
-function renderDetalhes(detalhes) {
-  if (!detalhes || detalhes.length === 0) {
-    return '<p>Sem detalhes</p>';
-  }
-
-  return `
-    <ul style="margin-top:6px">
-      ${detalhes
-        .map(
-          d => `
-        <li>
-          Área: <strong>${d.area}</strong> |
-          Rua: <strong>${d.rua}</strong> |
-          Posição: <strong>${d.posicao}</strong><br>
-          RZ: <strong>${d.rz}</strong> |
-          Volume: <strong>${d.volume}</strong>
-        </li>
-      `
-        )
-        .join('')}
-    </ul>
-  `;
-}
