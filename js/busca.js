@@ -3,12 +3,28 @@
 // Busca e destaque de gaylords no mapa
 // =======================================
 
+// -------------------------------
+// LIMPAR TODOS OS DESTAQUES
+// (uso interno e inicialização)
+// -------------------------------
+window.limparDestaques = function () {
+  state.areas.forEach(area => {
+    area.ruas.forEach(rua => {
+      rua.posicoes.forEach(pos => {
+        if (pos._highlight) {
+          delete pos._highlight;
+        }
+      });
+    });
+  });
+};
+
+// -------------------------------
+// BUSCAR
+// -------------------------------
 window.buscar = function () {
-  const termo = document
-    .getElementById('buscaInput')
-    .value
-    .trim()
-    .toLowerCase();
+  const input = document.getElementById('buscaInput');
+  const termo = input.value.trim().toLowerCase();
 
   if (!termo) {
     alert('Informe um termo para busca');
@@ -20,7 +36,10 @@ window.buscar = function () {
   state.areas.forEach(area => {
     area.ruas.forEach(rua => {
       rua.posicoes.forEach(pos => {
-        if (!pos.ocupada) return;
+        if (!pos.ocupada) {
+          delete pos._highlight;
+          return;
+        }
 
         const match =
           (pos.lote && pos.lote.toLowerCase().includes(termo)) ||
@@ -31,7 +50,7 @@ window.buscar = function () {
           pos._highlight = true;
           encontrados++;
         } else {
-          pos._highlight = false;
+          delete pos._highlight;
         }
       });
     });
@@ -44,19 +63,14 @@ window.buscar = function () {
   renderMapa();
 };
 
-// =======================================
-// LIMPAR BUSCA
-// =======================================
-
+// -------------------------------
+// LIMPAR BUSCA (BOTÃO)
+// -------------------------------
 window.limparBusca = function () {
-  state.areas.forEach(area => {
-    area.ruas.forEach(rua => {
-      rua.posicoes.forEach(pos => {
-        delete pos._highlight;
-      });
-    });
-  });
+  limparDestaques();
 
-  document.getElementById('buscaInput').value = '';
+  const input = document.getElementById('buscaInput');
+  if (input) input.value = '';
+
   renderMapa();
 };
