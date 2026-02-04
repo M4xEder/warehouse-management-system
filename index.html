@@ -88,6 +88,29 @@
       </div>
     </div>
   </div>
+  <!-- ================= MODAL EXPEDIÇÃO ================= -->
+<div id="modalExpedicao" class="modal hidden">
+  <div class="modal-content" style="width: 500px; max-height: 80vh; overflow-y: auto;">
+    <h3>Expedir Gaylords do Lote</h3>
+
+    <p style="font-size: 14px; margin-bottom: 10px;">
+      Selecione quais gaylords serão expedidas
+    </p>
+
+    <div style="margin-bottom: 10px;">
+      <button onclick="selecionarTodosGaylords()">Selecionar todos</button>
+      <button onclick="desmarcarTodosGaylords()">Desmarcar todos</button>
+    </div>
+
+    <!-- LISTA DINÂMICA -->
+    <div id="listaExpedicao"></div>
+
+    <div class="acoes" style="margin-top: 15px;">
+      <button onclick="confirmarExpedicao()">Confirmar Expedição</button>
+      <button onclick="fecharModalExpedicao()">Cancelar</button>
+    </div>
+  </div>
+</div>
 
   <!-- ================= JS ================= -->
 
