@@ -2,58 +2,43 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Relatórios de Gaylords</title>
+  <title>Relatórios de Expedição</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- CSS -->
-  <link rel="stylesheet" href="css/relatorios.css">
+  <link rel="stylesheet" href="css/style.css">
 </head>
-
 <body>
-<div id="header"></div> 
 
-<h1>📊 Relatórios de Gaylords</h1>
+  <div id="header"></div>
 
-<div class="box">
-  <label>
-    Lote:
-    <select id="loteSelecionado"></select>
-  </label>
+  <main id="app">
+    <h1>Relatórios de Expedição</h1>
 
-  <button onclick="gerarRelatorio()">Gerar Relatório</button>
-  <button onclick="exportarExcelLote()">📊 Excel (Lote)</button>
-  <button onclick="exportarExcelTodos()">📦 Excel (Todos)</button>
-  <button onclick="exportarCSVLote()">📄 CSV (Lote)</button>
-  <button onclick="exportarCSVTodos()">📦 CSV (Todos)</button>
-</div>
+    <div style="margin-bottom: 20px">
+      <button onclick="exportarCSVExpedicao()">
+        Exportar CSV
+      </button>
 
-<div id="mensagem" class="alerta" style="display:none"></div>
-<div id="resumo" class="resumo"></div>
+      <button onclick="exportarExcelExpedicao()">
+        Exportar Excel
+      </button>
+    </div>
 
-<table>
-  <thead>
-    <tr>
-      <th>Status</th>
-      <th>Área</th>
-      <th>Rua</th>
-      <th>Endereço</th>
-      <th>RZ</th>
-      <th>Volume</th>
-    </tr>
-  </thead>
-  <tbody id="tabela"></tbody>
-</table>
+    <div id="previewRelatorio"></div>
+  </main>
 
-<!-- Biblioteca XLSX -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <!-- Infra -->
+  <script src="js/supabase.js"></script>
+  <script src="js/header.js"></script>
 
-<!-- JS -->
+  <!-- ESTADO (obrigatório) -->
+  <script src="js/state.js"></script>
 
-<script src="js/supabase.js"></script>
-<script src="js/guard.js"></script>
-<script src="js/auth.js"></script> 
-<script src="js/header.js"></script>
-<script src="js/relatorios.js"></script>
+  <!-- Biblioteca Excel -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+  <!-- Relatórios -->
+  <script src="js/relatorios-expedicao.js"></script>
 
 </body>
 </html>
