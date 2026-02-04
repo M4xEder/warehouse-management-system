@@ -1,19 +1,10 @@
 // =======================================
 // DASHBOARD.JS
-// Controle correto de lotes ativos
+// Visualização e ações dos lotes
 // =======================================
 
 // -------------------------------
-// TOTAL EXPEDIDO DO LOTE
-// -------------------------------
-window.totalExpedidoDoLote = function (nomeLote) {
-  return state.historicoExpedidos
-    .filter(e => e.lote === nomeLote)
-    .reduce((acc, e) => acc + e.quantidadeExpedida, 0);
-};
-
-// -------------------------------
-// CONTAR GAYLORDS ALOCADAS
+// CONTAR GAYLORDS DE UM LOTE
 // -------------------------------
 window.contarGaylordsDoLote = function (nomeLote) {
   let total = 0;
@@ -21,7 +12,7 @@ window.contarGaylordsDoLote = function (nomeLote) {
   state.areas.forEach(area => {
     area.ruas.forEach(rua => {
       rua.posicoes.forEach(pos => {
-        if (pos.ocupada && pos.lote === nomeLote) {
+        if (pos.ocupada === true && pos.lote === nomeLote) {
           total++;
         }
       });
@@ -40,31 +31,24 @@ window.renderDashboard = function () {
 
   dashboard.innerHTML = '';
 
-  if (!state.lotes || state.lotes.length === 0) {
+  if (!Array.isArray(state.lotes) || state.lotes.length === 0) {
     dashboard.innerHTML = '<p>Nenhum lote ativo</p>';
     return;
   }
 
   state.lotes.forEach(lote => {
-    const expedido = totalExpedidoDoLote(lote.nome);
-    const alocado = contarGaylordsDoLote(lote.nome);
+    const usados = contarGaylordsDoLote(lote.nome);
     const total = lote.total;
 
-    // 🔐 REGRA: só some se 100% expedido
-    if (expedido >= total) return;
-
     const percentual =
-      total > 0 ? Math.round((expedido / total) * 100) : 0;
+      total > 0 ? Math.round((usados / total) * 100) : 0;
 
     const card = document.createElement('div');
     card.className = 'lote-card';
 
     card.innerHTML = `
       <strong>${lote.nome}</strong><br>
-
-      Expedidos: ${expedido} / ${total}<br>
-      Alocados: ${alocado}<br>
-      Não alocados: ${total - expedido - alocado}
+      <span>${usados} / ${total}</span>
 
       <div class="progress-bar">
         <div class="progress-fill"
@@ -75,7 +59,7 @@ window.renderDashboard = function () {
         </div>
       </div>
 
-      <div style="margin-top:8px">
+      <div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap">
         <button onclick="abrirModalExpedicao('${lote.nome}')">
           Expedir
         </button>
@@ -85,8 +69,8 @@ window.renderDashboard = function () {
         </button>
 
         <button
-          class="danger"
-          onclick="excluirLote('${lote.nome}')">
+          onclick="excluirLote('${lote.nome}')"
+          class="danger">
           Excluir
         </button>
       </div>
@@ -96,51 +80,51 @@ window.renderDashboard = function () {
   });
 };
 
-// -------------------------------
+// =======================================
 // ALTERAR QUANTIDADE DO LOTE
-// -------------------------------
+// =======================================
 window.alterarQuantidadeLote = function (nomeLote) {
   const lote = state.lotes.find(l => l.nome === nomeLote);
   if (!lote) return;
 
   const alocados = contarGaylordsDoLote(nomeLote);
-  const expedido = totalExpedidoDoLote(nomeLote);
-
-  const minimo = alocados + expedido;
 
   const novoTotal = Number(
     prompt(
       `Nova quantidade para o lote "${nomeLote}"\n` +
-      `Já expedidos: ${expedido}\n` +
-      `Alocados: ${alocados}\n` +
-      `Mínimo permitido: ${minimo}`,
+      `Já alocados: ${alocados}`,
       lote.total
     )
   );
 
-  if (isNaN(novoTotal) || novoTotal < minimo) {
+  if (isNaN(novoTotal) || novoTotal <= 0) {
     alert('Quantidade inválida');
     return;
   }
 
+  if (novoTotal < alocados) {
+    alert(
+      `Não pode ser menor que os já alocados (${alocados})`
+    );
+    return;
+  }
+
   lote.total = novoTotal;
+
   saveState();
   renderDashboard();
 
-  alert('Quantidade atualizada com sucesso');
+  alert(`Quantidade do lote "${nomeLote}" atualizada`);
 };
 
 // -------------------------------
 // EXCLUIR LOTE (SOMENTE SE VAZIO)
 // -------------------------------
 window.excluirLote = function (nomeLote) {
-  const alocados = contarGaylordsDoLote(nomeLote);
-  const expedido = totalExpedidoDoLote(nomeLote);
+  const usados = contarGaylordsDoLote(nomeLote);
 
-  if (alocados > 0 || expedido > 0) {
-    alert(
-      'Não é possível excluir um lote com histórico ou gaylords alocadas'
-    );
+  if (usados > 0) {
+    alert('Não é possível excluir. Existem gaylords alocadas.');
     return;
   }
 
@@ -150,4 +134,5 @@ window.excluirLote = function (nomeLote) {
 
   saveState();
   renderDashboard();
+  renderMapa();
 };
