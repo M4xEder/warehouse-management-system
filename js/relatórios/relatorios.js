@@ -1,223 +1,180 @@
 // =======================================
-// RELATORIOS.JS — RELATÓRIOS DE EXPEDIÇÃO
+// RELATORIOS.JS — LISTA DE LOTES E EXPORTAÇÃO
 // =======================================
 
 console.log('relatorios.js carregado');
 
-// ===============================
-// POPULAR SELECT DE LOTES
-// ===============================
+// -------------------------------
+// POPULA SELECT DE LOTES
+// -------------------------------
 function popularSelectLotes() {
   const select = document.getElementById('selectLoteRelatorio');
   if (!select) return;
 
   select.innerHTML = '<option value="">Selecione um lote</option>';
 
-  const lotesAtivos = state.lotes || [];
-  const lotesHistorico = state.historicoExpedidos.map(h => h.lote);
-  const todosLotes = Array.from(new Set([
-    ...lotesAtivos.map(l => l.nome),
-    ...lotesHistorico
-  ]));
-
-  todosLotes.forEach(nome => {
+  // Inclui todos os lotes cadastrados
+  state.lotes.forEach(lote => {
     const opt = document.createElement('option');
-    opt.value = nome;
-    opt.textContent = nome;
+    opt.value = lote.nome;
+    opt.textContent = lote.nome;
     select.appendChild(opt);
   });
 }
 
-// ===============================
-// FILTRAR POR RZ
-// ===============================
-window.filtrarPorRz = function(rz) {
-  if (!rz) return;
+// -------------------------------
+// EXPORTAR LOTE ESPECÍFICO PARA EXCEL
+// -------------------------------
+function exportarRelatorioLote() {
+  const select = document.getElementById('selectLoteRelatorio');
+  const loteNome = select.value;
+  if (!loteNome) return alert('Selecione um lote');
 
-  // Realce no mapa ou console log
-  let encontrados = 0;
+  const lote = state.lotes.find(l => l.nome === loteNome);
+  if (!lote) return alert('Lote não encontrado');
+
+  const dados = [];
+
+  // Gaylords alocadas
   state.areas.forEach(area => {
     area.ruas.forEach(rua => {
       rua.posicoes.forEach(pos => {
-        if (pos.ocupada && pos.rz === rz) {
-          console.log(`Encontrado: Lote ${pos.lote} | Área ${area.nome} | Rua ${rua.nome} | Pos ${pos.posicao}`);
-          encontrados++;
+        if (pos.ocupada && pos.lote === loteNome) {
+          dados.push({
+            Tipo: 'Ativo',
+            Área: area.nome,
+            Rua: rua.nome,
+            Posição: pos.posicao,
+            RZ: pos.rz || '',
+            Volume: pos.volume || ''
+          });
         }
       });
     });
   });
 
-  if (encontrados === 0) alert('Nenhum RZ encontrado');
-};
-
-// ===============================
-// EXPORTAR RELATÓRIO EXCEL (TODOS LOTES)
-// ===============================
-window.exportarRelatorioExcel = function() {
-  if (!state.lotes && !state.historicoExpedidos) {
-    alert('Nenhum lote cadastrado');
-    return;
-  }
-
-  const lotesAtivos = state.lotes || [];
-  const lotesHistorico = state.historicoExpedidos.map(h => h.lote);
-  const todosLotes = Array.from(new Set([
-    ...lotesAtivos.map(l => l.nome),
-    ...lotesHistorico
-  ]));
-
-  const wb = XLSX.utils.book_new();
-
-  todosLotes.forEach(nomeLote => {
-    const loteAtivo = state.lotes.find(l => l.nome === nomeLote);
-    const expedicoes = state.historicoExpedidos.filter(h => h.lote === nomeLote);
-
-    const linhas = [];
-
-    // Cabeçalho
-    linhas.push([
-      'Tipo', 'Data', 'Hora', 'Área', 'Rua', 'Posição', 'RZ', 'Volume'
-    ]);
-
-    // Lotes ativos (alocados)
-    if (loteAtivo) {
-      state.areas.forEach(area => {
-        area.ruas.forEach(rua => {
-          rua.posicoes.forEach(pos => {
-            if (pos.ocupada && pos.lote === nomeLote) {
-              linhas.push([
-                'Ativo',
-                '-', '-', // Data e Hora
-                area.nome,
-                rua.nome,
-                pos.posicao + 1,
-                pos.rz || '-',
-                pos.volume || '-'
-              ]);
-            }
-          });
+  // Gaylords expedidas
+  state.historicoExpedidos.forEach(exp => {
+    if (exp.lote === loteNome) {
+      exp.detalhes.forEach(d => {
+        dados.push({
+          Tipo: 'Expedido',
+          Área: d.area,
+          Rua: d.rua,
+          Posição: d.posicao,
+          RZ: d.rz || '',
+          Volume: d.volume || '',
+          Data: exp.data,
+          Hora: exp.hora
         });
       });
     }
-
-    // Lotes expedidos
-    expedicoes.forEach(exp => {
-      exp.detalhes.forEach(d => {
-        linhas.push([
-          exp.tipo,
-          exp.data,
-          exp.hora,
-          d.area,
-          d.rua,
-          d.posicao,
-          d.rz || '-',
-          d.volume || '-'
-        ]);
-      });
-    });
-
-    const ws = XLSX.utils.aoa_to_sheet(linhas);
-    XLSX.utils.book_append_sheet(wb, ws, nomeLote.substring(0, 31)); // nome aba <=31 chars
   });
 
-  const wbout = XLSX.write(wb, { bookType:'xlsx', type:'binary' });
-  const blob = new Blob([s2ab(wbout)], {type:"application/octet-stream"});
-  const url = URL.createObjectURL(blob);
+  // Não alocadas
+  const alocadas = state.areas.flatMap(a => a.ruas.flatMap(r => r.posicoes))
+    .filter(p => p.lote === loteNome).length;
+  const expedidas = state.historicoExpedidos
+    .filter(e => e.lote === loteNome)
+    .reduce((acc, e) => acc + e.quantidadeExpedida, 0);
+  const naoAlocadas = lote.total - (alocadas + expedidas);
 
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `relatorio_completo_${Date.now()}.xlsx`;
-  a.click();
-  URL.revokeObjectURL(url);
-
-  function s2ab(s) {
-    const buf = new ArrayBuffer(s.length);
-    const view = new Uint8Array(buf);
-    for (let i=0; i<s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
-    return buf;
-  }
-};
-
-// ===============================
-// EXPORTAR RELATÓRIO EXCEL (LOTE SELECIONADO)
-// ===============================
-window.exportarRelatorioLote = function() {
-  const select = document.getElementById('selectLoteRelatorio');
-  const nomeLote = select.value;
-
-  if (!nomeLote) {
-    alert('Selecione um lote');
-    return;
+  for (let i = 0; i < naoAlocadas; i++) {
+    dados.push({
+      Tipo: 'Não alocada',
+      Área: '',
+      Rua: '',
+      Posição: '',
+      RZ: '',
+      Volume: ''
+    });
   }
 
-  const loteAtivo = state.lotes.find(l => l.nome === nomeLote);
-  const expedicoes = state.historicoExpedidos.filter(h => h.lote === nomeLote);
+  // Criar planilha
+  const ws = XLSX.utils.json_to_sheet(dados);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, loteNome);
+  XLSX.writeFile(wb, `Relatorio_${loteNome}.xlsx`);
+}
 
-  const linhas = [];
-  linhas.push([
-    'Tipo', 'Data', 'Hora', 'Área', 'Rua', 'Posição', 'RZ', 'Volume'
-  ]);
+// -------------------------------
+// EXPORTAR TODOS LOTES PARA EXCEL
+// -------------------------------
+function exportarRelatorioExcel() {
+  if (!state.lotes || state.lotes.length === 0) {
+    return alert('Nenhum lote para exportar');
+  }
 
-  if (loteAtivo) {
+  const wb = XLSX.utils.book_new();
+
+  state.lotes.forEach(lote => {
+    const dados = [];
+
+    // Alocadas
     state.areas.forEach(area => {
       area.ruas.forEach(rua => {
         rua.posicoes.forEach(pos => {
-          if (pos.ocupada && pos.lote === nomeLote) {
-            linhas.push([
-              'Ativo',
-              '-', '-',
-              area.nome,
-              rua.nome,
-              pos.posicao + 1,
-              pos.rz || '-',
-              pos.volume || '-'
-            ]);
+          if (pos.ocupada && pos.lote === lote.nome) {
+            dados.push({
+              Tipo: 'Ativo',
+              Área: area.nome,
+              Rua: rua.nome,
+              Posição: pos.posicao,
+              RZ: pos.rz || '',
+              Volume: pos.volume || ''
+            });
           }
         });
       });
     });
-  }
 
-  expedicoes.forEach(exp => {
-    exp.detalhes.forEach(d => {
-      linhas.push([
-        exp.tipo,
-        exp.data,
-        exp.hora,
-        d.area,
-        d.rua,
-        d.posicao,
-        d.rz || '-',
-        d.volume || '-'
-      ]);
+    // Expedidas
+    state.historicoExpedidos.forEach(exp => {
+      if (exp.lote === lote.nome) {
+        exp.detalhes.forEach(d => {
+          dados.push({
+            Tipo: 'Expedido',
+            Área: d.area,
+            Rua: d.rua,
+            Posição: d.posicao,
+            RZ: d.rz || '',
+            Volume: d.volume || '',
+            Data: exp.data,
+            Hora: exp.hora
+          });
+        });
+      }
     });
+
+    // Não alocadas
+    const alocadas = state.areas.flatMap(a => a.ruas.flatMap(r => r.posicoes))
+      .filter(p => p.lote === lote.nome).length;
+    const expedidas = state.historicoExpedidos
+      .filter(e => e.lote === lote.nome)
+      .reduce((acc, e) => acc + e.quantidadeExpedida, 0);
+    const naoAlocadas = lote.total - (alocadas + expedidas);
+
+    for (let i = 0; i < naoAlocadas; i++) {
+      dados.push({
+        Tipo: 'Não alocada',
+        Área: '',
+        Rua: '',
+        Posição: '',
+        RZ: '',
+        Volume: ''
+      });
+    }
+
+    const ws = XLSX.utils.json_to_sheet(dados);
+    XLSX.utils.book_append_sheet(wb, ws, lote.nome);
   });
 
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.aoa_to_sheet(linhas);
-  XLSX.utils.book_append_sheet(wb, ws, nomeLote.substring(0, 31));
+  XLSX.writeFile(wb, `Relatorios_Completos.xlsx`);
+}
 
-  const wbout = XLSX.write(wb, { bookType:'xlsx', type:'binary' });
-  const blob = new Blob([s2ab(wbout)], {type:"application/octet-stream"});
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `relatorio_${nomeLote}_${Date.now()}.xlsx`;
-  a.click();
-  URL.revokeObjectURL(url);
-
-  function s2ab(s) {
-    const buf = new ArrayBuffer(s.length);
-    const view = new Uint8Array(buf);
-    for (let i=0; i<s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
-    return buf;
-  }
-};
-
-// ===============================
+// -------------------------------
 // INIT
-// ===============================
-document.addEventListener('DOMContentLoaded', () => {
+// -------------------------------
+window.addEventListener('DOMContentLoaded', () => {
   popularSelectLotes();
 });
