@@ -22,7 +22,7 @@ window.fazerLogin = function() {
   // Usuários válidos (exemplo)
   const usuariosValidos = [
     { usuario: 'admin', senha: '1234' },
-    { usuario: 'user', senha: 'abcd' }
+    { usuario: 'meli', senha: 'meli+02' }
   ];
 
   const valido = usuariosValidos.find(u => u.usuario === usuario && u.senha === senha);
