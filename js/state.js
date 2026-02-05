@@ -4,7 +4,9 @@
 
 const STORAGE_KEY = 'gaylords-system-state';
 
-// Estado global
+// ===============================
+// ESTADO GLOBAL
+// ===============================
 window.state = {
   areas: [],
   lotes: [],
@@ -22,8 +24,29 @@ function loadState() {
     const parsed = JSON.parse(data);
 
     state.areas = parsed.areas || [];
-    state.lotes = parsed.lotes || [];
     state.historicoExpedidos = parsed.historicoExpedidos || [];
+
+    // 🔴 NORMALIZA LOTES ANTIGOS
+    state.lotes = (parsed.lotes || []).map(lote => {
+      return {
+        id: lote.id || crypto.randomUUID(),
+        nome: lote.nome,
+        total: Number(lote.total) || 0,
+
+        // 👉 NOVOS CAMPOS (compatível com dados antigos)
+        saldo:
+          lote.saldo !== undefined
+            ? Number(lote.saldo)
+            : Number(lote.total) || 0,
+
+        ativo:
+          lote.ativo !== undefined
+            ? lote.ativo
+            : (Number(lote.saldo ?? lote.total) > 0),
+
+        cor: lote.cor || gerarCorFallback()
+      };
+    });
 
   } catch (err) {
     console.error('Erro ao carregar state:', err);
@@ -47,10 +70,17 @@ function saveState() {
 // ===============================
 // RESET (DEBUG)
 // ===============================
-function resetState() {
+window.resetState = function () {
   if (!confirm('Deseja apagar TODOS os dados?')) return;
   localStorage.removeItem(STORAGE_KEY);
   location.reload();
+};
+
+// ===============================
+// COR DE SEGURANÇA (fallback)
+// ===============================
+function gerarCorFallback() {
+  return `hsl(${Math.random() * 360}, 70%, 65%)`;
 }
 
 // ===============================
