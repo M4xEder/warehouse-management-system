@@ -1,101 +1,144 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Relatórios de Expedição</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <!-- CSS -->
-  <link rel="stylesheet" href="css/style.css">
-
-  <!-- SheetJS (Excel) -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      background: #f5f5f5;
-    }
-    h1 {
-      text-align: center;
-      margin-bottom: 30px;
-    }
-    .cadastros {
-      background: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      margin-bottom: 30px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-    }
-    button {
-      padding: 10px 15px;
-      background: #16a34a;
-      border: none;
-      color: #fff;
-      border-radius: 4px;
-      cursor: pointer;
-      margin-top: 10px;
-    }
-    button:hover {
-      background: #13803d;
-    }
-    select, input {
-      padding: 8px 10px;
-      margin-top: 8px;
-      width: 100%;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-    }
-    label {
-      display: block;
-      margin-top: 12px;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Relatórios de Expedição</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  body { font-family: Arial, sans-serif; padding:20px; background:#f5f5f5; }
+  h1 { text-align:center; margin-bottom:20px; }
+  select, button { padding:8px 12px; margin-right:10px; margin-bottom:20px; }
+  table { width:100%; border-collapse: collapse; background:#fff; }
+  th, td { border:1px solid #ddd; padding:8px; font-size:14px; text-align:left; }
+  th { background:#16a34a; color:#fff; }
+  tr:nth-child(even) { background:#f9f9f9; }
+  .badge { padding:2px 6px; border-radius:4px; color:#fff; font-size:12px; }
+  .total { background:#16a34a; }
+  .parcial { background:#ca8a04; }
+</style>
 </head>
 <body>
 
+  
   <!-- HEADER -->
   <div id="header"></div>
 
-  <main id="app">
+<h1>Relatórios de Expedição</h1>
 
-    <h1>Relatórios de Expedição</h1>
+<div>
+  <label for="selectLote">Selecione o Lote:</label>
+  <select id="selectLote">
+    <option value="">-- Selecione --</option>
+  </select>
 
-    <!-- ================= EXPORTAÇÃO COMPLETA ================= -->
-    <section class="cadastros">
-      <h2>Exportar todos os lotes</h2>
-      <p>
-        Gera um arquivo Excel com <strong>uma aba para cada lote</strong>,
-        contendo expedidos, parciais e não expedidos.
-      </p>
-      <button onclick="exportarRelatorioExcel()">
-        📊 Exportar todos os lotes
-      </button>
-    </section>
+  <button onclick="gerarTabela()">Mostrar Informações</button>
+</div>
 
-    <hr style="margin:30px 0">
+<table id="tabelaRelatorio">
+  <thead>
+    <tr>
+      <th>Lote</th>
+      <th>Total</th>
+      <th>Expedido</th>
+      <th>Parcial</th>
+      <th>Ativo (Alocado)</th>
+      <th>Não Endereçado</th>
+      <th>Endereço</th>
+      <th>Data/Hora Expedição</th>
+      <th>Mensagem</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- Conteúdo preenchido via JS -->
+  </tbody>
+</table>
 
-    <!-- ================= EXPORTAÇÃO POR LOTE ================= -->
-    <section class="cadastros">
-      <h2>Exportar lote específico</h2>
+<script src="js/state.js"></script>
+<script src="js/dashboard.js"></script>
+<script>
+  // Preencher select com todos os lotes
+  function preencherSelectLotes() {
+    const select = document.getElementById('selectLote');
+    select.innerHTML = '<option value="">-- Selecione --</option>';
+    state.lotes.forEach(l => {
+      const option = document.createElement('option');
+      option.value = l.nome;
+      option.textContent = l.nome;
+      select.appendChild(option);
+    });
+  }
 
-      <label for="selectLoteRelatorio">Selecione um lote:</label>
-      <select id="selectLoteRelatorio">
-        <option value="">Carregando lotes...</option>
-      </select>
+  preencherSelectLotes();
 
-      <button onclick="exportarRelatorioLote()">
-        📄 Exportar lote selecionado
-      </button>
-    </section>
+  // Gerar tabela de acordo com o lote selecionado
+  function gerarTabela() {
+    const loteSelecionado = document.getElementById('selectLote').value;
+    const tbody = document.querySelector('#tabelaRelatorio tbody');
+    tbody.innerHTML = '';
 
-  </main>
+    if (!loteSelecionado) return alert('Selecione um lote');
 
-  <!-- ================= SCRIPTS ================= -->
-  <script src="js/state.js"></script>
-  <script src="js/header.js"></script>
-  <script src="js/relatorios.js"></script>
+    const lote = state.lotes.find(l => l.nome === loteSelecionado);
+    if (!lote) return alert('Lote não encontrado');
 
+    const alocadas = contarGaylordsDoLote(lote.nome);
+    const expedidas = contarExpedidasDoLote(lote.nome);
+    const naoAlocadas = Math.max(lote.total - (alocadas + expedidas),0);
+
+    // Filtrar histórico do lote
+    const historico = state.historicoExpedidos.filter(e => e.lote === lote.nome);
+
+    if (historico.length === 0) {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${lote.nome}</td>
+        <td>${lote.total}</td>
+        <td>0</td>
+        <td>0</td>
+        <td>${alocadas}</td>
+        <td>${naoAlocadas}</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+      `;
+      tbody.appendChild(row);
+      return;
+    }
+
+    historico.forEach((exp, index) => {
+      // Endereços das gaylords da expedição
+      const enderecos = exp.detalhes.map(d => `${d.area}/${d.rua}/Pos ${d.posicao}`).join(' | ');
+
+      // Mensagem se houve mais de uma expedição parcial antes
+      let msg = '';
+      if (exp.tipo === 'TOTAL') {
+        const parciaisAntes = state.historicoExpedidos.filter(e =>
+          e.lote === lote.nome && e.tipo === 'PARCIAL' &&
+          new Date(`${e.data} ${e.hora}`) < new Date(`${exp.data} ${exp.hora}`)
+        ).length;
+        if (parciaisAntes > 0) {
+          msg = `🧾 Este lote teve ${parciaisAntes} expedição${parciaisAntes>1?'s':''} parcial${parciaisAntes>1?'s':''} antes da final`;
+        }
+      }
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${lote.nome}</td>
+        <td>${lote.total}</td>
+        <td>${exp.tipo==='TOTAL'?exp.quantidadeExpedida:0}</td>
+        <td>${exp.tipo==='PARCIAL'?exp.quantidadeExpedida:0}</td>
+        <td>${alocadas}</td>
+        <td>${naoAlocadas}</td>
+        <td>${enderecos || '-'}</td>
+        <td>${exp.data} ${exp.hora}</td>
+        <td>${msg}</td>
+      `;
+      tbody.appendChild(row);
+    });
+  }
+</script>
+  
+ <script src="js/header.js"></script>
 </body>
 </html>
