@@ -1,5 +1,5 @@
 // =======================================
-// LOGIN.JS
+// LOGIN.JS COM CONTROLE DE SESSÃO
 // =======================================
 
 console.log('login.js carregado');
@@ -16,8 +16,7 @@ window.login = function() {
     return;
   }
 
-  // Aqui você pode substituir por validação real ou Supabase
-  // Exemplo fixo para teste:
+  // Usuários válidos (exemplo)
   const usuariosValidos = [
     { usuario: 'admin', senha: '1234' },
     { usuario: 'user', senha: 'abcd' }
@@ -30,6 +29,28 @@ window.login = function() {
     return;
   }
 
-  // Login bem-sucedido → redireciona para index.html
+  // Login bem-sucedido → salva sessão
+  localStorage.setItem('usuarioLogado', JSON.stringify({ usuario }));
+
+  // Redireciona para o sistema
   window.location.href = 'index.html';
+};
+
+// ===============================
+// CHECAR SESSÃO
+// ===============================
+window.checarSessao = function() {
+  const usuario = localStorage.getItem('usuarioLogado');
+  if (!usuario) {
+    // Se não estiver logado, volta para login
+    window.location.href = 'login.html';
+  }
+};
+
+// ===============================
+// LOGOUT
+// ===============================
+window.logout = function() {
+  localStorage.removeItem('usuarioLogado');
+  window.location.href = 'login.html';
 };
