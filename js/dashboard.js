@@ -1,9 +1,9 @@
 // =======================================
-// DASHBOARD.JS
+// DASHBOARD.JS — ESTÁVEL
 // =======================================
 
 // -------------------------------
-// CONTAR GAYLORDS ALOCADAS
+// CONTAR GAYLORDS DO LOTE
 // -------------------------------
 window.contarGaylordsDoLote = function (nomeLote) {
   let total = 0;
@@ -11,7 +11,7 @@ window.contarGaylordsDoLote = function (nomeLote) {
   state.areas.forEach(area => {
     area.ruas.forEach(rua => {
       rua.posicoes.forEach(pos => {
-        if (pos.ocupada && pos.lote === nomeLote) {
+        if (pos.ocupada === true && pos.lote === nomeLote) {
           total++;
         }
       });
@@ -19,21 +19,6 @@ window.contarGaylordsDoLote = function (nomeLote) {
   });
 
   return total;
-};
-
-// -------------------------------
-// CALCULAR SALDO DO LOTE
-// -------------------------------
-window.calcularSaldoLote = function (nomeLote) {
-  const lote = state.lotes.find(l => l.nome === nomeLote);
-  if (!lote) return 0;
-
-  const expedido = state.historicoExpedidos
-    .filter(e => e.lote === nomeLote)
-    .reduce((soma, e) => soma + (e.quantidadeExpedida || 0), 0);
-
-  const saldo = lote.total - expedido;
-  return saldo < 0 ? 0 : saldo;
 };
 
 // -------------------------------
@@ -45,28 +30,25 @@ window.renderDashboard = function () {
 
   dashboard.innerHTML = '';
 
-  if (!state.lotes.length) {
+  if (!state.lotes || state.lotes.length === 0) {
     dashboard.innerHTML = '<p>Nenhum lote ativo</p>';
     return;
   }
 
   state.lotes.forEach(lote => {
-    const alocados = contarGaylordsDoLote(lote.nome);
-    const saldo = calcularSaldoLote(lote.nome);
+    if (!lote.cor) return; // segurança
 
+    const usados = contarGaylordsDoLote(lote.nome);
+    const total = lote.total;
     const percentual =
-      lote.total > 0
-        ? Math.round(((lote.total - saldo) / lote.total) * 100)
-        : 0;
+      total > 0 ? Math.round((usados / total) * 100) : 0;
 
     const card = document.createElement('div');
     card.className = 'lote-card';
 
     card.innerHTML = `
       <strong>${lote.nome}</strong><br>
-      Total: ${lote.total}<br>
-      Alocados: ${alocados}<br>
-      Saldo: ${saldo}
+      ${usados} / ${total}
 
       <div class="progress-bar">
         <div class="progress-fill"
@@ -75,12 +57,12 @@ window.renderDashboard = function () {
       </div>
 
       <div style="margin-top:8px">
-        <button onclick="abrirModalExpedicao('${lote.nome}')">
+        <button onclick="expedirLote('${lote.nome}')">
           Expedir
         </button>
 
         <button onclick="alterarQuantidadeLote('${lote.nome}')">
-          Alterar Qtde
+          Alterar quantidade
         </button>
 
         <button
@@ -96,50 +78,20 @@ window.renderDashboard = function () {
 };
 
 // -------------------------------
-// ALTERAR QUANTIDADE
-// -------------------------------
-window.alterarQuantidadeLote = function (nomeLote) {
-  const lote = state.lotes.find(l => l.nome === nomeLote);
-  if (!lote) return;
-
-  const minimo =
-    contarGaylordsDoLote(nomeLote) +
-    (lote.total - calcularSaldoLote(nomeLote));
-
-  const novoTotal = Number(
-    prompt(
-      `Nova quantidade do lote "${nomeLote}"\nMínimo permitido: ${minimo}`,
-      lote.total
-    )
-  );
-
-  if (!novoTotal || novoTotal < minimo) {
-    alert('Quantidade inválida');
-    return;
-  }
-
-  lote.total = novoTotal;
-  saveState();
-  renderDashboard();
-};
-
-// -------------------------------
-// EXCLUIR LOTE
+// EXCLUIR LOTE (SÓ SE VAZIO)
 // -------------------------------
 window.excluirLote = function (nomeLote) {
-  const alocados = contarGaylordsDoLote(nomeLote);
-  const historico = state.historicoExpedidos.some(
-    e => e.lote === nomeLote
-  );
+  const usados = contarGaylordsDoLote(nomeLote);
 
-  if (alocados > 0 || historico) {
-    alert('Lote não pode ser excluído');
+  if (usados > 0) {
+    alert('Não é possível excluir. Existem gaylords alocadas.');
     return;
   }
 
   if (!confirm(`Excluir lote "${nomeLote}"?`)) return;
 
   state.lotes = state.lotes.filter(l => l.nome !== nomeLote);
+
   saveState();
   renderDashboard();
   renderMapa();
