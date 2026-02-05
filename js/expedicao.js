@@ -1,5 +1,5 @@
 // =======================================
-// EXPEDICAO.JS — PARCIAL + TOTAL COM SALDO
+// EXPEDICAO.JS — EXPEDIÇÃO REAL
 // =======================================
 
 let expedicaoContext = {
@@ -7,9 +7,9 @@ let expedicaoContext = {
   selecionados: []
 };
 
-// ---------------------------------------
-// ABRIR MODAL DE EXPEDIÇÃO
-// ---------------------------------------
+// -------------------------------
+// ABRIR MODAL
+// -------------------------------
 window.expedirLote = function (nomeLote) {
   const lote = state.lotes.find(l => l.nome === nomeLote);
   if (!lote) {
@@ -38,11 +38,9 @@ window.expedirLote = function (nomeLote) {
 
           div.innerHTML = `
             <label>
-              <input
-                type="checkbox"
-                value="${id}"
-                onchange="toggleSelecionado(this)"
-              >
+              <input type="checkbox"
+                     value="${id}"
+                     onchange="toggleSelecionado(this)">
               Área: ${area.nome} |
               Rua: ${rua.nome} |
               Pos: ${p + 1} |
@@ -62,14 +60,13 @@ window.expedirLote = function (nomeLote) {
     return;
   }
 
-  document
-    .getElementById('modalExpedicao')
+  document.getElementById('modalExpedicao')
     .classList.remove('hidden');
 };
 
-// ---------------------------------------
+// -------------------------------
 // SELEÇÃO
-// ---------------------------------------
+// -------------------------------
 window.toggleSelecionado = function (checkbox) {
   const id = checkbox.value;
 
@@ -81,9 +78,6 @@ window.toggleSelecionado = function (checkbox) {
   }
 };
 
-// ---------------------------------------
-// SELECIONAR TODOS
-// ---------------------------------------
 window.selecionarTodosGaylords = function () {
   expedicaoContext.selecionados = [];
 
@@ -103,9 +97,9 @@ window.desmarcarTodosGaylords = function () {
     .forEach(cb => (cb.checked = false));
 };
 
-// ---------------------------------------
+// -------------------------------
 // CONFIRMAR EXPEDIÇÃO
-// ---------------------------------------
+// -------------------------------
 window.confirmarExpedicao = function () {
   const { lote, selecionados } = expedicaoContext;
 
@@ -118,11 +112,7 @@ window.confirmarExpedicao = function () {
 
   selecionados.forEach(id => {
     const [a, r, p] = id.split('-').map(Number);
-
-    const pos =
-      state.areas[a]
-        .ruas[r]
-        .posicoes[p];
+    const pos = state.areas[a].ruas[r].posicoes[p];
 
     detalhes.push({
       area: state.areas[a].nome,
@@ -132,18 +122,21 @@ window.confirmarExpedicao = function () {
       volume: pos.volume || '-'
     });
 
-    // LIMPA MAPA
     pos.ocupada = false;
     pos.lote = null;
     pos.rz = null;
     pos.volume = null;
   });
 
-  const totalAntes =
-    contarGaylordsDoLote(lote) + detalhes.length;
+  const loteObj = state.lotes.find(l => l.nome === lote);
+  const total = loteObj.total;
+  const expedidasAntes = contarExpedidasDoLote(lote);
+  const expedidasAgora = detalhes.length;
+  const totalExpedidas = expedidasAntes + expedidasAgora;
 
+  // 🔒 REGRA DEFINITIVA
   const tipo =
-    detalhes.length === totalAntes
+    totalExpedidas === total
       ? 'TOTAL'
       : 'PARCIAL';
 
@@ -151,8 +144,8 @@ window.confirmarExpedicao = function () {
     id: crypto.randomUUID(),
     lote,
     tipo,
-    quantidadeExpedida: detalhes.length,
-    quantidadeTotal: totalAntes,
+    quantidadeExpedida: expedidasAgora,
+    quantidadeTotal: total,
     data: new Date().toLocaleDateString(),
     hora: new Date().toLocaleTimeString(),
     detalhes
@@ -164,17 +157,14 @@ window.confirmarExpedicao = function () {
   renderDashboard();
   renderExpedidos();
 
-  alert(
-    `Expedição ${tipo} realizada: ${detalhes.length} gaylords`
-  );
+  alert(`Expedição ${tipo} realizada com sucesso`);
 };
 
-// ---------------------------------------
+// -------------------------------
 // FECHAR MODAL
-// ---------------------------------------
+// -------------------------------
 window.fecharModalExpedicao = function () {
-  document
-    .getElementById('modalExpedicao')
+  document.getElementById('modalExpedicao')
     .classList.add('hidden');
 
   expedicaoContext = {
