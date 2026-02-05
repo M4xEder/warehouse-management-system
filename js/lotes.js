@@ -1,5 +1,5 @@
 // ==================================
-// LOTES.JS — GESTÃO DE LOTES
+// LOTES.JS — GESTÃO DE LOTES (COM SALDO)
 // ==================================
 
 console.log('lotes.js carregado');
@@ -40,6 +40,10 @@ window.cadastrarLote = function () {
     id: crypto.randomUUID(),
     nome,
     total,
+
+    // 🧠 NOVOS CAMPOS
+    saldo: total,      // quanto ainda pode ser alocado
+    ativo: true,       // controla se aparece como ativo
     cor: gerarCor()
   };
 
@@ -54,7 +58,9 @@ window.cadastrarLote = function () {
     renderDashboard();
   }
 
-  renderMapa();
+  if (typeof renderMapa === 'function') {
+    renderMapa();
+  }
 
   console.log('Lote criado:', lote);
 };
