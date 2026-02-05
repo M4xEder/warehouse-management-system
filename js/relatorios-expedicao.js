@@ -1,11 +1,22 @@
 // =======================================
-// RELATORIOS-EXPEDICAO.JS — HISTÓRICO FINAL
+// RELATORIOS-EXPEDICAO.JS
+// Histórico, detalhes e exclusão
 // =======================================
 
-console.log('relatorios-expedicao.js carregado');
+// ---------------------------------------
+// CONTAR EXPEDIÇÕES PARCIAIS DO LOTE
+// ---------------------------------------
+function contarParciaisAntes(expAtual) {
+  return state.historicoExpedidos.filter(exp =>
+    exp.lote === expAtual.lote &&
+    exp.tipo === 'PARCIAL' &&
+    new Date(`${exp.data} ${exp.hora}`) <
+    new Date(`${expAtual.data} ${expAtual.hora}`)
+  ).length;
+}
 
 // ---------------------------------------
-// RENDER HISTÓRICO DE EXPEDIÇÕES
+// RENDER HISTÓRICO
 // ---------------------------------------
 window.renderExpedidos = function () {
   const container = document.getElementById('lotesExpedidos');
@@ -39,7 +50,7 @@ window.renderExpedidos = function () {
       </span>
       <br>
 
-      <strong>Expedido:</strong>
+      <strong>Quantidade:</strong>
       ${exp.quantidadeExpedida} de ${exp.quantidadeTotal}
       <br>
 
@@ -51,8 +62,8 @@ window.renderExpedidos = function () {
       </button>
 
       <button class="danger"
-        onclick="excluirRegistroExpedicao('${exp.id}')">
-        Excluir registro
+        onclick="excluirExpedicao('${exp.id}')">
+        Excluir
       </button>
     `;
 
@@ -61,7 +72,7 @@ window.renderExpedidos = function () {
 };
 
 // ---------------------------------------
-// ABRIR DETALHES DA EXPEDIÇÃO
+// MODAL DETALHES
 // ---------------------------------------
 window.abrirDetalhesExpedicao = function (id) {
   const exp = state.historicoExpedidos.find(e => e.id === id);
@@ -76,6 +87,30 @@ window.abrirDetalhesExpedicao = function (id) {
   const badgeColor =
     exp.tipo === 'TOTAL' ? '#16a34a' : '#ca8a04';
 
+  // 👉 CONTAGEM DE PARCIAIS
+  let avisoParciais = '';
+  if (exp.tipo === 'TOTAL') {
+    const qtdParciais = contarParciaisAntes(exp);
+
+    if (qtdParciais > 0) {
+      avisoParciais = `
+        <div style="
+          margin:10px 0;
+          padding:8px;
+          background:#f0fdf4;
+          border-left:4px solid #16a34a;
+          font-size:14px;
+        ">
+          🧾 Este lote teve
+          <strong>${qtdParciais}</strong>
+          expedição${qtdParciais > 1 ? 's' : ''}
+          parcial${qtdParciais > 1 ? 'is' : ''}
+          antes da expedição final.
+        </div>
+      `;
+    }
+  }
+
   let html = `
     <p>
       <strong>Lote:</strong> ${exp.lote}<br>
@@ -89,12 +124,12 @@ window.abrirDetalhesExpedicao = function (id) {
       ">
         ${exp.tipo}
       </span><br>
-
       <strong>Quantidade:</strong>
       ${exp.quantidadeExpedida} de ${exp.quantidadeTotal}<br>
-
       <strong>Data:</strong> ${exp.data} ${exp.hora}
     </p>
+
+    ${avisoParciais}
 
     <hr>
 
@@ -136,7 +171,7 @@ window.abrirDetalhesExpedicao = function (id) {
 };
 
 // ---------------------------------------
-// FECHAR MODAL DETALHES
+// FECHAR MODAL
 // ---------------------------------------
 window.fecharDetalhesExpedicao = function () {
   document
@@ -145,18 +180,15 @@ window.fecharDetalhesExpedicao = function () {
 };
 
 // ---------------------------------------
-// EXCLUIR REGISTRO DE EXPEDIÇÃO
-// (NÃO ALTERA MAPA NEM SALDO)
+// EXCLUIR REGISTRO
 // ---------------------------------------
-window.excluirRegistroExpedicao = function (id) {
+window.excluirExpedicao = function (id) {
   const exp = state.historicoExpedidos.find(e => e.id === id);
   if (!exp) return;
 
   if (!confirm(
-    `Excluir este registro de expedição?\n\n` +
-    `Lote: ${exp.lote}\n` +
-    `Quantidade: ${exp.quantidadeExpedida}\n\n` +
-    `⚠ Isso NÃO altera o mapa nem o saldo do lote.`
+    `Excluir registro de expedição do lote "${exp.lote}"?\n` +
+    `Isso NÃO altera mapa nem saldo.`
   )) return;
 
   state.historicoExpedidos =
