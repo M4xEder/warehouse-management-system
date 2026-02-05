@@ -1,5 +1,5 @@
 // =======================================
-// EXPEDICAO.JS — EXPEDIÇÃO PARCIAL / TOTAL
+// EXPEDICAO.JS — EXPEDIÇÃO PARCIAL E TOTAL
 // =======================================
 
 let expedicaoContext = {
@@ -11,8 +11,8 @@ let expedicaoContext = {
 // ABRIR MODAL DE EXPEDIÇÃO
 // ===============================
 window.expedirLote = function (nomeLote) {
-  const lote = state.lotes.find(l => l.nome === nomeLote && l.ativo !== false);
-  if (!lote) {
+  const lote = state.lotes.find(l => l.nome === nomeLote);
+  if (!lote || lote.ativo === false) {
     alert('Lote não encontrado ou já finalizado');
     return;
   }
@@ -25,13 +25,13 @@ window.expedirLote = function (nomeLote) {
 
   let encontrados = 0;
 
-  state.areas.forEach((area, a) => {
-    area.ruas.forEach((rua, r) => {
-      rua.posicoes.forEach((pos, p) => {
+  state.areas.forEach((area, areaIndex) => {
+    area.ruas.forEach((rua, ruaIndex) => {
+      rua.posicoes.forEach((pos, posIndex) => {
         if (pos.ocupada && pos.lote === nomeLote) {
           encontrados++;
 
-          const id = `${a}-${r}-${p}`;
+          const id = `${areaIndex}-${ruaIndex}-${posIndex}`;
 
           const div = document.createElement('div');
           div.className = 'item-expedicao';
@@ -45,7 +45,7 @@ window.expedirLote = function (nomeLote) {
               >
               Área: ${area.nome} |
               Rua: ${rua.nome} |
-              Pos: ${p + 1} |
+              Pos: ${posIndex + 1} |
               RZ: ${pos.rz} |
               Vol: ${pos.volume || '-'}
             </label>
@@ -68,7 +68,7 @@ window.expedirLote = function (nomeLote) {
 };
 
 // ===============================
-// TOGGLE SELEÇÃO
+// SELEÇÃO INDIVIDUAL
 // ===============================
 window.toggleSelecionado = function (checkbox) {
   const id = checkbox.value;
@@ -118,13 +118,16 @@ window.confirmarExpedicao = function () {
 
   const detalhes = [];
 
-  // Quantidade ANTES de limpar posições
+  // Quantidade antes da expedição
   const totalAntes = contarGaylordsDoLote(lote);
 
   selecionados.forEach(id => {
     const [a, r, p] = id.split('-').map(Number);
 
-    const pos = state.areas[a].ruas[r].posicoes[p];
+    const pos =
+      state.areas[a]
+        .ruas[r]
+        .posicoes[p];
 
     detalhes.push({
       area: state.areas[a].nome,
@@ -141,16 +144,13 @@ window.confirmarExpedicao = function () {
     pos.volume = null;
   });
 
-  // Reconta após limpeza
-  const restante = contarGaylordsDoLote(lote);
-
   const tipo =
-    restante === 0
+    detalhes.length === totalAntes
       ? 'TOTAL'
       : 'PARCIAL';
 
   // ===============================
-  // REGISTRO DE HISTÓRICO
+  // REGISTRA HISTÓRICO
   // ===============================
   state.historicoExpedidos.push({
     id: crypto.randomUUID(),
@@ -158,37 +158,37 @@ window.confirmarExpedicao = function () {
     tipo,
     quantidadeExpedida: detalhes.length,
     quantidadeTotal: totalAntes,
-    saldoRestante: restante,
     data: new Date().toLocaleDateString(),
     hora: new Date().toLocaleTimeString(),
     detalhes
   });
 
   // ===============================
-  // ATUALIZA STATUS DO LOTE
+  // FINALIZA LOTE SE TOTAL
   // ===============================
-  const loteObj = state.lotes.find(l => l.nome === lote);
-
-  if (restante === 0) {
-    loteObj.ativo = false; // FINALIZADO
-  } else {
-    loteObj.ativo = true; // CONTINUA ATIVO
+  if (tipo === 'TOTAL') {
+    const loteObj = state.lotes.find(l => l.nome === lote);
+    if (loteObj) {
+      loteObj.ativo = false;
+    }
   }
 
+  // ===============================
+  // FINALIZA
+  // ===============================
   saveState();
   fecharModalExpedicao();
-
   renderMapa();
   renderDashboard();
   renderExpedidos();
 
   alert(
-    `Expedição ${tipo} concluída: ${detalhes.length} gaylords`
+    `Expedição ${tipo} realizada: ${detalhes.length} gaylords`
   );
 };
 
 // ===============================
-// FECHAR MODAL
+// FECHAR MODAL EXPEDIÇÃO
 // ===============================
 window.fecharModalExpedicao = function () {
   document
