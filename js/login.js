@@ -1,10 +1,13 @@
 // =======================================
-// LOGIN.JS COM CONTROLE DE SESSÃO
+// LOGIN.JS — CONTROLE DE SESSÃO
 // =======================================
 
 console.log('login.js carregado');
 
-window.login = function() {
+// ===============================
+// LOGIN
+// ===============================
+window.fazerLogin = function() {
   const usuario = document.getElementById('usuario').value.trim();
   const senha = document.getElementById('senha').value.trim();
   const erro = document.getElementById('errorLogin');
@@ -37,7 +40,7 @@ window.login = function() {
 };
 
 // ===============================
-// CHECAR SESSÃO
+// CHECAR SESSÃO (para páginas protegidas)
 // ===============================
 window.checarSessao = function() {
   const usuario = localStorage.getItem('usuarioLogado');
