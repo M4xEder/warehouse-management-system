@@ -1,206 +1,204 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<title>Relatórios de Expedição</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="css/style.css">
-<!-- SheetJS para Excel -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-<!-- jsPDF para PDF -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <meta charset="UTF-8">
+  <title>Relatórios de Expedição</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<style>
-  body { font-family: Arial, sans-serif; padding:20px; background:#f5f5f5; }
-  h1 { text-align:center; margin-bottom:20px; }
-  select, button { padding:8px 12px; margin-right:10px; margin-bottom:20px; }
-  table { width:100%; border-collapse: collapse; background:#fff; }
-  th, td { border:1px solid #ddd; padding:8px; font-size:14px; text-align:left; }
-  th { background:#16a34a; color:#fff; }
-  tr:nth-child(even) { background:#f9f9f9; }
-  .badge { padding:2px 6px; border-radius:4px; color:#fff; font-size:12px; }
-  .total { background:#16a34a; }
-  .parcial { background:#ca8a04; }
-</style>
+  <link rel="stylesheet" href="css/style.css">
+
+  <!-- SheetJS para Excel -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+  <!-- jsPDF + autoTable -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+  <style>
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { border: 1px solid #ccc; padding: 6px; font-size: 12px; text-align: left; }
+    th { background: #16a34a; color: #fff; }
+    select, button { padding: 6px 10px; margin: 5px; font-size: 14px; }
+  </style>
 </head>
 <body>
-  
-   <!-- HEADER DINÂMICO -->
+
+  <!-- HEADER DINÂMICO -->
   <div id="header"></div>
-  
-<h1>Relatórios de Expedição</h1>
 
-<div>
-  <label for="selectLote">Selecione o Lote:</label>
-  <select id="selectLote">
-    <option value="">-- Selecione --</option>
-  </select>
+  <main id="app">
+    <h1>Relatórios de Expedição</h1>
 
-  <button onclick="gerarTabela()">Mostrar Informações</button>
-  <button onclick="exportarExcel()">📊 Exportar Excel</button>
-  <button onclick="exportarPDF()">📄 Exportar PDF</button>
-</div>
+    <!-- ================= FILTRO POR LOTE ================= -->
+    <label for="selectLoteRelatorio">Filtrar por Lote:</label>
+    <select id="selectLoteRelatorio">
+      <option value="">Todos os lotes</option>
+    </select>
+    <button onclick="filtrarTabela()">Pesquisar</button>
 
-<table id="tabelaRelatorio">
-  <thead>
-    <tr>
-      <th>Lote</th>
-      <th>Total</th>
-      <th>Expedido</th>
-      <th>Ativo</th>
-      <th>Não Endereçado</th>
-      <th>Área</th>
-      <th>Rua</th>
-      <th>Posição</th>
-      <th>RZ</th>
-      <th>Volume</th>
-      <th>Data/Hora Expedição</th>
-      <th>Mensagem</th>
-    </tr>
-  </thead>
-  <tbody>
-    <!-- Conteúdo preenchido via JS -->
-  </tbody>
-</table>
+    <!-- ================= TABELA ================= -->
+    <table id="tabelaRelatorio">
+      <thead>
+        <tr>
+          <th>Lote</th>
+          <th>Total</th>
+          <th>Expedido</th>
+          <th>Ativo</th>
+          <th>Não Endereçado</th>
+          <th>Área</th>
+          <th>Rua</th>
+          <th>Posição</th>
+          <th>RZ</th>
+          <th>Volume</th>
+          <th>Data/Hora Expedição</th>
+          <th>Mensagem</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
 
-<script src="js/state.js"></script>
-<script src="js/dashboard.js"></script>
+    <!-- ================= BOTÕES ================= -->
+    <button onclick="exportarRelatorioExcel()">Exportar Excel</button>
+    <button onclick="exportarRelatorioPDF()">Exportar PDF</button>
+  </main>
 
-<script>
-  // Preencher select com todos os lotes
-  function preencherSelectLotes() {
-    const select = document.getElementById('selectLote');
-    select.innerHTML = '<option value="">-- Selecione --</option>';
-    state.lotes.forEach(l => {
-      const option = document.createElement('option');
-      option.value = l.nome;
-      option.textContent = l.nome;
-      select.appendChild(option);
-    });
-  }
-
-  preencherSelectLotes();
-
-  // Gerar tabela detalhada do lote selecionado
-  function gerarTabela() {
-    const loteSelecionado = document.getElementById('selectLote').value;
-    const tbody = document.querySelector('#tabelaRelatorio tbody');
-    tbody.innerHTML = '';
-
-    if (!loteSelecionado) return alert('Selecione um lote');
-
-    const lote = state.lotes.find(l => l.nome === loteSelecionado);
-    if (!lote) return alert('Lote não encontrado');
-
-    const alocadas = contarGaylordsDoLote(lote.nome);
-    const expedidas = contarExpedidasDoLote(lote.nome);
-    const naoAlocadas = Math.max(lote.total - (alocadas + expedidas),0);
-
-    const historico = state.historicoExpedidos.filter(e => e.lote === lote.nome);
-
-    if (historico.length === 0) {
-      const posicoesAtivas = [];
-      state.areas.forEach(area => {
-        area.ruas.forEach(rua => {
-          rua.posicoes.forEach((pos, idx) => {
-            if (pos.ocupada && pos.lote === lote.nome) {
-              posicoesAtivas.push({
-                area: area.nome,
-                rua: rua.nome,
-                posicao: idx + 1,
-                rz: pos.rz || '-',
-                volume: pos.volume || '-'
-              });
-            }
-          });
-        });
-      });
-
-      posicoesAtivas.forEach(p => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${lote.nome}</td>
-          <td>${lote.total}</td>
-          <td>-</td>
-          <td>1</td>
-          <td>${naoAlocadas}</td>
-          <td>${p.area}</td>
-          <td>${p.rua}</td>
-          <td>${p.posicao}</td>
-          <td>${p.rz}</td>
-          <td>${p.volume}</td>
-          <td>-</td>
-          <td>-</td>
-        `;
-        tbody.appendChild(row);
-      });
-
-      return;
-    }
-
-    historico.forEach(exp => {
-      const msg = exp.tipo === 'TOTAL'
-        ? (() => {
-            const parciaisAntes = state.historicoExpedidos.filter(e =>
-              e.lote === lote.nome && e.tipo === 'PARCIAL' &&
-              new Date(`${e.data} ${e.hora}`) < new Date(`${exp.data} ${exp.hora}`)
-            ).length;
-            return parciaisAntes > 0
-              ? `🧾 Este lote teve ${parciaisAntes} expedição${parciaisAntes>1?'s':''} parcial${parciaisAntes>1?'s':''} antes da final`
-              : '';
-          })()
-        : '';
-
-      exp.detalhes.forEach(d => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${lote.nome}</td>
-          <td>${lote.total}</td>
-          <td><span class="badge ${exp.tipo==='TOTAL'?'total':'parcial'}">${exp.tipo}</span></td>
-          <td>${alocadas}</td>
-          <td>${naoAlocadas}</td>
-          <td>${d.area}</td>
-          <td>${d.rua}</td>
-          <td>${d.posicao}</td>
-          <td>${d.rz || '-'}</td>
-          <td>${d.volume || '-'}</td>
-          <td>${exp.data} ${exp.hora}</td>
-          <td>${msg}</td>
-        `;
-        tbody.appendChild(row);
-      });
-    });
-  }
-
-  // -------------------------------
-  // EXPORTAR EXCEL
-  // -------------------------------
-  function exportarExcel() {
-    const tabela = document.getElementById('tabelaRelatorio');
-    const wb = XLSX.utils.table_to_book(tabela, { sheet: "Relatório" });
-    XLSX.writeFile(wb, "RelatorioExpedicao.xlsx");
-  }
-
-  // -------------------------------
-  // EXPORTAR PDF
-  // -------------------------------
-  function exportarPDF() {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ orientation: 'landscape' });
-
-    doc.html(document.getElementById('tabelaRelatorio'), {
-      callback: function (doc) {
-        doc.save("RelatorioExpedicao.pdf");
-      },
-      x: 10,
-      y: 10,
-      html2canvas: { scale: 0.5 }
-    });
-  }
-</script>
-<!-- infra -->
+  <!-- ================= SCRIPTS INFRA ================= -->
   <script src="js/supabase.js"></script>
   <script src="js/header.js"></script>
-  
+  <script src="js/state.js"></script>
+  <script src="js/relatorios-expedicao.js"></script>
+  <script src="js/exportacao-expedicao.js"></script>
+
+  <!-- ================= JS RELATÓRIO ================= -->
+  <script>
+    // Preencher select de lotes
+    function atualizarSelectLotes() {
+      const select = document.getElementById('selectLoteRelatorio');
+      select.innerHTML = '<option value="">Todos os lotes</option>';
+
+      state.lotes.forEach(l => {
+        const option = document.createElement('option');
+        option.value = l.nome;
+        option.textContent = l.nome;
+        select.appendChild(option);
+      });
+    }
+
+    // Renderizar tabela
+    function renderTabelaRelatorio() {
+      const tbody = document.querySelector('#tabelaRelatorio tbody');
+      tbody.innerHTML = '';
+
+      const filtro = document.getElementById('selectLoteRelatorio').value;
+
+      state.lotes.forEach(lote => {
+        if (filtro && lote.nome !== filtro) return;
+
+        const total = lote.total;
+        const alocadas = window.contarGaylordsDoLote(lote.nome);
+        const expedidas = window.contarExpedidasDoLote(lote.nome);
+        const saldo = total - expedidas;
+        const naoAlocadas = Math.max(total - (alocadas + expedidas), 0);
+
+        // Gaylords detalhadas
+        state.areas.forEach(area => {
+          area.ruas.forEach(rua => {
+            rua.posicoes.forEach((pos, index) => {
+              if (pos.ocupada && pos.lote === lote.nome) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                  <td>${lote.nome}</td>
+                  <td>${total}</td>
+                  <td>${expedidas}</td>
+                  <td>${alocadas}</td>
+                  <td>${naoAlocadas}</td>
+                  <td>${area.nome}</td>
+                  <td>${rua.nome}</td>
+                  <td>${index + 1}</td>
+                  <td>${pos.rz || '-'}</td>
+                  <td>${pos.volume || '-'}</td>
+                  <td>-</td>
+                  <td>-</td>
+                `;
+                tbody.appendChild(tr);
+              }
+            });
+          });
+        });
+
+        // Expedições do lote
+        state.historicoExpedidos.filter(exp => exp.lote === lote.nome)
+          .forEach(exp => {
+            exp.detalhes.forEach((d, i) => {
+              const tr = document.createElement('tr');
+              const qtdExpedida = exp.quantidadeExpedida;
+              const msg = (exp.tipo === 'TOTAL' && window.contarParciaisAntes(exp) > 0)
+                ? `Este lote teve ${window.contarParciaisAntes(exp)} expedição(s) parcial(is) antes da final`
+                : '';
+              tr.innerHTML = `
+                <td>${exp.lote}</td>
+                <td>${exp.quantidadeTotal}</td>
+                <td>${exp.tipo}</td>
+                <td>-</td>
+                <td>-</td>
+                <td>${d.area}</td>
+                <td>${d.rua}</td>
+                <td>${d.posicao}</td>
+                <td>${d.rz || '-'}</td>
+                <td>${d.volume || '-'}</td>
+                <td>${exp.data} ${exp.hora}</td>
+                <td>${msg}</td>
+              `;
+              tbody.appendChild(tr);
+            });
+          });
+      });
+    }
+
+    // Filtrar tabela
+    function filtrarTabela() {
+      renderTabelaRelatorio();
+    }
+
+    // Exportar Excel
+    function exportarRelatorioExcel() {
+      const tabela = document.getElementById('tabelaRelatorio');
+      const wb = XLSX.utils.table_to_book(tabela, { sheet: "Relatório" });
+      XLSX.writeFile(wb, "RelatorioExpedicao.xlsx");
+    }
+
+    // Exportar PDF
+    function exportarRelatorioPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'landscape' });
+      const columns = [];
+      const rows = [];
+      const thead = document.querySelectorAll('#tabelaRelatorio thead th');
+
+      thead.forEach(th => columns.push(th.textContent));
+
+      const tbody = document.querySelectorAll('#tabelaRelatorio tbody tr');
+      tbody.forEach(tr => {
+        const row = [];
+        tr.querySelectorAll('td').forEach(td => row.push(td.textContent));
+        rows.push(row);
+      });
+
+      doc.autoTable({
+        head: [columns],
+        body: rows,
+        startY: 10,
+        styles: { fontSize: 9 },
+        headStyles: { fillColor: [22, 163, 74], textColor: 255 },
+        theme: 'grid'
+      });
+
+      doc.save("RelatorioExpedicao.pdf");
+    }
+
+    // Inicialização
+    atualizarSelectLotes();
+    renderTabelaRelatorio();
+  </script>
 </body>
 </html>
