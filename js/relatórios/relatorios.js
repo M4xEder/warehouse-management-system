@@ -1,156 +1,13 @@
 // =======================================
-// RELATORIOS.JS
-// Consolidação de dados para relatórios
-// NÃO altera estado, apenas lê o state
+// RELATORIOS.JS — FILTRO, RENDER E EXPORTAÇÃO
 // =======================================
 
 console.log('relatorios.js carregado');
 
-// -------------------------------
-// CONTAR ALOCADOS NO MAPA
-// -------------------------------
-function contarAlocados(loteNome) {
-  let total = 0;
-
-  state.areas.forEach(area => {
-    area.ruas.forEach(rua => {
-      rua.posicoes.forEach(pos => {
-        if (pos.ocupada && pos.lote === loteNome) {
-          total++;
-        }
-      });
-    });
-  });
-
-  return total;
-}
-
-// -------------------------------
-// LISTAR ALOCADOS (DETALHADO)
-// -------------------------------
-function listarAlocados(loteNome, filtroRz = '') {
-  const lista = [];
-
-  state.areas.forEach(area => {
-    area.ruas.forEach(rua => {
-      rua.posicoes.forEach((pos, index) => {
-        if (
-          pos.ocupada &&
-          pos.lote === loteNome &&
-          (!filtroRz || pos.rz === filtroRz)
-        ) {
-          lista.push({
-            area: area.nome,
-            rua: rua.nome,
-            posicao: index + 1,
-            rz: pos.rz || '',
-            volume: pos.volume || ''
-          });
-        }
-      });
-    });
-  });
-
-  return lista;
-}
-
-// -------------------------------
-// LISTAR EXPEDIDOS (DETALHADO)
-// -------------------------------
-function listarExpedidos(loteNome, filtroRz = '') {
-  const lista = [];
-
-  state.historicoExpedidos.forEach(exp => {
-    if (exp.lote !== loteNome) return;
-
-    exp.detalhes.forEach(d => {
-      if (!filtroRz || d.rz === filtroRz) {
-        lista.push({
-          data: exp.data,
-          hora: exp.hora,
-          rz: d.rz || '',
-          volume: d.volume || ''
-        });
-      }
-    });
-  });
-
-  return lista;
-}
-
-// -------------------------------
-// TOTAL EXPEDIDO DO LOTE
-// -------------------------------
-function contarExpedidos(loteNome) {
-  let total = 0;
-
-  state.historicoExpedidos.forEach(exp => {
-    if (exp.lote === loteNome) {
-      total += exp.quantidadeExpedida;
-    }
-  });
-
-  return total;
-}
-
-// -------------------------------
-// NÚMERO DE EXPEDIÇÕES DO LOTE
-// -------------------------------
-function contarExpedicoes(loteNome) {
-  return state.historicoExpedidos.filter(
-    e => e.lote === loteNome
-  ).length;
-}
-
-// -------------------------------
-// CONSOLIDAR DADOS DO LOTE
-// -------------------------------
-window.consolidarLoteRelatorio = function (loteNome, filtroRz = '') {
-  const lote = state.lotes.find(l => l.nome === loteNome);
-  if (!lote) return null;
-
-  const totalLote = lote.total;
-  const alocados = contarAlocados(loteNome);
-  const expedidos = contarExpedidos(loteNome);
-
-  const naoAlocados = Math.max(
-    totalLote - alocados - expedidos,
-    0
-  );
-
-  const saldo = totalLote - expedidos;
-
-  const qtdExpedicoes = contarExpedicoes(loteNome);
-
-  let mensagem = 'Lote sem expedição';
-  if (qtdExpedicoes === 1 && saldo === 0) {
-    mensagem = 'Lote expedido em uma única expedição';
-  } else if (qtdExpedicoes > 1 && saldo === 0) {
-    mensagem =
-      `Este lote teve ${qtdExpedicoes - 1} ` +
-      `expedições parciais antes da final`;
-  } else if (qtdExpedicoes > 0 && saldo > 0) {
-    mensagem =
-      `Lote com ${qtdExpedicoes} expedição(ões) parcial(is)`;
-  }
-
-  return {
-    lote: loteNome,
-    total: totalLote,
-    alocados,
-    expedidos,
-    naoAlocados,
-    saldo,
-    mensagem,
-    listaAlocados: listarAlocados(loteNome, filtroRz),
-    listaExpedidos: listarExpedidos(loteNome, filtroRz)
-  };
-};
-
-// -------------------------------
+// ===============================
 // POPULAR SELECT DE LOTES
-// -------------------------------
-window.carregarSelectRelatorios = function () {
+// ===============================
+function popularSelectLotes() {
   const select = document.getElementById('selectLoteRelatorio');
   if (!select) return;
 
@@ -162,11 +19,149 @@ window.carregarSelectRelatorios = function () {
     opt.textContent = lote.nome;
     select.appendChild(opt);
   });
+}
+
+// ===============================
+// RENDER RELATÓRIO NO HTML (OPCIONAL)
+// ===============================
+function renderRelatorioHTML(loteNome, filtroRz = '') {
+  const lote = state.lotes.find(l => l.nome === loteNome);
+  if (!lote) {
+    alert('Lote não encontrado');
+    return;
+  }
+
+  // Gaylords alocadas
+  const alocadas = [];
+  const naoAlocadas = [];
+
+  state.areas.forEach(area => {
+    area.ruas.forEach(rua => {
+      rua.posicoes.forEach(pos => {
+        if (pos.lote === loteNome && pos.ocupada) {
+          if (!filtroRz || pos.rz === filtroRz) {
+            alocadas.push({
+              area: area.nome,
+              rua: rua.nome,
+              posicao: pos.posicao || '?',
+              rz: pos.rz,
+              volume: pos.volume
+            });
+          }
+        } else if (pos.lote === loteNome && !pos.ocupada) {
+          naoAlocadas.push({
+            area: area.nome,
+            rua: rua.nome,
+            posicao: pos.posicao || '?'
+          });
+        }
+      });
+    });
+  });
+
+  // Gaylords expedidas
+  const expedidas = state.historicoExpedidos.filter(h => h.lote === loteNome);
+
+  // Mensagem parcial
+  const msgParcial = expedidas.length > 1
+    ? `Este lote teve ${expedidas.length - 1} expedições parciais antes da final`
+    : '';
+
+  // Saldo
+  const totalAlocado = alocadas.length;
+  const totalExpedido = expedidas.reduce((acc, h) => acc + h.quantidadeExpedida, 0);
+  const totalNaoAlocado = naoAlocadas.length;
+  const saldo = lote.total - totalExpedido - totalNaoAlocado;
+
+  let html = `
+    <h3>Lote: ${lote.nome}</h3>
+    <p><strong>Total:</strong> ${lote.total} | 
+       <strong>Alocadas:</strong> ${totalAlocado} | 
+       <strong>Expedidas:</strong> ${totalExpedido} | 
+       <strong>Não alocadas:</strong> ${totalNaoAlocado} | 
+       <strong>Saldo:</strong> ${saldo}</p>
+    ${msgParcial ? `<p style="color:#ca8a04">${msgParcial}</p>` : ''}
+    <hr>
+    <h4>Alocadas:</h4>
+    <ul>
+      ${alocadas.map(a => `<li>Área: ${a.area} | Rua: ${a.rua} | Posição: ${a.posicao} | RZ: ${a.rz} | Volume: ${a.volume || '-'}</li>`).join('')}
+    </ul>
+    <h4>Expedidas:</h4>
+    <ul>
+      ${expedidas.map(e => `<li>Data: ${e.data} ${e.hora} | Quantidade: ${e.quantidadeExpedida}</li>`).join('')}
+    </ul>
+    <h4>Não alocadas:</h4>
+    <ul>
+      ${naoAlocadas.map(n => `<li>Área: ${n.area} | Rua: ${n.rua} | Posição: ${n.posicao}</li>`).join('')}
+    </ul>
+  `;
+
+  return html;
+}
+
+// ===============================
+// EXPORTAR TODOS LOTES PARA EXCEL
+// ===============================
+window.exportarRelatorioExcel = function() {
+  if (!state.lotes || state.lotes.length === 0) {
+    alert('Nenhum lote disponível');
+    return;
+  }
+
+  const wb = XLSX.utils.book_new();
+
+  state.lotes.forEach(lote => {
+    const html = renderRelatorioHTML(lote.nome);
+    const ws = XLSX.utils.table_to_sheet(
+      new DOMParser().parseFromString(`<table>${html}</table>`, 'text/html').querySelector('table')
+    );
+
+    XLSX.utils.book_append_sheet(wb, ws, lote.nome.substring(0, 31));
+  });
+
+  XLSX.writeFile(wb, `relatorios_lotes_${Date.now()}.xlsx`);
 };
 
-// -------------------------------
-// INIT AUTOMÁTICO
-// -------------------------------
-document.addEventListener('DOMContentLoaded', () => {
-  carregarSelectRelatorios();
-});
+// ===============================
+// EXPORTAR LOTE ESPECÍFICO
+// ===============================
+window.exportarRelatorioLote = function() {
+  const select = document.getElementById('selectLoteRelatorio');
+  if (!select) return;
+
+  const loteNome = select.value;
+  if (!loteNome) {
+    alert('Selecione um lote');
+    return;
+  }
+
+  const wb = XLSX.utils.book_new();
+
+  const html = renderRelatorioHTML(loteNome);
+  const ws = XLSX.utils.table_to_sheet(
+    new DOMParser().parseFromString(`<table>${html}</table>`, 'text/html').querySelector('table')
+  );
+
+  XLSX.utils.book_append_sheet(wb, ws, loteNome.substring(0, 31));
+  XLSX.writeFile(wb, `relatorio_lote_${loteNome}_${Date.now()}.xlsx`);
+};
+
+// ===============================
+// FILTRO POR RZ
+// ===============================
+window.filtrarPorRz = function(rz) {
+  const select = document.getElementById('selectLoteRelatorio');
+  if (!select) return;
+
+  const loteNome = select.value;
+  if (!loteNome) return;
+
+  const html = renderRelatorioHTML(loteNome, rz);
+  // Aqui você pode exibir em um container no HTML se quiser
+  console.log('Relatório filtrado por RZ', rz, html);
+};
+
+// ===============================
+// POPULAR SELECT AO CARREGAR
+// ===============================
+window.addEventListener('load', popularSelectLotes);
