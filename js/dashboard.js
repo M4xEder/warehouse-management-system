@@ -1,9 +1,10 @@
 // =======================================
-// DASHBOARD.JS — ESTÁVEL
+// DASHBOARD.JS — LOTES ATIVOS (COM SALDO)
 // =======================================
 
 // -------------------------------
-// CONTAR GAYLORDS DO LOTE
+// CONTAR GAYLORDS ALOCADAS NO MAPA
+// (MAPA É A FONTE DA VERDADE)
 // -------------------------------
 window.contarGaylordsDoLote = function (nomeLote) {
   let total = 0;
@@ -30,25 +31,37 @@ window.renderDashboard = function () {
 
   dashboard.innerHTML = '';
 
-  if (!state.lotes || state.lotes.length === 0) {
+  const lotesAtivos = state.lotes.filter(l => l.ativo !== false);
+
+  if (lotesAtivos.length === 0) {
     dashboard.innerHTML = '<p>Nenhum lote ativo</p>';
     return;
   }
 
-  state.lotes.forEach(lote => {
-    if (!lote.cor) return; // segurança
-
+  lotesAtivos.forEach(lote => {
     const usados = contarGaylordsDoLote(lote.nome);
-    const total = lote.total;
+
+    // 🧠 SALDO REAL
+    lote.saldo = lote.total - usados;
+    if (lote.saldo < 0) lote.saldo = 0;
+
     const percentual =
-      total > 0 ? Math.round((usados / total) * 100) : 0;
+      lote.total > 0
+        ? Math.round((usados / lote.total) * 100)
+        : 0;
 
     const card = document.createElement('div');
     card.className = 'lote-card';
 
     card.innerHTML = `
       <strong>${lote.nome}</strong><br>
-      ${usados} / ${total}
+
+      <span>
+        ${usados} / ${lote.total}
+        <small style="color:#666">
+          (Saldo: ${lote.saldo})
+        </small>
+      </span>
 
       <div class="progress-bar">
         <div class="progress-fill"
@@ -65,9 +78,8 @@ window.renderDashboard = function () {
           Alterar quantidade
         </button>
 
-        <button
-          onclick="excluirLote('${lote.nome}')"
-          class="danger">
+        <button class="danger"
+                onclick="excluirLote('${lote.nome}')">
           Excluir
         </button>
       </div>
@@ -75,10 +87,51 @@ window.renderDashboard = function () {
 
     dashboard.appendChild(card);
   });
+
+  saveState();
 };
 
 // -------------------------------
-// EXCLUIR LOTE (SÓ SE VAZIO)
+// ALTERAR QUANTIDADE DO LOTE
+// -------------------------------
+window.alterarQuantidadeLote = function (nomeLote) {
+  const lote = state.lotes.find(l => l.nome === nomeLote);
+  if (!lote) return;
+
+  const usados = contarGaylordsDoLote(nomeLote);
+
+  const novoTotal = Number(
+    prompt(
+      `Nova quantidade do lote "${nomeLote}"\n` +
+      `Já alocados: ${usados}`,
+      lote.total
+    )
+  );
+
+  if (isNaN(novoTotal) || novoTotal <= 0) {
+    alert('Quantidade inválida');
+    return;
+  }
+
+  if (novoTotal < usados) {
+    alert(
+      `Não pode ser menor que os já alocados (${usados})`
+    );
+    return;
+  }
+
+  lote.total = novoTotal;
+  lote.saldo = novoTotal - usados;
+  lote.ativo = true;
+
+  saveState();
+  renderDashboard();
+
+  alert('Quantidade atualizada com sucesso');
+};
+
+// -------------------------------
+// EXCLUIR LOTE (SOMENTE SE VAZIO)
 // -------------------------------
 window.excluirLote = function (nomeLote) {
   const usados = contarGaylordsDoLote(nomeLote);
