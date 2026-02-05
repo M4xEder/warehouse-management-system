@@ -1,9 +1,9 @@
 // =======================================
-// DASHBOARD.JS — CONTROLE REAL DE LOTES
+// DASHBOARD.JS — VISÃO COMPLETA DO LOTE
 // =======================================
 
 // ---------------------------------------
-// CONTAR GAYLORDS NO MAPA (VERDADE)
+// CONTAR GAYLORDS ALOCADAS (MAPA = VERDADE)
 // ---------------------------------------
 window.contarGaylordsDoLote = function (nomeLote) {
   let total = 0;
@@ -16,6 +16,21 @@ window.contarGaylordsDoLote = function (nomeLote) {
         }
       });
     });
+  });
+
+  return total;
+};
+
+// ---------------------------------------
+// CONTAR GAYLORDS EXPEDIDAS (HISTÓRICO)
+// ---------------------------------------
+window.contarGaylordsExpedidas = function (nomeLote) {
+  let total = 0;
+
+  state.historicoExpedidos.forEach(exp => {
+    if (exp.lote === nomeLote) {
+      total += exp.quantidadeExpedida;
+    }
   });
 
   return total;
@@ -35,16 +50,21 @@ window.renderDashboard = function () {
     return;
   }
 
-  state.lotes.forEach(lote => {
-    const alocados = contarGaylordsDoLote(lote.nome);
-    const saldo = lote.total - alocados;
+  let exibiuAlgum = false;
 
-    // 🔒 LOTE TOTALMENTE EXPEDIDO → NÃO MOSTRA
+  state.lotes.forEach(lote => {
+    const alocadas = contarGaylordsDoLote(lote.nome);
+    const expedidas = contarGaylordsExpedidas(lote.nome);
+    const saldo = lote.total - alocadas - expedidas;
+
+    // 🔒 LOTE FINALIZADO → NÃO MOSTRA COMO ATIVO
     if (saldo <= 0) return;
+
+    exibiuAlgum = true;
 
     const percentual =
       lote.total > 0
-        ? Math.round((alocados / lote.total) * 100)
+        ? Math.round((alocadas / lote.total) * 100)
         : 0;
 
     const card = document.createElement('div');
@@ -52,11 +72,15 @@ window.renderDashboard = function () {
 
     card.innerHTML = `
       <strong>${lote.nome}</strong><br>
-      ${alocados} / ${lote.total}
-      <br>
-      <small>Saldo: ${saldo}</small>
 
-      <div class="progress-bar">
+      <small>
+        Total: <strong>${lote.total}</strong> |
+        Alocadas: <strong>${alocadas}</strong> |
+        Expedidas: <strong>${expedidas}</strong> |
+        Saldo: <strong>${saldo}</strong>
+      </small>
+
+      <div class="progress-bar" style="margin-top:6px">
         <div class="progress-fill"
              style="width:${percentual}%; background:${lote.cor}">
         </div>
@@ -81,72 +105,8 @@ window.renderDashboard = function () {
     dashboard.appendChild(card);
   });
 
-  if (dashboard.innerHTML === '') {
+  if (!exibiuAlgum) {
     dashboard.innerHTML =
-      '<p>Nenhum lote ativo (todos expedidos)</p>';
+      '<p>Nenhum lote ativo (todos finalizados)</p>';
   }
-};
-
-// ---------------------------------------
-// ALTERAR QUANTIDADE (PROTEGIDO)
-// ---------------------------------------
-window.alterarQuantidadeLote = function (nomeLote) {
-  const lote = state.lotes.find(l => l.nome === nomeLote);
-  if (!lote) {
-    alert('Lote não encontrado');
-    return;
-  }
-
-  const alocados = contarGaylordsDoLote(nomeLote);
-
-  const novoTotal = Number(
-    prompt(
-      `Nova quantidade do lote "${nomeLote}"\n` +
-      `Alocados no mapa: ${alocados}`,
-      lote.total
-    )
-  );
-
-  if (isNaN(novoTotal) || novoTotal <= 0) {
-    alert('Quantidade inválida');
-    return;
-  }
-
-  if (novoTotal < alocados) {
-    alert(
-      `Não pode ser menor que os ${alocados} já alocados`
-    );
-    return;
-  }
-
-  lote.total = novoTotal;
-
-  saveState();
-  renderDashboard();
-
-  alert('Quantidade atualizada com sucesso');
-};
-
-// ---------------------------------------
-// EXCLUIR LOTE (SÓ SE VAZIO)
-// ---------------------------------------
-window.excluirLote = function (nomeLote) {
-  const alocados = contarGaylordsDoLote(nomeLote);
-
-  if (alocados > 0) {
-    alert(
-      'Não é possível excluir.\n' +
-      'Existem gaylords alocadas neste lote.'
-    );
-    return;
-  }
-
-  if (!confirm(`Excluir lote "${nomeLote}"?`)) return;
-
-  state.lotes =
-    state.lotes.filter(l => l.nome !== nomeLote);
-
-  saveState();
-  renderDashboard();
-  renderMapa();
 };
