@@ -5,116 +5,72 @@
   <title>Relatórios de Expedição</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- CSS GLOBAL -->
+  <!-- CSS -->
   <link rel="stylesheet" href="css/style.css">
 
-  <!-- SheetJS (Excel) -->
+  <!-- SheetJS para Excel -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <!-- jsPDF para PDF (se quiser implementar depois) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-  <!-- jsPDF (PDF) -->
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h1 { text-align: center; margin-bottom: 30px; }
+    section { background: #fff; padding: 20px; margin-bottom: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+    select, input, button { padding: 8px; margin-right: 8px; margin-top: 8px; }
+    button { background: #16a34a; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+    button:hover { background: #13803d; }
+  </style>
 </head>
 <body>
 
-<script src="js/login.js"></script>
-<script>
-  checarSessao();
-</script>
-
-  <!-- HEADER DINÂMICO -->
+  <!-- HEADER -->
   <div id="header"></div>
 
   <main id="app">
-
     <h1>Relatórios de Expedição</h1>
 
-    <!-- ================= FILTRO GLOBAL ================= -->
-    <section class="cadastros">
-      <h2>Filtro (opcional)</h2>
-
-      <input
-        type="text"
-        id="filtroRz"
-        placeholder="Filtrar por RZ (ex: RZ123)"
-      >
-
-      <p style="font-size:13px; color:#555; margin-top:6px">
-        * O filtro por RZ afeta apenas a listagem (Excel/PDF),
-        não altera totais do lote.
-      </p>
-    </section>
-
-    <hr style="margin:30px 0">
-
     <!-- ================= EXPORTAÇÃO COMPLETA ================= -->
-    <section class="cadastros">
+    <section>
       <h2>Exportar todos os lotes</h2>
-
       <p>
-        Gera um arquivo <strong>Excel ou PDF</strong> com
-        <strong>uma aba / página para cada lote</strong>,
-        incluindo:
+        Gera um arquivo Excel com <strong>uma aba para cada lote</strong>,
+        contendo expedidos, parciais e não alocados.
       </p>
-
-      <ul style="font-size:14px; margin-left:18px">
-        <li>Total do lote</li>
-        <li>Alocados (Área / Rua / RZ / Volume)</li>
-        <li>Expedidos (Data / Hora / RZ / Volume)</li>
-        <li>Não alocados</li>
-        <li>Saldo</li>
-        <li>Mensagem de lote parcial / múltiplas expedições</li>
-      </ul>
-
-      <div style="margin-top:12px">
-        <button onclick="exportarRelatorioExcel()">
-          📊 Exportar Excel (todos os lotes)
-        </button>
-
-        <button onclick="exportarRelatorioPDF()">
-          📄 Exportar PDF (todos os lotes)
-        </button>
-      </div>
+      <button onclick="exportarRelatorioExcel()">📊 Exportar todos os lotes</button>
     </section>
 
     <hr style="margin:30px 0">
 
     <!-- ================= EXPORTAÇÃO POR LOTE ================= -->
-    <section class="cadastros">
+    <section>
       <h2>Exportar lote específico</h2>
 
       <select id="selectLoteRelatorio">
         <option value="">Selecione um lote</option>
       </select>
 
-      <div style="margin-top:12px">
-        <button onclick="exportarRelatorioLote()">
-          📊 Exportar Excel do lote
-        </button>
+      <button onclick="exportarRelatorioLote()">📄 Exportar lote selecionado</button>
+    </section>
 
-        <button onclick="exportarRelatorioLotePDF()">
-          📄 Exportar PDF do lote
-        </button>
-      </div>
+    <hr style="margin:30px 0">
+
+    <!-- ================= FILTRO POR RZ ================= -->
+    <section>
+      <h2>Filtrar por RZ</h2>
+      <input type="text" id="rzFiltro" placeholder="Informe o RZ">
+      <button onclick="filtrarPorRz(document.getElementById('rzFiltro').value)">🔍 Buscar</button>
     </section>
 
   </main>
 
-  <!-- ================= SCRIPTS BASE ================= -->
-
-  <script src="js/supabase.js"></script>
-  <script src="js/header.js"></script>
+  <!-- JS BASE -->
   <script src="js/state.js"></script>
-
-  <!-- ================= RELATÓRIOS ================= -->
-
-  <!-- Consolidação (cálculos, saldo, não alocados, parciais) -->
-  <script src="js/relatorios/relatorios.js"></script>
-
-  <!-- Excel -->
-  <script src="js/relatorios/excel-relatorios.js"></script>
-
-  <!-- PDF -->
-  <script src="js/relatorios/pdf-relatorios.js"></script>
+  <script src="js/relatorios.js"></script>
 
 </body>
 </html>
