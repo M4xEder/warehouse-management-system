@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -19,8 +19,7 @@
 </style>
 </head>
 <body>
-
-    <!-- HEADER DINÂMICO -->
+     <!-- HEADER DINÂMICO -->
   <div id="header"></div>
 
 <h1>Relatórios de Expedição</h1>
@@ -46,6 +45,7 @@
       <th>Rua</th>
       <th>Posição</th>
       <th>RZ</th>
+      <th>Volume</th>
       <th>Data/Hora Expedição</th>
       <th>Mensagem</th>
     </tr>
@@ -95,9 +95,15 @@
       const posicoesAtivas = [];
       state.areas.forEach(area => {
         area.ruas.forEach(rua => {
-          rua.posicoes.forEach(pos => {
+          rua.posicoes.forEach((pos, idx) => {
             if (pos.ocupada && pos.lote === lote.nome) {
-              posicoesAtivas.push({area: area.nome, rua: rua.nome, posicao: pos.posicao || '-', rz: pos.rz || '-'});
+              posicoesAtivas.push({
+                area: area.nome,
+                rua: rua.nome,
+                posicao: idx + 1,
+                rz: pos.rz || '-',
+                volume: pos.volume || '-'
+              });
             }
           });
         });
@@ -115,6 +121,7 @@
           <td>${p.rua}</td>
           <td>${p.posicao}</td>
           <td>${p.rz}</td>
+          <td>${p.volume}</td>
           <td>-</td>
           <td>-</td>
         `;
@@ -151,6 +158,7 @@
           <td>${d.rua}</td>
           <td>${d.posicao}</td>
           <td>${d.rz || '-'}</td>
+          <td>${d.volume || '-'}</td>
           <td>${exp.data} ${exp.hora}</td>
           <td>${msg}</td>
         `;
@@ -159,11 +167,10 @@
     });
   }
 </script>
-
-    <!-- Infra -->
+      <!-- Infra -->
   <script src="js/supabase.js"></script>
   <script src="js/header.js"></script>
 
-
 </body>
 </html>
+
