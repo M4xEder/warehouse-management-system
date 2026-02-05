@@ -1,11 +1,24 @@
 // =======================================
-// DASHBOARD.JS — CONTROLE POR SALDO
+// DASHBOARD.JS — CONTROLE REAL DE SALDO
 // =======================================
 
-console.log('dashboard.js carregado');
+// ---------------------------------------
+// TOTAL JÁ EXPEDIDO DO LOTE (HISTÓRICO)
+// ---------------------------------------
+window.totalExpedidoDoLote = function (nomeLote) {
+  let total = 0;
+
+  state.historicoExpedidos.forEach(exp => {
+    if (exp.lote === nomeLote) {
+      total += exp.quantidadeExpedida;
+    }
+  });
+
+  return total;
+};
 
 // ---------------------------------------
-// TOTAL ALOCADO NO MAPA (VERDADE FÍSICA)
+// CONTAR GAYLORDS ALOCADAS NO MAPA
 // ---------------------------------------
 window.contarGaylordsDoLote = function (nomeLote) {
   let total = 0;
@@ -24,26 +37,6 @@ window.contarGaylordsDoLote = function (nomeLote) {
 };
 
 // ---------------------------------------
-// TOTAL JÁ EXPEDIDO (HISTÓRICO)
-// ---------------------------------------
-window.totalExpedidoDoLote = function (nomeLote) {
-  return state.historicoExpedidos
-    .filter(e => e.lote === nomeLote)
-    .reduce((soma, e) => soma + e.quantidadeExpedida, 0);
-};
-
-// ---------------------------------------
-// SALDO REAL DO LOTE
-// ---------------------------------------
-window.saldoDoLote = function (nomeLote) {
-  const lote = state.lotes.find(l => l.nome === nomeLote);
-  if (!lote) return 0;
-
-  const expedido = totalExpedidoDoLote(nomeLote);
-  return lote.total - expedido;
-};
-
-// ---------------------------------------
 // RENDER DASHBOARD
 // ---------------------------------------
 window.renderDashboard = function () {
@@ -57,17 +50,22 @@ window.renderDashboard = function () {
     return;
   }
 
-  state.lotes.forEach(lote => {
-    const total = lote.total;
-    const expedido = totalExpedidoDoLote(lote.nome);
-    const alocado = contarGaylordsDoLote(lote.nome);
-    const saldo = saldoDoLote(lote.nome);
+  let exibiuAlgum = false;
 
-    // 🔴 LOTE TOTALMENTE EXPEDIDO
+  state.lotes.forEach(lote => {
+    const alocados = contarGaylordsDoLote(lote.nome);
+    const expedidos = totalExpedidoDoLote(lote.nome);
+    const saldo = lote.total - expedidos;
+
+    // 👉 SE NÃO TEM SALDO, NÃO É ATIVO
     if (saldo <= 0) return;
 
+    exibiuAlgum = true;
+
     const percentual =
-      total > 0 ? Math.round((expedido / total) * 100) : 0;
+      lote.total > 0
+        ? Math.round((alocados / lote.total) * 100)
+        : 0;
 
     const card = document.createElement('div');
     card.className = 'lote-card';
@@ -75,23 +73,18 @@ window.renderDashboard = function () {
     card.innerHTML = `
       <strong>${lote.nome}</strong><br>
 
-      <small>
-        Total: ${total} |
-        Expedidos: ${expedido} |
-        Alocados: ${alocado} |
-        Saldo: ${saldo}
-      </small>
+      Total: ${lote.total}<br>
+      Alocados: ${alocados}<br>
+      Expedidos: ${expedidos}<br>
+      <strong>Saldo: ${saldo}</strong>
 
-      <div class="progress-bar" style="margin-top:6px">
+      <div class="progress-bar">
         <div class="progress-fill"
-          style="
-            width:${percentual}%;
-            background:${lote.cor};
-          ">
+          style="width:${percentual}%; background:${lote.cor}">
         </div>
       </div>
 
-      <div style="margin-top:10px">
+      <div style="margin-top:8px">
         <button onclick="expedirLote('${lote.nome}')">
           Expedir
         </button>
@@ -110,60 +103,9 @@ window.renderDashboard = function () {
 
     dashboard.appendChild(card);
   });
-};
 
-// ---------------------------------------
-// ALTERAR QUANTIDADE DO LOTE (SEGURA)
-// ---------------------------------------
-window.alterarQuantidadeLote = function (nomeLote) {
-  const lote = state.lotes.find(l => l.nome === nomeLote);
-  if (!lote) return;
-
-  const expedido = totalExpedidoDoLote(nomeLote);
-
-  const novoTotal = Number(
-    prompt(
-      `Novo total para o lote "${nomeLote}"\n` +
-      `(Não pode ser menor que já expedido: ${expedido})`,
-      lote.total
-    )
-  );
-
-  if (!novoTotal || novoTotal < expedido) {
-    alert(
-      `Quantidade inválida.\n` +
-      `Já foram expedidas ${expedido} gaylords.`
-    );
-    return;
+  if (!exibiuAlgum) {
+    dashboard.innerHTML =
+      '<p>Todos os lotes foram totalmente expedidos</p>';
   }
-
-  lote.total = novoTotal;
-
-  saveState();
-  renderDashboard();
-  renderMapa();
-};
-
-// ---------------------------------------
-// EXCLUIR LOTE (SOMENTE SE VAZIO E SEM HISTÓRICO)
-// ---------------------------------------
-window.excluirLote = function (nomeLote) {
-  const alocado = contarGaylordsDoLote(nomeLote);
-  const expedido = totalExpedidoDoLote(nomeLote);
-
-  if (alocado > 0 || expedido > 0) {
-    alert(
-      'Não é possível excluir.\n' +
-      'Existem gaylords alocadas ou já expedidas.'
-    );
-    return;
-  }
-
-  if (!confirm(`Excluir lote "${nomeLote}"?`)) return;
-
-  state.lotes = state.lotes.filter(l => l.nome !== nomeLote);
-
-  saveState();
-  renderDashboard();
-  renderMapa();
 };
