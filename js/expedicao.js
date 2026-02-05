@@ -1,5 +1,5 @@
 // =======================================
-// EXPEDICAO.JS — EXPEDIÇÃO PARCIAL E TOTAL
+// EXPEDICAO.JS — PARCIAL + TOTAL COM SALDO
 // =======================================
 
 let expedicaoContext = {
@@ -7,13 +7,13 @@ let expedicaoContext = {
   selecionados: []
 };
 
-// ===============================
+// ---------------------------------------
 // ABRIR MODAL DE EXPEDIÇÃO
-// ===============================
+// ---------------------------------------
 window.expedirLote = function (nomeLote) {
   const lote = state.lotes.find(l => l.nome === nomeLote);
-  if (!lote || lote.ativo === false) {
-    alert('Lote não encontrado ou já finalizado');
+  if (!lote) {
+    alert('Lote não encontrado');
     return;
   }
 
@@ -25,13 +25,13 @@ window.expedirLote = function (nomeLote) {
 
   let encontrados = 0;
 
-  state.areas.forEach((area, areaIndex) => {
-    area.ruas.forEach((rua, ruaIndex) => {
-      rua.posicoes.forEach((pos, posIndex) => {
+  state.areas.forEach((area, a) => {
+    area.ruas.forEach((rua, r) => {
+      rua.posicoes.forEach((pos, p) => {
         if (pos.ocupada && pos.lote === nomeLote) {
           encontrados++;
 
-          const id = `${areaIndex}-${ruaIndex}-${posIndex}`;
+          const id = `${a}-${r}-${p}`;
 
           const div = document.createElement('div');
           div.className = 'item-expedicao';
@@ -45,7 +45,7 @@ window.expedirLote = function (nomeLote) {
               >
               Área: ${area.nome} |
               Rua: ${rua.nome} |
-              Pos: ${posIndex + 1} |
+              Pos: ${p + 1} |
               RZ: ${pos.rz} |
               Vol: ${pos.volume || '-'}
             </label>
@@ -67,25 +67,23 @@ window.expedirLote = function (nomeLote) {
     .classList.remove('hidden');
 };
 
-// ===============================
-// SELEÇÃO INDIVIDUAL
-// ===============================
+// ---------------------------------------
+// SELEÇÃO
+// ---------------------------------------
 window.toggleSelecionado = function (checkbox) {
   const id = checkbox.value;
 
   if (checkbox.checked) {
-    if (!expedicaoContext.selecionados.includes(id)) {
-      expedicaoContext.selecionados.push(id);
-    }
+    expedicaoContext.selecionados.push(id);
   } else {
     expedicaoContext.selecionados =
       expedicaoContext.selecionados.filter(x => x !== id);
   }
 };
 
-// ===============================
-// SELECIONAR / DESMARCAR TODOS
-// ===============================
+// ---------------------------------------
+// SELECIONAR TODOS
+// ---------------------------------------
 window.selecionarTodosGaylords = function () {
   expedicaoContext.selecionados = [];
 
@@ -105,9 +103,9 @@ window.desmarcarTodosGaylords = function () {
     .forEach(cb => (cb.checked = false));
 };
 
-// ===============================
+// ---------------------------------------
 // CONFIRMAR EXPEDIÇÃO
-// ===============================
+// ---------------------------------------
 window.confirmarExpedicao = function () {
   const { lote, selecionados } = expedicaoContext;
 
@@ -117,9 +115,6 @@ window.confirmarExpedicao = function () {
   }
 
   const detalhes = [];
-
-  // Quantidade antes da expedição
-  const totalAntes = contarGaylordsDoLote(lote);
 
   selecionados.forEach(id => {
     const [a, r, p] = id.split('-').map(Number);
@@ -137,21 +132,21 @@ window.confirmarExpedicao = function () {
       volume: pos.volume || '-'
     });
 
-    // LIMPA POSIÇÃO
+    // LIMPA MAPA
     pos.ocupada = false;
     pos.lote = null;
     pos.rz = null;
     pos.volume = null;
   });
 
+  const totalAntes =
+    contarGaylordsDoLote(lote) + detalhes.length;
+
   const tipo =
     detalhes.length === totalAntes
       ? 'TOTAL'
       : 'PARCIAL';
 
-  // ===============================
-  // REGISTRA HISTÓRICO
-  // ===============================
   state.historicoExpedidos.push({
     id: crypto.randomUUID(),
     lote,
@@ -163,19 +158,6 @@ window.confirmarExpedicao = function () {
     detalhes
   });
 
-  // ===============================
-  // FINALIZA LOTE SE TOTAL
-  // ===============================
-  if (tipo === 'TOTAL') {
-    const loteObj = state.lotes.find(l => l.nome === lote);
-    if (loteObj) {
-      loteObj.ativo = false;
-    }
-  }
-
-  // ===============================
-  // FINALIZA
-  // ===============================
   saveState();
   fecharModalExpedicao();
   renderMapa();
@@ -187,9 +169,9 @@ window.confirmarExpedicao = function () {
   );
 };
 
-// ===============================
-// FECHAR MODAL EXPEDIÇÃO
-// ===============================
+// ---------------------------------------
+// FECHAR MODAL
+// ---------------------------------------
 window.fecharModalExpedicao = function () {
   document
     .getElementById('modalExpedicao')
