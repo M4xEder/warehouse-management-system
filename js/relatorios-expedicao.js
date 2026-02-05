@@ -1,11 +1,12 @@
 // =======================================
-// RELATORIOS-EXPEDICAO.JS
-// Histórico, detalhes e exclusão de expedição
+// RELATORIOS-EXPEDICAO.JS — HISTÓRICO FINAL
 // =======================================
 
-// -------------------------------
-// RENDER HISTÓRICO DE EXPEDIÇÃO
-// -------------------------------
+console.log('relatorios-expedicao.js carregado');
+
+// ---------------------------------------
+// RENDER HISTÓRICO DE EXPEDIÇÕES
+// ---------------------------------------
 window.renderExpedidos = function () {
   const container = document.getElementById('lotesExpedidos');
   if (!container) return;
@@ -38,7 +39,7 @@ window.renderExpedidos = function () {
       </span>
       <br>
 
-      <strong>Quantidade:</strong>
+      <strong>Expedido:</strong>
       ${exp.quantidadeExpedida} de ${exp.quantidadeTotal}
       <br>
 
@@ -50,8 +51,8 @@ window.renderExpedidos = function () {
       </button>
 
       <button class="danger"
-              onclick="excluirExpedicao('${exp.id}')">
-        Excluir
+        onclick="excluirRegistroExpedicao('${exp.id}')">
+        Excluir registro
       </button>
     `;
 
@@ -59,10 +60,9 @@ window.renderExpedidos = function () {
   });
 };
 
-// =======================================
-// MODAL - DETALHES DA EXPEDIÇÃO
-// =======================================
-
+// ---------------------------------------
+// ABRIR DETALHES DA EXPEDIÇÃO
+// ---------------------------------------
 window.abrirDetalhesExpedicao = function (id) {
   const exp = state.historicoExpedidos.find(e => e.id === id);
   if (!exp) {
@@ -89,8 +89,10 @@ window.abrirDetalhesExpedicao = function (id) {
       ">
         ${exp.tipo}
       </span><br>
+
       <strong>Quantidade:</strong>
       ${exp.quantidadeExpedida} de ${exp.quantidadeTotal}<br>
+
       <strong>Data:</strong> ${exp.data} ${exp.hora}
     </p>
 
@@ -133,23 +135,28 @@ window.abrirDetalhesExpedicao = function (id) {
     .classList.remove('hidden');
 };
 
+// ---------------------------------------
+// FECHAR MODAL DETALHES
+// ---------------------------------------
 window.fecharDetalhesExpedicao = function () {
   document
     .getElementById('modalDetalhesExpedicao')
     .classList.add('hidden');
 };
 
-// =======================================
+// ---------------------------------------
 // EXCLUIR REGISTRO DE EXPEDIÇÃO
-// =======================================
-
-window.excluirExpedicao = function (id) {
+// (NÃO ALTERA MAPA NEM SALDO)
+// ---------------------------------------
+window.excluirRegistroExpedicao = function (id) {
   const exp = state.historicoExpedidos.find(e => e.id === id);
   if (!exp) return;
 
   if (!confirm(
-    `Excluir registro de expedição do lote "${exp.lote}"?\n` +
-    `Isso NÃO altera mapa nem quantidades.`
+    `Excluir este registro de expedição?\n\n` +
+    `Lote: ${exp.lote}\n` +
+    `Quantidade: ${exp.quantidadeExpedida}\n\n` +
+    `⚠ Isso NÃO altera o mapa nem o saldo do lote.`
   )) return;
 
   state.historicoExpedidos =
@@ -159,5 +166,5 @@ window.excluirExpedicao = function (id) {
   renderExpedidos();
   renderDashboard();
 
-  alert('Registro de expedição removido com sucesso');
+  alert('Registro removido com sucesso');
 };
