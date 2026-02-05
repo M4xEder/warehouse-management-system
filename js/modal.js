@@ -13,7 +13,9 @@ function contarGaylordsDoLote(nomeLote) {
   state.areas.forEach(area => {
     area.ruas.forEach(rua => {
       rua.posicoes.forEach(pos => {
-        if (pos.lote === nomeLote) total++;
+        if (pos.ocupada === true && pos.lote === nomeLote) {
+          total++;
+        }
       });
     });
   });
@@ -45,7 +47,7 @@ function abrirModal(areaIndex, ruaIndex, posicaoIndex) {
     select.appendChild(opt);
   });
 
-  if (posicao.ocupada) {
+  if (posicao.ocupada === true) {
     select.value = posicao.lote;
     document.getElementById('modalRz').value = posicao.rz || '';
     document.getElementById('modalVolume').value = posicao.volume || '';
@@ -100,13 +102,26 @@ function confirmarEndereco() {
   const usados = contarGaylordsDoLote(loteNome);
 
   const mesmaPosicaoMesmoLote =
-    posicao.ocupada && posicao.lote === loteNome;
+    posicao.ocupada === true && posicao.lote === loteNome;
 
   if (usados >= lote.total && !mesmaPosicaoMesmoLote) {
     alert(
       `Lote "${loteNome}" está cheio (${usados}/${lote.total})`
     );
     return;
+  }
+
+  // ===============================
+  // ⚠️ CONFIRMAR SOBRESCRITA
+  // ===============================
+  if (
+    posicao.ocupada === true &&
+    posicao.lote !== loteNome
+  ) {
+    const confirmar = confirm(
+      `Esta posição já está ocupada pelo lote "${posicao.lote}".\nDeseja substituir?`
+    );
+    if (!confirmar) return;
   }
 
   // ===============================
