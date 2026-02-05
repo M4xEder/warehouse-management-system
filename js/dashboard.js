@@ -1,5 +1,5 @@
 // =======================================
-// DASHBOARD.JS — CONTROLE REAL DE LOTES
+// DASHBOARD.JS — CONTROLE DEFINITIVO
 // =======================================
 
 // -------------------------------
@@ -53,7 +53,7 @@ window.renderDashboard = function () {
     const saldo = total - expedidas;
     const naoAlocadas = Math.max(total - (alocadas + expedidas), 0);
 
-    // 🔒 Se saldo = 0 → totalmente expedido → não é ativo
+    // 🔒 Se saldo = 0 → totalmente expedido → NÃO é ativo
     if (saldo <= 0) return;
 
     temAtivo = true;
@@ -82,10 +82,14 @@ window.renderDashboard = function () {
       </div>
 
       <div style="margin-top:8px">
-        <button onclick="expedirLote('${lote.nome}')">Expedir</button>
+        <button onclick="expedirLote('${lote.nome}')">
+          Expedir
+        </button>
+
         <button onclick="alterarQuantidadeLote('${lote.nome}')">
           Alterar quantidade
         </button>
+
         <button class="danger"
                 onclick="excluirLote('${lote.nome}')">
           Excluir
@@ -102,7 +106,7 @@ window.renderDashboard = function () {
 };
 
 // -------------------------------
-// ALTERAR QUANTIDADE (REGRA REAL)
+// ALTERAR QUANTIDADE (SEGURA)
 // -------------------------------
 window.alterarQuantidadeLote = function (nomeLote) {
   const lote = state.lotes.find(l => l.nome === nomeLote);
@@ -135,4 +139,32 @@ window.alterarQuantidadeLote = function (nomeLote) {
   saveState();
   renderDashboard();
   renderMapa();
+};
+
+// -------------------------------
+// EXCLUIR LOTE ATIVO (CORRETO)
+// -------------------------------
+window.excluirLote = function (nomeLote) {
+  const alocadas = contarGaylordsDoLote(nomeLote);
+
+  if (alocadas > 0) {
+    alert(
+      'Não é possível excluir este lote.\n' +
+      'Existem gaylords alocadas no mapa.'
+    );
+    return;
+  }
+
+  if (!confirm(`Excluir definitivamente o lote "${nomeLote}"?`)) {
+    return;
+  }
+
+  // Remove APENAS do cadastro de lotes
+  state.lotes = state.lotes.filter(l => l.nome !== nomeLote);
+
+  saveState();
+  renderDashboard();
+  renderMapa();
+
+  alert('Lote excluído com sucesso');
 };
