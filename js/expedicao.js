@@ -1,122 +1,190 @@
 // =======================================
-// EXPEDICAO.JS
+// EXPEDICAO.JS — EXPEDIÇÃO PARCIAL E TOTAL
 // =======================================
 
-let contextoExpedicao = {
+let expedicaoContext = {
   lote: null,
   selecionados: []
 };
 
-// -------------------------------
-// ABRIR MODAL
-// -------------------------------
-window.abrirModalExpedicao = function (nomeLote) {
-  const modal = document.getElementById('modalExpedicao');
+// ===============================
+// ABRIR MODAL DE EXPEDIÇÃO
+// ===============================
+window.expedirLote = function (nomeLote) {
+  const lote = state.lotes.find(l => l.nome === nomeLote);
+  if (!lote) {
+    alert('Lote não encontrado');
+    return;
+  }
+
+  expedicaoContext.lote = nomeLote;
+  expedicaoContext.selecionados = [];
+
   const lista = document.getElementById('listaExpedicao');
-
-  contextoExpedicao.lote = nomeLote;
-  contextoExpedicao.selecionados = [];
-
   lista.innerHTML = '';
 
-  state.areas.forEach(area => {
-    area.ruas.forEach(rua => {
-      rua.posicoes.forEach((pos, index) => {
-        if (pos.ocupada && pos.lote === nomeLote) {
-          const id = crypto.randomUUID();
+  let encontrados = 0;
 
-          lista.innerHTML += `
-            <label style="display:block; margin-bottom:4px">
-              <input type="checkbox"
-                     data-area="${area.nome}"
-                     data-rua="${rua.nome}"
-                     data-posicao="${index + 1}"
-                     data-rz="${pos.rz || ''}"
-                     data-volume="${pos.volume || ''}">
-              Área ${area.nome} | Rua ${rua.nome} |
-              Pos ${index + 1} |
-              RZ ${pos.rz || '-'} |
-              Vol ${pos.volume || '-'}
+  state.areas.forEach((area, areaIndex) => {
+    area.ruas.forEach((rua, ruaIndex) => {
+      rua.posicoes.forEach((pos, posIndex) => {
+        if (pos.ocupada && pos.lote === nomeLote) {
+          encontrados++;
+
+          const id = `${areaIndex}-${ruaIndex}-${posIndex}`;
+
+          const div = document.createElement('div');
+          div.className = 'item-expedicao';
+
+          div.innerHTML = `
+            <label>
+              <input
+                type="checkbox"
+                value="${id}"
+                onchange="toggleSelecionado(this)"
+              >
+              Área: ${area.nome} |
+              Rua: ${rua.nome} |
+              Pos: ${posIndex + 1} |
+              RZ: ${pos.rz} |
+              Vol: ${pos.volume || '-'}
             </label>
           `;
+
+          lista.appendChild(div);
         }
       });
     });
   });
 
-  modal.classList.remove('hidden');
-};
-
-// -------------------------------
-// CONFIRMAR EXPEDIÇÃO
-// -------------------------------
-window.confirmarExpedicao = function () {
-  const checks =
-    document.querySelectorAll('#listaExpedicao input:checked');
-
-  if (!checks.length) {
-    alert('Selecione ao menos uma gaylord');
+  if (encontrados === 0) {
+    alert('Nenhuma gaylord alocada neste lote');
     return;
   }
 
-  const saldo = calcularSaldoLote(contextoExpedicao.lote);
+  document
+    .getElementById('modalExpedicao')
+    .classList.remove('hidden');
+};
 
-  if (checks.length > saldo) {
-    alert(`Saldo insuficiente (${saldo})`);
+// ===============================
+// SELEÇÃO INDIVIDUAL
+// ===============================
+window.toggleSelecionado = function (checkbox) {
+  const id = checkbox.value;
+
+  if (checkbox.checked) {
+    expedicaoContext.selecionados.push(id);
+  } else {
+    expedicaoContext.selecionados =
+      expedicaoContext.selecionados.filter(x => x !== id);
+  }
+};
+
+// ===============================
+// SELECIONAR / DESMARCAR TODOS
+// ===============================
+window.selecionarTodosGaylords = function () {
+  expedicaoContext.selecionados = [];
+
+  document
+    .querySelectorAll('#listaExpedicao input[type="checkbox"]')
+    .forEach(cb => {
+      cb.checked = true;
+      expedicaoContext.selecionados.push(cb.value);
+    });
+};
+
+window.desmarcarTodosGaylords = function () {
+  expedicaoContext.selecionados = [];
+
+  document
+    .querySelectorAll('#listaExpedicao input[type="checkbox"]')
+    .forEach(cb => (cb.checked = false));
+};
+
+// ===============================
+// CONFIRMAR EXPEDIÇÃO
+// ===============================
+window.confirmarExpedicao = function () {
+  const { lote, selecionados } = expedicaoContext;
+
+  if (!lote || selecionados.length === 0) {
+    alert('Selecione ao menos uma gaylord');
     return;
   }
 
   const detalhes = [];
 
-  checks.forEach(c => {
+  selecionados.forEach(id => {
+    const [a, r, p] = id.split('-').map(Number);
+
+    const pos =
+      state.areas[a]
+        .ruas[r]
+        .posicoes[p];
+
     detalhes.push({
-      area: c.dataset.area,
-      rua: c.dataset.rua,
-      posicao: c.dataset.posicao,
-      rz: c.dataset.rz,
-      volume: c.dataset.volume
+      area: state.areas[a].nome,
+      rua: state.areas[a].ruas[r].nome,
+      posicao: p + 1,
+      rz: pos.rz,
+      volume: pos.volume || '-'
     });
 
-    // limpa do mapa
-    state.areas.forEach(a => {
-      a.ruas.forEach(r => {
-        r.posicoes.forEach(p => {
-          if (
-            p.lote === contextoExpedicao.lote &&
-            p.rz === c.dataset.rz &&
-            p.volume === c.dataset.volume
-          ) {
-            p.ocupada = false;
-            p.lote = null;
-            p.rz = null;
-            p.volume = null;
-          }
-        });
-      });
-    });
+    // LIMPA POSIÇÃO (IMPORTANTE)
+    pos.ocupada = false;
+    pos.lote = null;
+    pos.rz = null;
+    pos.volume = null;
   });
 
+  const totalAlocadoAntes =
+    contarGaylordsDoLote(lote) + detalhes.length;
+
+  const tipo =
+    detalhes.length === totalAlocadoAntes
+      ? 'TOTAL'
+      : 'PARCIAL';
+
+  // ===============================
+  // REGISTRA HISTÓRICO
+  // ===============================
   state.historicoExpedidos.push({
     id: crypto.randomUUID(),
-    lote: contextoExpedicao.lote,
-    tipo: checks.length === saldo ? 'TOTAL' : 'PARCIAL',
-    quantidadeExpedida: checks.length,
-    quantidadeTotal: saldo,
+    lote,
+    tipo,
+    quantidadeExpedida: detalhes.length,
+    quantidadeTotal: totalAlocadoAntes,
     data: new Date().toLocaleDateString(),
     hora: new Date().toLocaleTimeString(),
     detalhes
   });
 
+  // ===============================
+  // FECHA MODAL + RENDER
+  // ===============================
   saveState();
   fecharModalExpedicao();
   renderMapa();
   renderDashboard();
   renderExpedidos();
+
+  alert(
+    `Expedição ${tipo} realizada: ${detalhes.length} gaylords`
+  );
 };
 
-// -------------------------------
+// ===============================
+// FECHAR MODAL EXPEDIÇÃO
+// ===============================
 window.fecharModalExpedicao = function () {
   document
     .getElementById('modalExpedicao')
     .classList.add('hidden');
+
+  expedicaoContext = {
+    lote: null,
+    selecionados: []
+  };
 };
