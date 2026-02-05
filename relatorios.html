@@ -5,73 +5,59 @@
   <title>Relatórios de Expedição</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- CSS -->
   <link rel="stylesheet" href="css/style.css">
 
   <!-- SheetJS para Excel -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-  <!-- jsPDF para PDF (se quiser implementar depois) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      background: #f5f5f5;
-    }
-    h1 { text-align: center; margin-bottom: 30px; }
-    section { background: #fff; padding: 20px; margin-bottom: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-    select, input, button { padding: 8px; margin-right: 8px; margin-top: 8px; }
-    button { background: #16a34a; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
-    button:hover { background: #13803d; }
-  </style>
 </head>
 <body>
-  
 
-
-  <main id="app">
-  <!-- HEADER DINÂMICO -->
+  <!-- HEADER -->
   <div id="header"></div>
 
-    
+  <main id="app">
     <h1>Relatórios de Expedição</h1>
 
     <!-- ================= EXPORTAÇÃO COMPLETA ================= -->
-    <section>
+    <section class="cadastros">
       <h2>Exportar todos os lotes</h2>
       <p>
         Gera um arquivo Excel com <strong>uma aba para cada lote</strong>,
-        contendo expedidos, parciais e não alocados.
+        contendo expedidos, parciais e não expedidos.
       </p>
-      <button onclick="exportarRelatorioExcel()">📊 Exportar todos os lotes</button>
+      <button onclick="exportarRelatorioExcel()">
+        📊 Exportar todos os lotes
+      </button>
     </section>
 
     <hr style="margin:30px 0">
 
     <!-- ================= EXPORTAÇÃO POR LOTE ================= -->
-    <section>
+    <section class="cadastros">
       <h2>Exportar lote específico</h2>
 
       <select id="selectLoteRelatorio">
         <option value="">Selecione um lote</option>
       </select>
 
-      <button onclick="exportarRelatorioLote()">📄 Exportar lote selecionado</button>
+      <button onclick="exportarRelatorioLote()">
+        📄 Exportar lote selecionado
+      </button>
     </section>
 
     <hr style="margin:30px 0">
 
     <!-- ================= FILTRO POR RZ ================= -->
-    <section>
+    <section class="cadastros">
       <h2>Filtrar por RZ</h2>
-      <input type="text" id="rzFiltro" placeholder="Informe o RZ">
-      <button onclick="filtrarPorRz(document.getElementById('rzFiltro').value)">🔍 Buscar</button>
+      <input type="text" id="filtroRz" placeholder="Digite o RZ">
+      <button onclick="filtrarPorRz()">Pesquisar</button>
+      <div id="resultadoRz" style="margin-top:10px;"></div>
     </section>
 
   </main>
 
-  <!-- JS BASE -->
+  <!-- ================= SCRIPTS ================= -->
   <script src="js/state.js"></script>
   <script src="js/relatorios.js"></script>
 
