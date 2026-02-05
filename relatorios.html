@@ -5,31 +5,70 @@
   <title>Relatórios de Expedição</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- CSS -->
+  <!-- CSS GLOBAL -->
   <link rel="stylesheet" href="css/style.css">
 
   <!-- SheetJS (Excel) -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+  <!-- jsPDF (PDF) -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 </head>
 <body>
 
-  <!-- HEADER -->
+  <!-- HEADER DINÂMICO -->
   <div id="header"></div>
 
   <main id="app">
 
     <h1>Relatórios de Expedição</h1>
 
+    <!-- ================= FILTRO GLOBAL ================= -->
+    <section class="cadastros">
+      <h2>Filtro (opcional)</h2>
+
+      <input
+        type="text"
+        id="filtroRz"
+        placeholder="Filtrar por RZ (ex: RZ123)"
+      >
+
+      <p style="font-size:13px; color:#555; margin-top:6px">
+        * O filtro por RZ afeta apenas a listagem (Excel/PDF),
+        não altera totais do lote.
+      </p>
+    </section>
+
+    <hr style="margin:30px 0">
+
     <!-- ================= EXPORTAÇÃO COMPLETA ================= -->
     <section class="cadastros">
       <h2>Exportar todos os lotes</h2>
+
       <p>
-        Gera um arquivo Excel com <strong>uma aba para cada lote</strong>,
-        contendo expedidos, parciais e não expedidos.
+        Gera um arquivo <strong>Excel ou PDF</strong> com
+        <strong>uma aba / página para cada lote</strong>,
+        incluindo:
       </p>
-      <button onclick="exportarRelatorioExcel()">
-        📊 Exportar todos os lotes
-      </button>
+
+      <ul style="font-size:14px; margin-left:18px">
+        <li>Total do lote</li>
+        <li>Alocados (Área / Rua / RZ / Volume)</li>
+        <li>Expedidos (Data / Hora / RZ / Volume)</li>
+        <li>Não alocados</li>
+        <li>Saldo</li>
+        <li>Mensagem de lote parcial / múltiplas expedições</li>
+      </ul>
+
+      <div style="margin-top:12px">
+        <button onclick="exportarRelatorioExcel()">
+          📊 Exportar Excel (todos os lotes)
+        </button>
+
+        <button onclick="exportarRelatorioPDF()">
+          📄 Exportar PDF (todos os lotes)
+        </button>
+      </div>
     </section>
 
     <hr style="margin:30px 0">
@@ -42,21 +81,35 @@
         <option value="">Selecione um lote</option>
       </select>
 
-      <button onclick="exportarRelatorioLote()">
-        📄 Exportar lote selecionado
-      </button>
+      <div style="margin-top:12px">
+        <button onclick="exportarRelatorioLote()">
+          📊 Exportar Excel do lote
+        </button>
+
+        <button onclick="exportarRelatorioLotePDF()">
+          📄 Exportar PDF do lote
+        </button>
+      </div>
     </section>
 
   </main>
 
-  <!-- JS BASE -->
+  <!-- ================= SCRIPTS BASE ================= -->
+
   <script src="js/supabase.js"></script>
   <script src="js/header.js"></script>
   <script src="js/state.js"></script>
 
-  <!-- JS RELATÓRIOS -->
+  <!-- ================= RELATÓRIOS ================= -->
+
+  <!-- Consolidação (cálculos, saldo, não alocados, parciais) -->
   <script src="js/relatorios/relatorios.js"></script>
+
+  <!-- Excel -->
   <script src="js/relatorios/excel-relatorios.js"></script>
+
+  <!-- PDF -->
+  <script src="js/relatorios/pdf-relatorios.js"></script>
 
 </body>
 </html>
