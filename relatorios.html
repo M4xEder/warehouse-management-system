@@ -5,10 +5,53 @@
   <title>Relatórios de Expedição</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <!-- CSS -->
   <link rel="stylesheet" href="css/style.css">
 
-  <!-- SheetJS para Excel -->
+  <!-- SheetJS (Excel) -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .cadastros {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+    button {
+      padding: 10px 15px;
+      background: #16a34a;
+      border: none;
+      color: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    button:hover {
+      background: #13803d;
+    }
+    select, input {
+      padding: 8px 10px;
+      margin-top: 8px;
+      width: 100%;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+    label {
+      display: block;
+      margin-top: 12px;
+    }
+  </style>
 </head>
 <body>
 
@@ -16,6 +59,7 @@
   <div id="header"></div>
 
   <main id="app">
+
     <h1>Relatórios de Expedição</h1>
 
     <!-- ================= EXPORTAÇÃO COMPLETA ================= -->
@@ -36,8 +80,9 @@
     <section class="cadastros">
       <h2>Exportar lote específico</h2>
 
+      <label for="selectLoteRelatorio">Selecione um lote:</label>
       <select id="selectLoteRelatorio">
-        <option value="">Selecione um lote</option>
+        <option value="">Carregando lotes...</option>
       </select>
 
       <button onclick="exportarRelatorioLote()">
@@ -45,20 +90,11 @@
       </button>
     </section>
 
-    <hr style="margin:30px 0">
-
-    <!-- ================= FILTRO POR RZ ================= -->
-    <section class="cadastros">
-      <h2>Filtrar por RZ</h2>
-      <input type="text" id="filtroRz" placeholder="Digite o RZ">
-      <button onclick="filtrarPorRz()">Pesquisar</button>
-      <div id="resultadoRz" style="margin-top:10px;"></div>
-    </section>
-
   </main>
 
   <!-- ================= SCRIPTS ================= -->
   <script src="js/state.js"></script>
+  <script src="js/header.js"></script>
   <script src="js/relatorios.js"></script>
 
 </body>
