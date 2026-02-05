@@ -1,10 +1,15 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <title>Relatórios de Expedição</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="css/style.css">
+<!-- SheetJS para Excel -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<!-- jsPDF para PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 <style>
   body { font-family: Arial, sans-serif; padding:20px; background:#f5f5f5; }
   h1 { text-align:center; margin-bottom:20px; }
@@ -19,9 +24,10 @@
 </style>
 </head>
 <body>
-     <!-- HEADER DINÂMICO -->
+  
+   <!-- HEADER DINÂMICO -->
   <div id="header"></div>
-
+  
 <h1>Relatórios de Expedição</h1>
 
 <div>
@@ -31,6 +37,8 @@
   </select>
 
   <button onclick="gerarTabela()">Mostrar Informações</button>
+  <button onclick="exportarExcel()">📊 Exportar Excel</button>
+  <button onclick="exportarPDF()">📄 Exportar PDF</button>
 </div>
 
 <table id="tabelaRelatorio">
@@ -57,6 +65,7 @@
 
 <script src="js/state.js"></script>
 <script src="js/dashboard.js"></script>
+
 <script>
   // Preencher select com todos os lotes
   function preencherSelectLotes() {
@@ -87,10 +96,8 @@
     const expedidas = contarExpedidasDoLote(lote.nome);
     const naoAlocadas = Math.max(lote.total - (alocadas + expedidas),0);
 
-    // Filtrar histórico do lote
     const historico = state.historicoExpedidos.filter(e => e.lote === lote.nome);
 
-    // Se não houver expedições ainda
     if (historico.length === 0) {
       const posicoesAtivas = [];
       state.areas.forEach(area => {
@@ -131,7 +138,6 @@
       return;
     }
 
-    // Para cada expedição do lote
     historico.forEach(exp => {
       const msg = exp.tipo === 'TOTAL'
         ? (() => {
@@ -145,7 +151,6 @@
           })()
         : '';
 
-      // Cada gaylord da expedição vira uma linha
       exp.detalhes.forEach(d => {
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -166,11 +171,36 @@
       });
     });
   }
+
+  // -------------------------------
+  // EXPORTAR EXCEL
+  // -------------------------------
+  function exportarExcel() {
+    const tabela = document.getElementById('tabelaRelatorio');
+    const wb = XLSX.utils.table_to_book(tabela, { sheet: "Relatório" });
+    XLSX.writeFile(wb, "RelatorioExpedicao.xlsx");
+  }
+
+  // -------------------------------
+  // EXPORTAR PDF
+  // -------------------------------
+  function exportarPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'landscape' });
+
+    doc.html(document.getElementById('tabelaRelatorio'), {
+      callback: function (doc) {
+        doc.save("RelatorioExpedicao.pdf");
+      },
+      x: 10,
+      y: 10,
+      html2canvas: { scale: 0.5 }
+    });
+  }
 </script>
-      <!-- Infra -->
+<!-- infra -->
   <script src="js/supabase.js"></script>
   <script src="js/header.js"></script>
-
+  
 </body>
 </html>
-
