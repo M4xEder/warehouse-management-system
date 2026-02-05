@@ -1,5 +1,5 @@
 // =======================================
-// EXPEDICAO.JS — EXPEDIÇÃO PARCIAL E TOTAL
+// EXPEDICAO.JS — EXPEDIÇÃO PARCIAL / TOTAL
 // =======================================
 
 let expedicaoContext = {
@@ -11,9 +11,9 @@ let expedicaoContext = {
 // ABRIR MODAL DE EXPEDIÇÃO
 // ===============================
 window.expedirLote = function (nomeLote) {
-  const lote = state.lotes.find(l => l.nome === nomeLote);
+  const lote = state.lotes.find(l => l.nome === nomeLote && l.ativo !== false);
   if (!lote) {
-    alert('Lote não encontrado');
+    alert('Lote não encontrado ou já finalizado');
     return;
   }
 
@@ -25,13 +25,13 @@ window.expedirLote = function (nomeLote) {
 
   let encontrados = 0;
 
-  state.areas.forEach((area, areaIndex) => {
-    area.ruas.forEach((rua, ruaIndex) => {
-      rua.posicoes.forEach((pos, posIndex) => {
+  state.areas.forEach((area, a) => {
+    area.ruas.forEach((rua, r) => {
+      rua.posicoes.forEach((pos, p) => {
         if (pos.ocupada && pos.lote === nomeLote) {
           encontrados++;
 
-          const id = `${areaIndex}-${ruaIndex}-${posIndex}`;
+          const id = `${a}-${r}-${p}`;
 
           const div = document.createElement('div');
           div.className = 'item-expedicao';
@@ -45,7 +45,7 @@ window.expedirLote = function (nomeLote) {
               >
               Área: ${area.nome} |
               Rua: ${rua.nome} |
-              Pos: ${posIndex + 1} |
+              Pos: ${p + 1} |
               RZ: ${pos.rz} |
               Vol: ${pos.volume || '-'}
             </label>
@@ -68,13 +68,15 @@ window.expedirLote = function (nomeLote) {
 };
 
 // ===============================
-// SELEÇÃO INDIVIDUAL
+// TOGGLE SELEÇÃO
 // ===============================
 window.toggleSelecionado = function (checkbox) {
   const id = checkbox.value;
 
   if (checkbox.checked) {
-    expedicaoContext.selecionados.push(id);
+    if (!expedicaoContext.selecionados.includes(id)) {
+      expedicaoContext.selecionados.push(id);
+    }
   } else {
     expedicaoContext.selecionados =
       expedicaoContext.selecionados.filter(x => x !== id);
@@ -116,13 +118,13 @@ window.confirmarExpedicao = function () {
 
   const detalhes = [];
 
+  // Quantidade ANTES de limpar posições
+  const totalAntes = contarGaylordsDoLote(lote);
+
   selecionados.forEach(id => {
     const [a, r, p] = id.split('-').map(Number);
 
-    const pos =
-      state.areas[a]
-        .ruas[r]
-        .posicoes[p];
+    const pos = state.areas[a].ruas[r].posicoes[p];
 
     detalhes.push({
       area: state.areas[a].nome,
@@ -132,51 +134,61 @@ window.confirmarExpedicao = function () {
       volume: pos.volume || '-'
     });
 
-    // LIMPA POSIÇÃO (IMPORTANTE)
+    // LIMPA POSIÇÃO
     pos.ocupada = false;
     pos.lote = null;
     pos.rz = null;
     pos.volume = null;
   });
 
-  const totalAlocadoAntes =
-    contarGaylordsDoLote(lote) + detalhes.length;
+  // Reconta após limpeza
+  const restante = contarGaylordsDoLote(lote);
 
   const tipo =
-    detalhes.length === totalAlocadoAntes
+    restante === 0
       ? 'TOTAL'
       : 'PARCIAL';
 
   // ===============================
-  // REGISTRA HISTÓRICO
+  // REGISTRO DE HISTÓRICO
   // ===============================
   state.historicoExpedidos.push({
     id: crypto.randomUUID(),
     lote,
     tipo,
     quantidadeExpedida: detalhes.length,
-    quantidadeTotal: totalAlocadoAntes,
+    quantidadeTotal: totalAntes,
+    saldoRestante: restante,
     data: new Date().toLocaleDateString(),
     hora: new Date().toLocaleTimeString(),
     detalhes
   });
 
   // ===============================
-  // FECHA MODAL + RENDER
+  // ATUALIZA STATUS DO LOTE
   // ===============================
+  const loteObj = state.lotes.find(l => l.nome === lote);
+
+  if (restante === 0) {
+    loteObj.ativo = false; // FINALIZADO
+  } else {
+    loteObj.ativo = true; // CONTINUA ATIVO
+  }
+
   saveState();
   fecharModalExpedicao();
+
   renderMapa();
   renderDashboard();
   renderExpedidos();
 
   alert(
-    `Expedição ${tipo} realizada: ${detalhes.length} gaylords`
+    `Expedição ${tipo} concluída: ${detalhes.length} gaylords`
   );
 };
 
 // ===============================
-// FECHAR MODAL EXPEDIÇÃO
+// FECHAR MODAL
 // ===============================
 window.fecharModalExpedicao = function () {
   document
