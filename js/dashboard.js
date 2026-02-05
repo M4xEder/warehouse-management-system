@@ -1,10 +1,9 @@
 // =======================================
-// DASHBOARD.JS — LOTES ATIVOS (COM SALDO)
+// DASHBOARD.JS — CONTROLE VISUAL DOS LOTES
 // =======================================
 
 // -------------------------------
-// CONTAR GAYLORDS ALOCADAS NO MAPA
-// (MAPA É A FONTE DA VERDADE)
+// CONTAR GAYLORDS ALOCADAS DO LOTE
 // -------------------------------
 window.contarGaylordsDoLote = function (nomeLote) {
   let total = 0;
@@ -31,37 +30,27 @@ window.renderDashboard = function () {
 
   dashboard.innerHTML = '';
 
-  const lotesAtivos = state.lotes.filter(l => l.ativo !== false);
-
-  if (lotesAtivos.length === 0) {
+  if (!state.lotes || state.lotes.length === 0) {
     dashboard.innerHTML = '<p>Nenhum lote ativo</p>';
     return;
   }
 
-  lotesAtivos.forEach(lote => {
-    const usados = contarGaylordsDoLote(lote.nome);
+  state.lotes.forEach(lote => {
+    // Lote finalizado não aparece
+    if (lote.ativo === false) return;
 
-    // 🧠 SALDO REAL
-    lote.saldo = lote.total - usados;
-    if (lote.saldo < 0) lote.saldo = 0;
+    const usados = contarGaylordsDoLote(lote.nome);
+    const total = lote.total;
 
     const percentual =
-      lote.total > 0
-        ? Math.round((usados / lote.total) * 100)
-        : 0;
+      total > 0 ? Math.round((usados / total) * 100) : 0;
 
     const card = document.createElement('div');
     card.className = 'lote-card';
 
     card.innerHTML = `
       <strong>${lote.nome}</strong><br>
-
-      <span>
-        ${usados} / ${lote.total}
-        <small style="color:#666">
-          (Saldo: ${lote.saldo})
-        </small>
-      </span>
+      ${usados} / ${total}
 
       <div class="progress-bar">
         <div class="progress-fill"
@@ -78,8 +67,9 @@ window.renderDashboard = function () {
           Alterar quantidade
         </button>
 
-        <button class="danger"
-                onclick="excluirLote('${lote.nome}')">
+        <button
+          onclick="excluirLote('${lote.nome}')"
+          class="danger">
           Excluir
         </button>
       </div>
@@ -87,23 +77,21 @@ window.renderDashboard = function () {
 
     dashboard.appendChild(card);
   });
-
-  saveState();
 };
 
-// -------------------------------
+// =======================================
 // ALTERAR QUANTIDADE DO LOTE
-// -------------------------------
+// =======================================
 window.alterarQuantidadeLote = function (nomeLote) {
   const lote = state.lotes.find(l => l.nome === nomeLote);
   if (!lote) return;
 
-  const usados = contarGaylordsDoLote(nomeLote);
+  const alocados = contarGaylordsDoLote(nomeLote);
 
   const novoTotal = Number(
     prompt(
-      `Nova quantidade do lote "${nomeLote}"\n` +
-      `Já alocados: ${usados}`,
+      `Nova quantidade para o lote "${nomeLote}"\n` +
+      `Alocados atualmente: ${alocados}`,
       lote.total
     )
   );
@@ -113,25 +101,23 @@ window.alterarQuantidadeLote = function (nomeLote) {
     return;
   }
 
-  if (novoTotal < usados) {
+  if (novoTotal < alocados) {
     alert(
-      `Não pode ser menor que os já alocados (${usados})`
+      `Não é possível definir um total menor que o já alocado (${alocados})`
     );
     return;
   }
 
   lote.total = novoTotal;
-  lote.saldo = novoTotal - usados;
-  lote.ativo = true;
 
   saveState();
   renderDashboard();
 
-  alert('Quantidade atualizada com sucesso');
+  alert(`Quantidade do lote "${nomeLote}" atualizada`);
 };
 
 // -------------------------------
-// EXCLUIR LOTE (SOMENTE SE VAZIO)
+// EXCLUIR LOTE (SÓ SE VAZIO)
 // -------------------------------
 window.excluirLote = function (nomeLote) {
   const usados = contarGaylordsDoLote(nomeLote);
