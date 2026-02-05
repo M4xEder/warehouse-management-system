@@ -1,20 +1,21 @@
 // =======================================
 // RELATORIOS.JS
-// Leitura e consolidação de dados
+// Consolidação de dados para relatórios
+// NÃO altera estado, apenas lê o state
 // =======================================
 
 console.log('relatorios.js carregado');
 
-// ===============================
-// UTIL — CONTAR ALOCAÇÕES NO MAPA
-// ===============================
-function contarAlocadosNoMapa(nomeLote) {
+// -------------------------------
+// CONTAR ALOCADOS NO MAPA
+// -------------------------------
+function contarAlocados(loteNome) {
   let total = 0;
 
   state.areas.forEach(area => {
     area.ruas.forEach(rua => {
       rua.posicoes.forEach(pos => {
-        if (pos.ocupada && pos.lote === nomeLote) {
+        if (pos.ocupada && pos.lote === loteNome) {
           total++;
         }
       });
@@ -24,93 +25,136 @@ function contarAlocadosNoMapa(nomeLote) {
   return total;
 }
 
-// ===============================
-// UTIL — DADOS DE EXPEDIÇÃO
-// ===============================
-function obterDadosExpedicao(nomeLote) {
-  const registros =
-    state.historicoExpedidos.filter(e => e.lote === nomeLote);
+// -------------------------------
+// LISTAR ALOCADOS (DETALHADO)
+// -------------------------------
+function listarAlocados(loteNome, filtroRz = '') {
+  const lista = [];
 
-  let totalExpedido = 0;
-  let parciais = 0;
-  let teveFinal = false;
-
-  registros.forEach(r => {
-    totalExpedido += r.quantidadeExpedida;
-    if (r.tipo === 'PARCIAL') parciais++;
-    if (r.tipo === 'TOTAL') teveFinal = true;
+  state.areas.forEach(area => {
+    area.ruas.forEach(rua => {
+      rua.posicoes.forEach((pos, index) => {
+        if (
+          pos.ocupada &&
+          pos.lote === loteNome &&
+          (!filtroRz || pos.rz === filtroRz)
+        ) {
+          lista.push({
+            area: area.nome,
+            rua: rua.nome,
+            posicao: index + 1,
+            rz: pos.rz || '',
+            volume: pos.volume || ''
+          });
+        }
+      });
+    });
   });
 
-  return {
-    registros,
-    totalExpedido,
-    parciais,
-    teveFinal
-  };
+  return lista;
 }
 
-// ===============================
+// -------------------------------
+// LISTAR EXPEDIDOS (DETALHADO)
+// -------------------------------
+function listarExpedidos(loteNome, filtroRz = '') {
+  const lista = [];
+
+  state.historicoExpedidos.forEach(exp => {
+    if (exp.lote !== loteNome) return;
+
+    exp.detalhes.forEach(d => {
+      if (!filtroRz || d.rz === filtroRz) {
+        lista.push({
+          data: exp.data,
+          hora: exp.hora,
+          rz: d.rz || '',
+          volume: d.volume || ''
+        });
+      }
+    });
+  });
+
+  return lista;
+}
+
+// -------------------------------
+// TOTAL EXPEDIDO DO LOTE
+// -------------------------------
+function contarExpedidos(loteNome) {
+  let total = 0;
+
+  state.historicoExpedidos.forEach(exp => {
+    if (exp.lote === loteNome) {
+      total += exp.quantidadeExpedida;
+    }
+  });
+
+  return total;
+}
+
+// -------------------------------
+// NÚMERO DE EXPEDIÇÕES DO LOTE
+// -------------------------------
+function contarExpedicoes(loteNome) {
+  return state.historicoExpedidos.filter(
+    e => e.lote === loteNome
+  ).length;
+}
+
+// -------------------------------
 // CONSOLIDAR DADOS DO LOTE
-// ===============================
-window.consolidarLoteRelatorio = function (lote) {
-  const total = lote.total;
+// -------------------------------
+window.consolidarLoteRelatorio = function (loteNome, filtroRz = '') {
+  const lote = state.lotes.find(l => l.nome === loteNome);
+  if (!lote) return null;
 
-  const alocados = contarAlocadosNoMapa(lote.nome);
-
-  const {
-    registros,
-    totalExpedido,
-    parciais,
-    teveFinal
-  } = obterDadosExpedicao(lote.nome);
+  const totalLote = lote.total;
+  const alocados = contarAlocados(loteNome);
+  const expedidos = contarExpedidos(loteNome);
 
   const naoAlocados = Math.max(
-    total - alocados - totalExpedido,
+    totalLote - alocados - expedidos,
     0
   );
 
-  const saldo = total - totalExpedido;
+  const saldo = totalLote - expedidos;
 
-  let status = 'ATIVO';
+  const qtdExpedicoes = contarExpedicoes(loteNome);
 
-  if (teveFinal || saldo === 0) {
-    status = 'TOTALMENTE EXPEDIDO';
-  } else if (totalExpedido > 0) {
-    status = 'PARCIAL';
-  }
-
-  let mensagem = '';
-
-  if (parciais > 0 && teveFinal) {
+  let mensagem = 'Lote sem expedição';
+  if (qtdExpedicoes === 1 && saldo === 0) {
+    mensagem = 'Lote expedido em uma única expedição';
+  } else if (qtdExpedicoes > 1 && saldo === 0) {
     mensagem =
-      `Este lote teve ${parciais} ` +
+      `Este lote teve ${qtdExpedicoes - 1} ` +
       `expedições parciais antes da final`;
+  } else if (qtdExpedicoes > 0 && saldo > 0) {
+    mensagem =
+      `Lote com ${qtdExpedicoes} expedição(ões) parcial(is)`;
   }
 
   return {
-    nome: lote.nome,
-    total,
+    lote: loteNome,
+    total: totalLote,
     alocados,
-    expedidos: totalExpedido,
+    expedidos,
     naoAlocados,
     saldo,
-    status,
     mensagem,
-    registros
+    listaAlocados: listarAlocados(loteNome, filtroRz),
+    listaExpedidos: listarExpedidos(loteNome, filtroRz)
   };
 };
 
-// ===============================
+// -------------------------------
 // POPULAR SELECT DE LOTES
-// ===============================
-window.popularSelectRelatorios = function () {
-  const select =
-    document.getElementById('selectLoteRelatorio');
-
+// -------------------------------
+window.carregarSelectRelatorios = function () {
+  const select = document.getElementById('selectLoteRelatorio');
   if (!select) return;
 
-  select.innerHTML =
-    '<option value="">Selecione um lote</option>';
+  select.innerHTML = '<option value="">Selecione um lote</option>';
 
   state.lotes.forEach(lote => {
     const opt = document.createElement('option');
@@ -120,27 +164,9 @@ window.popularSelectRelatorios = function () {
   });
 };
 
-// ===============================
-// EXPORTAÇÃO — DADOS CONSOLIDADOS
-// ===============================
-window.obterRelatorioTodosLotes = function () {
-  return state.lotes.map(lote =>
-    consolidarLoteRelatorio(lote)
-  );
-};
-
-window.obterRelatorioLote = function (nomeLote) {
-  const lote =
-    state.lotes.find(l => l.nome === nomeLote);
-
-  if (!lote) return null;
-
-  return consolidarLoteRelatorio(lote);
-};
-
-// ===============================
+// -------------------------------
 // INIT AUTOMÁTICO
-// ===============================
+// -------------------------------
 document.addEventListener('DOMContentLoaded', () => {
-  popularSelectRelatorios();
+  carregarSelectRelatorios();
 });
