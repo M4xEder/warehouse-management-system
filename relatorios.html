@@ -20,10 +20,6 @@
 </head>
 <body>
 
-  
-  <!-- HEADER -->
-  <div id="header"></div>
-
 <h1>Relatórios de Expedição</h1>
 
 <div>
@@ -41,10 +37,12 @@
       <th>Lote</th>
       <th>Total</th>
       <th>Expedido</th>
-      <th>Parcial</th>
-      <th>Ativo (Alocado)</th>
+      <th>Ativo</th>
       <th>Não Endereçado</th>
-      <th>Endereço</th>
+      <th>Área</th>
+      <th>Rua</th>
+      <th>Posição</th>
+      <th>RZ</th>
       <th>Data/Hora Expedição</th>
       <th>Mensagem</th>
     </tr>
@@ -71,7 +69,7 @@
 
   preencherSelectLotes();
 
-  // Gerar tabela de acordo com o lote selecionado
+  // Gerar tabela detalhada do lote selecionado
   function gerarTabela() {
     const loteSelecionado = document.getElementById('selectLote').value;
     const tbody = document.querySelector('#tabelaRelatorio tbody');
@@ -89,56 +87,75 @@
     // Filtrar histórico do lote
     const historico = state.historicoExpedidos.filter(e => e.lote === lote.nome);
 
+    // Se não houver expedições ainda
     if (historico.length === 0) {
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${lote.nome}</td>
-        <td>${lote.total}</td>
-        <td>0</td>
-        <td>0</td>
-        <td>${alocadas}</td>
-        <td>${naoAlocadas}</td>
-        <td>-</td>
-        <td>-</td>
-        <td>-</td>
-      `;
-      tbody.appendChild(row);
+      const posicoesAtivas = [];
+      state.areas.forEach(area => {
+        area.ruas.forEach(rua => {
+          rua.posicoes.forEach(pos => {
+            if (pos.ocupada && pos.lote === lote.nome) {
+              posicoesAtivas.push({area: area.nome, rua: rua.nome, posicao: pos.posicao || '-', rz: pos.rz || '-'});
+            }
+          });
+        });
+      });
+
+      posicoesAtivas.forEach(p => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${lote.nome}</td>
+          <td>${lote.total}</td>
+          <td>-</td>
+          <td>1</td>
+          <td>${naoAlocadas}</td>
+          <td>${p.area}</td>
+          <td>${p.rua}</td>
+          <td>${p.posicao}</td>
+          <td>${p.rz}</td>
+          <td>-</td>
+          <td>-</td>
+        `;
+        tbody.appendChild(row);
+      });
+
       return;
     }
 
-    historico.forEach((exp, index) => {
-      // Endereços das gaylords da expedição
-      const enderecos = exp.detalhes.map(d => `${d.area}/${d.rua}/Pos ${d.posicao}`).join(' | ');
+    // Para cada expedição do lote
+    historico.forEach(exp => {
+      const msg = exp.tipo === 'TOTAL'
+        ? (() => {
+            const parciaisAntes = state.historicoExpedidos.filter(e =>
+              e.lote === lote.nome && e.tipo === 'PARCIAL' &&
+              new Date(`${e.data} ${e.hora}`) < new Date(`${exp.data} ${exp.hora}`)
+            ).length;
+            return parciaisAntes > 0
+              ? `🧾 Este lote teve ${parciaisAntes} expedição${parciaisAntes>1?'s':''} parcial${parciaisAntes>1?'s':''} antes da final`
+              : '';
+          })()
+        : '';
 
-      // Mensagem se houve mais de uma expedição parcial antes
-      let msg = '';
-      if (exp.tipo === 'TOTAL') {
-        const parciaisAntes = state.historicoExpedidos.filter(e =>
-          e.lote === lote.nome && e.tipo === 'PARCIAL' &&
-          new Date(`${e.data} ${e.hora}`) < new Date(`${exp.data} ${exp.hora}`)
-        ).length;
-        if (parciaisAntes > 0) {
-          msg = `🧾 Este lote teve ${parciaisAntes} expedição${parciaisAntes>1?'s':''} parcial${parciaisAntes>1?'s':''} antes da final`;
-        }
-      }
-
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${lote.nome}</td>
-        <td>${lote.total}</td>
-        <td>${exp.tipo==='TOTAL'?exp.quantidadeExpedida:0}</td>
-        <td>${exp.tipo==='PARCIAL'?exp.quantidadeExpedida:0}</td>
-        <td>${alocadas}</td>
-        <td>${naoAlocadas}</td>
-        <td>${enderecos || '-'}</td>
-        <td>${exp.data} ${exp.hora}</td>
-        <td>${msg}</td>
-      `;
-      tbody.appendChild(row);
+      // Cada gaylord da expedição vira uma linha
+      exp.detalhes.forEach(d => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${lote.nome}</td>
+          <td>${lote.total}</td>
+          <td><span class="badge ${exp.tipo==='TOTAL'?'total':'parcial'}">${exp.tipo}</span></td>
+          <td>${alocadas}</td>
+          <td>${naoAlocadas}</td>
+          <td>${d.area}</td>
+          <td>${d.rua}</td>
+          <td>${d.posicao}</td>
+          <td>${d.rz || '-'}</td>
+          <td>${exp.data} ${exp.hora}</td>
+          <td>${msg}</td>
+        `;
+        tbody.appendChild(row);
+      });
     });
   }
 </script>
-  
- <script src="js/header.js"></script>
+
 </body>
 </html>
