@@ -1,19 +1,19 @@
 // ===============================
-// MODAL.JS — ENDEREÇAMENTO
+// MODAL.JS — ENDEREÇAMENTO (VERSÃO ESTÁVEL)
 // ===============================
 
 let modalContext = null;
 
-// -------------------------------
-// CONTADOR REAL DE LOTE (MAPA = VERDADE)
-// -------------------------------
+// ===============================
+// CONTADOR REAL DO LOTE (MAPA É A VERDADE)
+// ===============================
 function contarGaylordsDoLote(nomeLote) {
   let total = 0;
 
   state.areas.forEach(area => {
     area.ruas.forEach(rua => {
       rua.posicoes.forEach(pos => {
-        if (pos.ocupada === true && pos.lote === nomeLote) {
+        if (pos.ocupada && pos.lote === nomeLote) {
           total++;
         }
       });
@@ -23,10 +23,10 @@ function contarGaylordsDoLote(nomeLote) {
   return total;
 }
 
-// -------------------------------
+// ===============================
 // ABRIR MODAL
-// -------------------------------
-function abrirModal(areaIndex, ruaIndex, posicaoIndex) {
+// ===============================
+window.abrirModal = function (areaIndex, ruaIndex, posicaoIndex) {
   const modal = document.getElementById('modal');
   if (!modal) return;
 
@@ -47,7 +47,8 @@ function abrirModal(areaIndex, ruaIndex, posicaoIndex) {
     select.appendChild(opt);
   });
 
-  if (posicao.ocupada === true) {
+  // Preenche dados se já estiver ocupada
+  if (posicao.ocupada) {
     select.value = posicao.lote;
     document.getElementById('modalRz').value = posicao.rz || '';
     document.getElementById('modalVolume').value = posicao.volume || '';
@@ -58,20 +59,20 @@ function abrirModal(areaIndex, ruaIndex, posicaoIndex) {
   }
 
   modal.classList.remove('hidden');
-}
+};
 
-// -------------------------------
+// ===============================
 // FECHAR MODAL
-// -------------------------------
-function fecharModal() {
+// ===============================
+window.fecharModal = function () {
   document.getElementById('modal').classList.add('hidden');
   modalContext = null;
-}
+};
 
-// -------------------------------
+// ===============================
 // CONFIRMAR ENDEREÇAMENTO
-// -------------------------------
-function confirmarEndereco() {
+// ===============================
+window.confirmarEndereco = function () {
   if (!modalContext) return;
 
   const { areaIndex, ruaIndex, posicaoIndex } = modalContext;
@@ -97,12 +98,12 @@ function confirmarEndereco() {
       .posicoes[posicaoIndex];
 
   // ===============================
-  // 🔒 REGRA DE LOTE CHEIO (CORRETA)
+  // REGRA DE LOTE CHEIO (SEGURA)
   // ===============================
   const usados = contarGaylordsDoLote(loteNome);
 
   const mesmaPosicaoMesmoLote =
-    posicao.ocupada === true && posicao.lote === loteNome;
+    posicao.ocupada && posicao.lote === loteNome;
 
   if (usados >= lote.total && !mesmaPosicaoMesmoLote) {
     alert(
@@ -112,20 +113,7 @@ function confirmarEndereco() {
   }
 
   // ===============================
-  // ⚠️ CONFIRMAR SOBRESCRITA
-  // ===============================
-  if (
-    posicao.ocupada === true &&
-    posicao.lote !== loteNome
-  ) {
-    const confirmar = confirm(
-      `Esta posição já está ocupada pelo lote "${posicao.lote}".\nDeseja substituir?`
-    );
-    if (!confirmar) return;
-  }
-
-  // ===============================
-  // ALOCA
+  // ALOCAÇÃO (SEM DUPLICAR)
   // ===============================
   posicao.ocupada = true;
   posicao.lote = loteNome;
@@ -135,12 +123,12 @@ function confirmarEndereco() {
   saveState();
   fecharModal();
   renderMapa();
-}
+};
 
-// -------------------------------
+// ===============================
 // REMOVER GAYLORD
-// -------------------------------
-function removerGaylord() {
+// ===============================
+window.removerGaylord = function () {
   if (!modalContext) return;
 
   const { areaIndex, ruaIndex, posicaoIndex } = modalContext;
@@ -160,4 +148,4 @@ function removerGaylord() {
   saveState();
   fecharModal();
   renderMapa();
-}
+};
