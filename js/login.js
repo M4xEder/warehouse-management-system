@@ -57,3 +57,12 @@ window.logout = function() {
   localStorage.removeItem('usuarioLogado');
   window.location.href = 'login.html';
 };
+// ===============================
+// CHECAR SESSÃO (SAFE)
+// ===============================
+window.checarSessao = function () {
+  const usuario = localStorage.getItem('usuarioLogado');
+  if (!usuario) {
+    window.location.replace('login.html');
+  }
+};
