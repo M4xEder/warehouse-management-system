@@ -8,7 +8,7 @@
   <!-- CSS -->
   <link rel="stylesheet" href="css/style.css" />
 
-  <!-- EXCEL -->
+  <!-- XLSX -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
   <!-- PDF -->
@@ -18,66 +18,61 @@
 
 <body>
 
-  <!-- 🔐 LOGIN SEMPRE PRIMEIRO -->
-  <script src="js/login.js"></script>
-  <script>
-    checarSessao();
-  </script>
+<!-- LOGIN -->
+<script src="js/login.js"></script>
+<script>
+  checarSessao();
+</script>
 
-  <!-- 🔌 SUPABASE -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/supabase.js"></script>
+<!-- SUPABASE PRIMEIRO -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
 
-  <!-- HEADER -->
-  <div id="header"></div>
+<!-- STATE (DEPENDE DO SUPABASE) -->
+<script src="js/state.js"></script>
 
-  <h1>Relatórios de Expedição</h1>
+<!-- HEADER -->
+<div id="header"></div>
+<script src="js/header.js"></script>
 
-  <!-- FILTRO -->
-  <div class="filtro">
-    <label>
-      Lote:
-      <select id="selectLote">
-        <option value="">Selecione um lote</option>
-        <option value="todos">Todos</option>
-      </select>
-    </label>
+<h1>Relatórios de Expedição</h1>
 
-    <button onclick="gerarRelatorio()">Gerar Relatório</button>
-    <button onclick="exportarExcel()">Exportar Excel</button>
-    <button onclick="exportarPDF()">Exportar PDF</button>
-  </div>
+<!-- FILTROS -->
+<div class="filtro">
+  <label>
+    Lote:
+    <select id="selectLote">
+      <option value="">Carregando...</option>
+    </select>
+  </label>
 
-  <!-- RESUMO -->
-  <div id="resumo"></div>
+  <button onclick="gerarRelatorio()">Gerar Relatório</button>
+  <button onclick="exportarExcel()">Exportar Excel</button>
+  <button onclick="exportarPDF()">Exportar PDF</button>
+</div>
 
-  <!-- TABELA -->
-  <table id="tabelaRelatorio">
-    <thead>
-      <tr>
-        <th>Lote</th>
-        <th>RZ</th>
-        <th>Volume</th>
-        <th>Status</th>
-        <th>Área</th>
-        <th>Rua</th>
-        <th>Data</th>
-        <th>Hora</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+<!-- RESUMO -->
+<div id="resumo" style="display:none"></div>
 
-  <!-- ================= SCRIPTS BASE ================= -->
+<!-- TABELA -->
+<table id="tabelaRelatorio">
+  <thead>
+    <tr>
+      <th>Lote</th>
+      <th>RZ</th>
+      <th>Volume</th>
+      <th>Status</th>
+      <th>Área</th>
+      <th>Rua</th>
+      <th>Data</th>
+      <th>Hora</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
 
-  <!-- HEADER -->
-  <script src="js/header.js"></script>
-
-  <!-- STATE -->
-  <script src="js/state.js"></script>
-
-  <!-- RELATÓRIOS (SEMPRE POR ÚLTIMO) -->
-  <script src="js/relatorios/relatorios.js"></script>
+<!-- RELATÓRIOS -->
+<script src="js/relatorios/relatorios.js"></script>
 
 </body>
 </html>
