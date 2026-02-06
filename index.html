@@ -61,34 +61,38 @@
   <!-- ... mantém exatamente como está ... -->
 
   <!-- ================= SCRIPTS ================= -->
+<!-- Infra -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/header.js"></script>
 
-  <!-- SUPABASE -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/supabase.js"></script>
+<!-- Estado -->
+<script src="js/state.js"></script>
 
-  <!-- HEADER -->
-  <script src="js/header.js"></script>
+<!-- Base -->
+<script src="js/lotes.js"></script>
+<script src="js/mapa.js"></script>
+<script src="js/modal.js"></script>
 
-  <!-- STATE -->
-  <script src="js/state.js"></script>
+<!-- Funcionalidades -->
+<script src="js/busca.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/expedicao.js"></script>
+<script src="js/relatorios-expedicao.js"></script>
+<script src="js/exportacao-expedicao.js"></script>
 
-  <!-- BASE -->
-  <script src="js/lotes.js"></script>
-  <script src="js/mapa.js"></script>
-  <script src="js/modal.js"></script>
+<!-- DB / Bootstrap -->
+<script src="js/mapa-db.js"></script>
+<script src="js/main.js"></script>
 
-  <!-- DB / INTEGRAÇÃO -->
-  <script src="js/mapa-db.js"></script>
+<!-- Login SEMPRE POR ÚLTIMO -->
+<script src="js/login.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    checarSessao();
+  });
+</script>
 
-  <!-- FUNCIONALIDADES -->
-  <script src="js/busca.js"></script>
-  <script src="js/dashboard.js"></script>
-  <script src="js/expedicao.js"></script>
-  <script src="js/relatorios-expedicao.js"></script>
-  <script src="js/exportacao-expedicao.js"></script>
-
-  <!-- MAIN (SEMPRE O ÚLTIMO) -->
-  <script src="js/main.js"></script>
 
 </body>
 </html>
