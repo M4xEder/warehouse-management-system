@@ -5,103 +5,30 @@
   <title>Relatórios de Expedição</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- CSS GLOBAL -->
+  <!-- CSS -->
   <link rel="stylesheet" href="css/style.css" />
 
-  <!-- XLSX (Excel) -->
+  <!-- EXCEL -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
   <!-- PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-
-  <!-- ESTILO LOCAL (PLANILHA) -->
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f6f8;
-      padding: 20px;
-    }
-
-    h1 {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
-    .filtro {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
-      margin-bottom: 15px;
-    }
-
-    select, button {
-      padding: 8px 12px;
-      font-size: 14px;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      cursor: pointer;
-    }
-
-    button {
-      background: #16a34a;
-      color: #fff;
-      border: none;
-    }
-
-    button:hover {
-      background: #13803d;
-    }
-
-    #resumo {
-      display: none;
-      margin-bottom: 15px;
-      padding: 12px;
-      background: #eefaf0;
-      border-left: 5px solid #16a34a;
-      font-size: 14px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: #fff;
-    }
-
-    th, td {
-      border: 1px solid #ddd;
-      padding: 8px 6px;
-      font-size: 13px;
-      text-align: left;
-      white-space: nowrap;
-    }
-
-    th {
-      background: #0f766e;
-      color: #fff;
-      font-weight: bold;
-    }
-
-    tr:nth-child(even) {
-      background: #f3f3f3;
-    }
-  </style>
 </head>
 
 <body>
 
-  <!-- PROTEÇÃO DE LOGIN -->
+  <!-- 🔐 LOGIN SEMPRE PRIMEIRO -->
   <script src="js/login.js"></script>
   <script>
     checarSessao();
   </script>
 
-  <!-- SUPABASE -->
+  <!-- 🔌 SUPABASE -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase.js"></script>
 
-  <!-- HEADER DINÂMICO -->
+  <!-- HEADER -->
   <div id="header"></div>
 
   <h1>Relatórios de Expedição</h1>
@@ -141,11 +68,15 @@
     <tbody></tbody>
   </table>
 
-  <!-- SCRIPTS BASE -->
+  <!-- ================= SCRIPTS BASE ================= -->
+
+  <!-- HEADER -->
   <script src="js/header.js"></script>
+
+  <!-- STATE -->
   <script src="js/state.js"></script>
 
-  <!-- RELATÓRIOS -->
+  <!-- RELATÓRIOS (SEMPRE POR ÚLTIMO) -->
   <script src="js/relatorios/relatorios.js"></script>
 
 </body>
