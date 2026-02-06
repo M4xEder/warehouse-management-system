@@ -1,27 +1,26 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Relatórios de Expedição</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- CSS -->
-  <link rel="stylesheet" href="css/style.css">
+  <!-- CSS GLOBAL -->
+  <link rel="stylesheet" href="css/style.css" />
 
-  <!-- PDF & Excel -->
+  <!-- XLSX -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+  <!-- PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
+  <!-- ESTILO LOCAL (PLANILHA) -->
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f5f5f5;
+      background: #f4f6f8;
       padding: 20px;
-    }
-
-    #header {
-      margin-bottom: 20px;
     }
 
     h1 {
@@ -30,11 +29,11 @@
     }
 
     .filtro {
-      margin-bottom: 20px;
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
       align-items: center;
+      margin-bottom: 15px;
     }
 
     select, button {
@@ -59,8 +58,8 @@
       display: none;
       margin-bottom: 15px;
       padding: 12px;
-      background: #e0f7fa;
-      border-left: 5px solid #00796b;
+      background: #eefaf0;
+      border-left: 5px solid #16a34a;
       font-size: 14px;
     }
 
@@ -68,53 +67,61 @@
       width: 100%;
       border-collapse: collapse;
       background: #fff;
-      margin-bottom: 20px;
     }
 
-    table th, table td {
-      border: 1px solid #ccc;
+    th, td {
+      border: 1px solid #ddd;
       padding: 8px 6px;
-      text-align: left;
       font-size: 13px;
+      text-align: left;
     }
 
-    table th {
-      background: #00796b;
+    th {
+      background: #0f766e;
       color: #fff;
       font-weight: bold;
     }
 
-    table tr:nth-child(even) {
-      background: #f1f1f1;
+    tr:nth-child(even) {
+      background: #f3f3f3;
     }
   </style>
 </head>
 <body>
-  
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase.js"></script>
-  
-<script src="js/login.js"></script>
-<script>
-  checarSessao();
-</script>
-  <!-- HEADER DINÂMICO -->
+
+  <!-- PROTEÇÃO DE LOGIN -->
+  <script src="js/login.js"></script>
+  <script>
+    checarSessao();
+  </script>
+
+  <!-- SUPABASE -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js"></script>
+
+  <!-- HEADER -->
   <div id="header"></div>
 
   <h1>Relatórios de Expedição</h1>
 
+  <!-- FILTRO -->
   <div class="filtro">
     <label>
       Lote:
-      <select id="selectLote"></select>
+      <select id="selectLote">
+        <option value="">Selecione um lote</option>
+      </select>
     </label>
+
     <button onclick="gerarRelatorio()">Gerar Relatório</button>
     <button onclick="exportarExcel()">Exportar Excel</button>
     <button onclick="exportarPDF()">Exportar PDF</button>
   </div>
 
+  <!-- RESUMO -->
   <div id="resumo"></div>
 
+  <!-- TABELA -->
   <table id="tabelaRelatorio">
     <thead>
       <tr>
@@ -131,10 +138,13 @@
     <tbody></tbody>
   </table>
 
-  <!-- JS -->
+  <!-- SCRIPTS BASE -->
   <script src="js/header.js"></script>
   <script src="js/state.js"></script>
-  <script src="js/relatórios/relatorios.js"></script>
+  <script src="js/main.js"></script>
+
+  <!-- RELATÓRIOS -->
+  <script src="js/relatorios/relatorios.js"></script>
 
 </body>
 </html>
