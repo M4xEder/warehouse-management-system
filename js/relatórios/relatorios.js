@@ -72,6 +72,7 @@ function renderTabela(loteNome) {
   const lote = state.lotes.find(l => l.nome === loteNome);
   if (!lote) return;
 
+  // Gaylords ativas
   state.areas.forEach(area => {
     area.ruas.forEach(rua => {
       rua.posicoes.forEach(pos => {
@@ -93,6 +94,7 @@ function renderTabela(loteNome) {
     });
   });
 
+  // Gaylords expedidas
   state.historicoExpedidos
     .filter(e => e.lote === loteNome)
     .forEach(exp => {
@@ -127,12 +129,12 @@ function exportarExcel() {
 // -------------------------------
 function exportarPDF() {
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
+  const doc = new jsPDF({ orientation: "landscape" });
 
   doc.setFontSize(14);
   doc.text("Relatório de Expedição", 14, 20);
 
-  doc.autoTable({ 
+  doc.autoTable({
     html: '#tabelaRelatorio',
     startY: 30,
     theme: 'grid',
