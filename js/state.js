@@ -1,5 +1,5 @@
 // ===============================
-// STATE.JS — CONTROLE DE ESTADO
+// STATE.JS — LOCAL + SUPABASE
 // ===============================
 
 const STORAGE_KEY = 'gaylords-system-state';
@@ -14,76 +14,91 @@ window.state = {
 };
 
 // ===============================
-// LOAD STATE
+// LOAD STATE (SUPABASE → LOCAL)
 // ===============================
-function loadState() {
+async function loadState() {
   try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    if (!data) return;
+    // 1️⃣ BUSCAR LOTES DO SUPABASE
+    const { data: lotesDB, error } = await supabase
+      .from('lotes')
+      .select('*')
+      .order('criado_em', { ascending: true });
 
-    const parsed = JSON.parse(data);
+    if (error) {
+      console.warn('Supabase indisponível, usando localStorage', error);
+      carregarLocal();
+      return;
+    }
 
-    state.areas = parsed.areas || [];
-    state.historicoExpedidos = parsed.historicoExpedidos || [];
+    // 2️⃣ NORMALIZAR LOTES DO BANCO
+    state.lotes = lotesDB.map(lote => ({
+      id: lote.id,
+      nome: lote.nome,
+      total: lote.total_gaylords,
+      saldo: lote.total_gaylords,
+      ativo: true,
+      cor: gerarCorFallback()
+    }));
 
-    // 🔴 NORMALIZA LOTES ANTIGOS
-    state.lotes = (parsed.lotes || []).map(lote => {
-      return {
-        id: lote.id || crypto.randomUUID(),
-        nome: lote.nome,
-        total: Number(lote.total) || 0,
+    // 3️⃣ ÁREAS E HISTÓRICO (ainda local)
+    carregarLocal(false);
 
-        // 👉 NOVOS CAMPOS (compatível com dados antigos)
-        saldo:
-          lote.saldo !== undefined
-            ? Number(lote.saldo)
-            : Number(lote.total) || 0,
-
-        ativo:
-          lote.ativo !== undefined
-            ? lote.ativo
-            : (Number(lote.saldo ?? lote.total) > 0),
-
-        cor: lote.cor || gerarCorFallback()
-      };
-    });
+    console.log('State carregado do Supabase');
 
   } catch (err) {
-    console.error('Erro ao carregar state:', err);
-    alert('Erro ao carregar dados salvos. O sistema será reiniciado.');
-    localStorage.removeItem(STORAGE_KEY);
+    console.error('Erro geral loadState:', err);
+    carregarLocal();
   }
 }
 
 // ===============================
-// SAVE STATE
+// FALLBACK LOCAL
+// ===============================
+function carregarLocal(carregarLotes = true) {
+  const data = localStorage.getItem(STORAGE_KEY);
+  if (!data) return;
+
+  const parsed = JSON.parse(data);
+
+  state.areas = parsed.areas || [];
+  state.historicoExpedidos = parsed.historicoExpedidos || [];
+
+  if (carregarLotes) {
+    state.lotes = (parsed.lotes || []).map(lote => ({
+      id: lote.id || crypto.randomUUID(),
+      nome: lote.nome,
+      total: Number(lote.total) || 0,
+      saldo: Number(lote.saldo ?? lote.total) || 0,
+      ativo: lote.ativo ?? true,
+      cor: lote.cor || gerarCorFallback()
+    }));
+  }
+}
+
+// ===============================
+// SAVE STATE (LOCAL)
 // ===============================
 function saveState() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch (err) {
-    console.error('Erro ao salvar state:', err);
-    alert('Erro ao salvar dados.');
-  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
 // ===============================
-// RESET (DEBUG)
+// RESET
 // ===============================
 window.resetState = function () {
   if (!confirm('Deseja apagar TODOS os dados?')) return;
-  localStorage.removeItem(STORAGE_KEY);
+  localStorage.clear();
   location.reload();
 };
 
 // ===============================
-// COR DE SEGURANÇA (fallback)
+// COR FALLBACK
 // ===============================
 function gerarCorFallback() {
   return `hsl(${Math.random() * 360}, 70%, 65%)`;
 }
 
 // ===============================
-// INIT AUTOMÁTICO
+// INIT
 // ===============================
 loadState();
