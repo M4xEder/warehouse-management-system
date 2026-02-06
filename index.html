@@ -10,11 +10,6 @@
 </head>
 <body>
 
-<script src="js/login.js"></script>
-<script>
-  checarSessao();
-</script>
-
   <!-- HEADER DINÂMICO -->
   <div id="header"></div>
 
@@ -96,10 +91,7 @@
 
   <!-- ================= MODAL EXPEDIÇÃO ================= -->
   <div id="modalExpedicao" class="modal hidden">
-    <div
-      class="modal-content"
-      style="width: 500px; max-height: 80vh; overflow-y: auto;"
-    >
+    <div class="modal-content" style="width: 500px; max-height: 80vh; overflow-y: auto;">
       <h3>Expedir Gaylords do Lote</h3>
 
       <p style="font-size: 14px;">
@@ -137,10 +129,10 @@
 
   <!-- Infra -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase.js"></script>
+  <script src="js/supabase.js"></script>
   <script src="js/header.js"></script>
 
-  <!-- Estado (sempre primeiro) -->
+  <!-- Estado -->
   <script src="js/state.js"></script>
 
   <!-- Base -->
@@ -157,6 +149,14 @@
 
   <!-- Bootstrap -->
   <script src="js/main.js"></script>
+
+  <!-- Login (sempre por último) -->
+  <script src="js/login.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      checarSessao();
+    });
+  </script>
 
 </body>
 </html>
