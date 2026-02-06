@@ -1,16 +1,11 @@
-// =======================================
-// RELATORIOS.JS — Relatórios detalhados
-// =======================================
-
 console.log('relatorios.js carregado');
 
 // -------------------------------
-// PREENCHE SELECT COM LOTES
+// POPULAR SELECT
 // -------------------------------
 function popularSelectLotes() {
   const select = document.getElementById('selectLoteRelatorio');
   select.innerHTML = '<option value="">Selecione um lote</option>';
-
   state.lotes.forEach(lote => {
     const option = document.createElement('option');
     option.value = lote.nome;
@@ -20,25 +15,21 @@ function popularSelectLotes() {
 }
 
 // -------------------------------
-// FILTRAR LOTE SELECIONADO
+// FILTRAR LOTE
 // -------------------------------
 function filtrarLote() {
-  const select = document.getElementById('selectLoteRelatorio');
-  const loteNome = select.value.trim();
-
+  const loteNome = document.getElementById('selectLoteRelatorio').value.trim();
   if (!loteNome) return alert('Selecione um lote');
-
   renderResumo(loteNome);
   renderTabela(loteNome);
 }
 
 // -------------------------------
-// RENDER RESUMO DO LOTE
+// RESUMO
 // -------------------------------
 function renderResumo(loteNome) {
   const resumo = document.getElementById('resumoLote');
   resumo.innerHTML = '';
-
   const lote = state.lotes.find(l => l.nome === loteNome);
   if (!lote) return;
 
@@ -62,15 +53,13 @@ function renderResumo(loteNome) {
 
   const naoAlocadas = total - (alocadas + expedidas);
 
-  let html = `<div style="background:#f0f4f8;padding:10px;border-left:4px solid #2563eb;margin-bottom:12px;">
+  resumo.innerHTML = `<div>
       <strong>Detalhes do Lote "${loteNome}"</strong><br>
       Total: ${total} gaylords<br>
       Expedidas: ${expedidas} (${parciais} parcial${parciais !== 1 ? 's' : ''})<br>
       Gaylords ativas: ${alocadas}<br>
       Não endereçadas: ${naoAlocadas}
   </div>`;
-
-  resumo.innerHTML = html;
 }
 
 // -------------------------------
@@ -83,21 +72,20 @@ function renderTabela(loteNome) {
   const lote = state.lotes.find(l => l.nome === loteNome);
   if (!lote) return;
 
-  // Gaylords alocadas
   state.areas.forEach(area => {
     area.ruas.forEach(rua => {
       rua.posicoes.forEach(pos => {
         if (pos.ocupada && pos.lote === loteNome) {
           const tr = document.createElement('tr');
           tr.innerHTML = `
-            <td>${loteNome}</td>
-            <td>${pos.rz || '-'}</td>
-            <td>${pos.volume || '-'}</td>
-            <td>Ativa</td>
-            <td>${area.nome}</td>
-            <td>${rua.nome}</td>
-            <td>-</td>
-            <td>-</td>
+            <td data-label="Lote">${loteNome}</td>
+            <td data-label="RZ">${pos.rz || '-'}</td>
+            <td data-label="Volume">${pos.volume || '-'}</td>
+            <td data-label="Status">Ativa</td>
+            <td data-label="Área">${area.nome}</td>
+            <td data-label="Rua">${rua.nome}</td>
+            <td data-label="Data">-</td>
+            <td data-label="Hora">-</td>
           `;
           tbody.appendChild(tr);
         }
@@ -105,21 +93,20 @@ function renderTabela(loteNome) {
     });
   });
 
-  // Gaylords expedidas
   state.historicoExpedidos
     .filter(e => e.lote === loteNome)
     .forEach(exp => {
       exp.detalhes.forEach(d => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td>${loteNome}</td>
-          <td>${d.rz || '-'}</td>
-          <td>${d.volume || '-'}</td>
-          <td>Expedida (${exp.tipo})</td>
-          <td>${d.area}</td>
-          <td>${d.rua}</td>
-          <td>${exp.data}</td>
-          <td>${exp.hora}</td>
+          <td data-label="Lote">${loteNome}</td>
+          <td data-label="RZ">${d.rz || '-'}</td>
+          <td data-label="Volume">${d.volume || '-'}</td>
+          <td data-label="Status">Expedida (${exp.tipo})</td>
+          <td data-label="Área">${d.area}</td>
+          <td data-label="Rua">${d.rua}</td>
+          <td data-label="Data">${exp.data}</td>
+          <td data-label="Hora">${exp.hora}</td>
         `;
         tbody.appendChild(tr);
       });
@@ -140,18 +127,20 @@ function exportarExcel() {
 // -------------------------------
 function exportarPDF() {
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF('l', 'pt', 'a4');
+  const doc = new jsPDF();
 
-  const table = document.getElementById('tabelaRelatorio');
-  doc.html(table, {
-    callback: function (doc) {
-      doc.save('relatorio_lote.pdf');
-    },
-    margin: [20, 20, 20, 20],
-    autoPaging: 'text',
-    x: 10,
-    y: 20
+  doc.setFontSize(14);
+  doc.text("Relatório de Expedição", 14, 20);
+
+  doc.autoTable({ 
+    html: '#tabelaRelatorio',
+    startY: 30,
+    theme: 'grid',
+    headStyles: { fillColor: [37, 99, 235], textColor: 255 },
+    styles: { fontSize: 10, cellPadding: 3 }
   });
+
+  doc.save('relatorio_lote.pdf');
 }
 
 // -------------------------------
