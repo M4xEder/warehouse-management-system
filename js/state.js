@@ -1,12 +1,9 @@
 // ===============================
-// STATE.JS — ESTÁVEL + SUPABASE SAFE
+// STATE.JS — LOCAL + SUPABASE
 // ===============================
 
 const STORAGE_KEY = 'gaylords-system-state';
 
-// ===============================
-// ESTADO GLOBAL
-// ===============================
 window.state = {
   areas: [],
   lotes: [],
@@ -14,42 +11,33 @@ window.state = {
 };
 
 // ===============================
-// LOAD STATE (SUPABASE → LOCAL)
+// LOAD STATE
 // ===============================
 async function loadState() {
   try {
-    if (typeof window.supabase === 'undefined') {
-      console.warn('Supabase não disponível, usando localStorage');
-      carregarLocal();
-      return;
-    }
-
     const { data: lotesDB, error } = await supabase
       .from('lotes')
       .select('*')
       .order('criado_em', { ascending: true });
 
     if (error) {
-      console.warn('Erro Supabase, fallback local', error);
+      console.warn('Supabase indisponível, usando localStorage', error);
       carregarLocal();
       return;
     }
 
-    // NORMALIZA LOTES
     state.lotes = lotesDB.map(lote => ({
       id: lote.id,
       nome: lote.nome,
-      total: Number(lote.total_gaylords) || 0,
-      saldo: Number(lote.total_gaylords) || 0,
+      total: lote.total_gaylords,
+      saldo: lote.total_gaylords,
       ativo: true,
       cor: gerarCorFallback()
     }));
 
-    // AREAS + HISTÓRICO LOCAL
     carregarLocal(false);
 
     console.log('State carregado do Supabase');
-
   } catch (err) {
     console.error('Erro geral loadState:', err);
     carregarLocal();
@@ -63,33 +51,29 @@ function carregarLocal(carregarLotes = true) {
   const data = localStorage.getItem(STORAGE_KEY);
   if (!data) return;
 
-  try {
-    const parsed = JSON.parse(data);
+  const parsed = JSON.parse(data);
 
-    state.areas = parsed.areas || [];
-    state.historicoExpedidos = parsed.historicoExpedidos || [];
+  state.areas = parsed.areas || [];
+  state.historicoExpedidos = parsed.historicoExpedidos || [];
 
-    if (carregarLotes) {
-      state.lotes = (parsed.lotes || []).map(lote => ({
-        id: lote.id || crypto.randomUUID(),
-        nome: lote.nome,
-        total: Number(lote.total) || 0,
-        saldo: Number(lote.saldo ?? lote.total) || 0,
-        ativo: lote.ativo ?? true,
-        cor: lote.cor || gerarCorFallback()
-      }));
-    }
-  } catch (e) {
-    console.error('Erro ao carregar localStorage', e);
+  if (carregarLotes) {
+    state.lotes = (parsed.lotes || []).map(lote => ({
+      id: lote.id || crypto.randomUUID(),
+      nome: lote.nome,
+      total: Number(lote.total) || 0,
+      saldo: Number(lote.saldo ?? lote.total) || 0,
+      ativo: lote.ativo ?? true,
+      cor: lote.cor || gerarCorFallback()
+    }));
   }
 }
 
 // ===============================
 // SAVE STATE
 // ===============================
-window.saveState = function () {
+function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-};
+}
 
 // ===============================
 // RESET
@@ -108,12 +92,6 @@ function gerarCorFallback() {
 }
 
 // ===============================
-// INIT SEGURO
+// INIT
 // ===============================
-(function aguardarSupabase() {
-  if (typeof window.supabase === 'undefined') {
-    setTimeout(aguardarSupabase, 100);
-    return;
-  }
-  loadState();
-})();
+loadState();
