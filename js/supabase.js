@@ -1,19 +1,20 @@
 // =======================================
-// SUPABASE.JS — FRONTEND (GITHUB PAGES)
+// SUPABASE.JS
 // =======================================
 
 const SUPABASE_URL = 'https://fctxvszjqhkfstzqgvat.supabase.co';
 
+// ⚠️ Use APENAS a Publishable Key (anon)
 const SUPABASE_ANON_KEY =
-  'eyJhbGci0iJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // cola inteira aqui
+  'sb_publishable_MGb2JD0gYRYvihRdAbSEiQ_eeyu8tie';
 
-window.supabaseClient = window.supabase.createClient(
+const supabase = window.supabase.createClient(
   SUPABASE_URL,
   SUPABASE_ANON_KEY
 );
 
-console.log('✅ Supabase conectado com sucesso');
-// ===============================
+// Debug opcional
+console.log('Supabase conectado:', supabase);// ===============================
 // BUSCAR LOTES DO BANCO
 // ===============================
 async function carregarLotesDoBanco() {
