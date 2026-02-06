@@ -5,20 +5,21 @@
   <title>Relatórios de Expedição</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <!-- CSS -->
   <link rel="stylesheet" href="css/style.css">
 
-  <!-- SheetJS para Excel -->
+  <!-- SheetJS (Excel) -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-
-  <!-- jsPDF + autoTable -->
+  <!-- jsPDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
   <style>
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-    th, td { border: 1px solid #ccc; padding: 6px; font-size: 12px; text-align: left; }
-    th { background: #16a34a; color: #fff; }
-    select, button { padding: 6px 10px; margin: 5px; font-size: 14px; }
+    main { padding: 20px; font-family: Arial, sans-serif; }
+    h1 { margin-bottom: 20px; }
+    select, button { margin: 5px 0; padding: 6px 10px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
+    th { background: #f0f0f0; }
   </style>
 </head>
 <body>
@@ -26,17 +27,19 @@
   <!-- HEADER DINÂMICO -->
   <div id="header"></div>
 
-  <main id="app">
+  <main>
     <h1>Relatórios de Expedição</h1>
 
-    <!-- ================= FILTRO POR LOTE ================= -->
-    <label for="selectLoteRelatorio">Filtrar por Lote:</label>
+    <!-- FILTRO POR LOTE -->
+    <label>Filtrar por lote:</label>
     <select id="selectLoteRelatorio">
       <option value="">Todos os lotes</option>
     </select>
-    <button onclick="filtrarTabela()">Pesquisar</button>
+    <button onclick="renderTabelaRelatorio()">Pesquisar</button>
+    <button onclick="exportarRelatorioExcel()">Exportar Excel</button>
+    <button onclick="exportarRelatorioPDF()">Exportar PDF</button>
 
-    <!-- ================= TABELA ================= -->
+    <!-- TABELA -->
     <table id="tabelaRelatorio">
       <thead>
         <tr>
@@ -44,47 +47,50 @@
           <th>Total</th>
           <th>Expedido</th>
           <th>Ativo</th>
-          <th>Não Endereçado</th>
+          <th>Não endereçado</th>
           <th>Área</th>
           <th>Rua</th>
           <th>Posição</th>
           <th>RZ</th>
           <th>Volume</th>
-          <th>Data/Hora Expedição</th>
+          <th>Data/Hora</th>
           <th>Mensagem</th>
         </tr>
       </thead>
       <tbody></tbody>
     </table>
-
-    <!-- ================= BOTÕES ================= -->
-    <button onclick="exportarRelatorioExcel()">Exportar Excel</button>
-    <button onclick="exportarRelatorioPDF()">Exportar PDF</button>
   </main>
 
-  <!-- ================= SCRIPTS INFRA ================= -->
+  <!-- ================= SCRIPTS ================= -->
+  <!-- Infra -->
   <script src="js/supabase.js"></script>
   <script src="js/header.js"></script>
-  <script src="js/state.js"></script>
-  <script src="js/relatorios-expedicao.js"></script>
-  <script src="js/exportacao-expedicao.js"></script>
 
-  <!-- ================= JS RELATÓRIO ================= -->
+  <!-- Estado -->
+  <script src="js/state.js"></script>
+
+  <!-- Base -->
+  <script src="js/lotes.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/expedicao.js"></script>
+  <script src="js/relatorios-expedicao.js"></script>
+
+  <!-- RELATÓRIO -->
   <script>
     // Preencher select de lotes
-    function atualizarSelectLotes() {
+    function popularSelectLotes() {
       const select = document.getElementById('selectLoteRelatorio');
       select.innerHTML = '<option value="">Todos os lotes</option>';
 
-      state.lotes.forEach(l => {
+      state.lotes.forEach(lote => {
         const option = document.createElement('option');
-        option.value = l.nome;
-        option.textContent = l.nome;
+        option.value = lote.nome;
+        option.textContent = lote.nome;
         select.appendChild(option);
       });
     }
 
-    // Renderizar tabela
+    // Função para renderizar tabela completa
     function renderTabelaRelatorio() {
       const tbody = document.querySelector('#tabelaRelatorio tbody');
       tbody.innerHTML = '';
@@ -100,10 +106,10 @@
         const saldo = total - expedidas;
         const naoAlocadas = Math.max(total - (alocadas + expedidas), 0);
 
-        // Gaylords detalhadas
+        // Gaylords alocadas
         state.areas.forEach(area => {
-          area.ruas.forEach(rua => {
-            rua.posicoes.forEach((pos, index) => {
+          area.ruas.forEach((rua, rIndex) => {
+            rua.posicoes.forEach((pos, pIndex) => {
               if (pos.ocupada && pos.lote === lote.nome) {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -114,7 +120,7 @@
                   <td>${naoAlocadas}</td>
                   <td>${area.nome}</td>
                   <td>${rua.nome}</td>
-                  <td>${index + 1}</td>
+                  <td>${pIndex + 1}</td>
                   <td>${pos.rz || '-'}</td>
                   <td>${pos.volume || '-'}</td>
                   <td>-</td>
@@ -126,15 +132,14 @@
           });
         });
 
-        // Expedições do lote
+        // Expedições
         state.historicoExpedidos.filter(exp => exp.lote === lote.nome)
           .forEach(exp => {
-            exp.detalhes.forEach((d, i) => {
-              const tr = document.createElement('tr');
-              const qtdExpedida = exp.quantidadeExpedida;
+            exp.detalhes.forEach(d => {
               const msg = (exp.tipo === 'TOTAL' && window.contarParciaisAntes(exp) > 0)
                 ? `Este lote teve ${window.contarParciaisAntes(exp)} expedição(s) parcial(is) antes da final`
                 : '';
+              const tr = document.createElement('tr');
               tr.innerHTML = `
                 <td>${exp.lote}</td>
                 <td>${exp.quantidadeTotal}</td>
@@ -152,53 +157,105 @@
               tbody.appendChild(tr);
             });
           });
+
+        // Se não houver nada
+        if (alocadas === 0 && expedidas === 0) {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${lote.nome}</td>
+            <td>${total}</td>
+            <td>0</td>
+            <td>0</td>
+            <td>${total}</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+          `;
+          tbody.appendChild(tr);
+        }
       });
     }
 
-    // Filtrar tabela
-    function filtrarTabela() {
-      renderTabelaRelatorio();
-    }
-
-    // Exportar Excel
+    // Exportação Excel
     function exportarRelatorioExcel() {
-      const tabela = document.getElementById('tabelaRelatorio');
-      const wb = XLSX.utils.table_to_book(tabela, { sheet: "Relatório" });
-      XLSX.writeFile(wb, "RelatorioExpedicao.xlsx");
+      const wb = XLSX.utils.book_new();
+      const filtro = document.getElementById('selectLoteRelatorio').value;
+
+      state.lotes.forEach(lote => {
+        if (filtro && lote.nome !== filtro) return;
+
+        const wsData = [['Lote','Total','Expedido','Ativo','Não endereçado','Área','Rua','Posição','RZ','Volume','Data/Hora','Mensagem']];
+
+        // Gaylords alocadas
+        state.areas.forEach(area => {
+          area.ruas.forEach((rua, rIndex) => {
+            rua.posicoes.forEach((pos, pIndex) => {
+              if (pos.ocupada && pos.lote === lote.nome) {
+                wsData.push([
+                  lote.nome,
+                  lote.total,
+                  window.contarExpedidasDoLote(lote.nome),
+                  window.contarGaylordsDoLote(lote.nome),
+                  Math.max(lote.total - (window.contarExpedidasDoLote(lote.nome) + window.contarGaylordsDoLote(lote.nome)),0),
+                  area.nome,
+                  rua.nome,
+                  pIndex + 1,
+                  pos.rz || '-',
+                  pos.volume || '-',
+                  '-',
+                  '-'
+                ]);
+              }
+            });
+          });
+        });
+
+        // Expedições
+        state.historicoExpedidos.filter(exp => exp.lote === lote.nome)
+          .forEach(exp => {
+            exp.detalhes.forEach(d => {
+              const msg = (exp.tipo === 'TOTAL' && window.contarParciaisAntes(exp) > 0)
+                ? `Este lote teve ${window.contarParciaisAntes(exp)} expedição(s) parcial(is) antes da final`
+                : '';
+              wsData.push([
+                exp.lote,
+                exp.quantidadeTotal,
+                exp.tipo,
+                '-',
+                '-',
+                d.area,
+                d.rua,
+                d.posicao,
+                d.rz || '-',
+                d.volume || '-',
+                `${exp.data} ${exp.hora}`,
+                msg
+              ]);
+            });
+          });
+
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        XLSX.utils.book_append_sheet(wb, ws, lote.nome.substring(0, 31));
+      });
+
+      XLSX.writeFile(wb, 'Relatorio_Gaylords.xlsx');
     }
 
     // Exportar PDF
     function exportarRelatorioPDF() {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({ orientation: 'landscape' });
-      const columns = [];
-      const rows = [];
-      const thead = document.querySelectorAll('#tabelaRelatorio thead th');
-
-      thead.forEach(th => columns.push(th.textContent));
-
-      const tbody = document.querySelectorAll('#tabelaRelatorio tbody tr');
-      tbody.forEach(tr => {
-        const row = [];
-        tr.querySelectorAll('td').forEach(td => row.push(td.textContent));
-        rows.push(row);
-      });
-
-      doc.autoTable({
-        head: [columns],
-        body: rows,
-        startY: 10,
-        styles: { fontSize: 9 },
-        headStyles: { fillColor: [22, 163, 74], textColor: 255 },
-        theme: 'grid'
-      });
-
-      doc.save("RelatorioExpedicao.pdf");
+      alert('PDF será implementado, mas é recomendado usar desktop para grandes relatórios devido a performance.');
     }
 
     // Inicialização
-    atualizarSelectLotes();
-    renderTabelaRelatorio();
+    window.addEventListener('load', () => {
+      popularSelectLotes();
+      renderTabelaRelatorio();
+    });
   </script>
+
 </body>
 </html>
