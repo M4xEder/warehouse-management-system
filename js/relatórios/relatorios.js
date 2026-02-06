@@ -1,8 +1,5 @@
 console.log('relatorios.js carregado');
 
-// -------------------------------
-// POPULAR SELECT
-// -------------------------------
 function popularSelectLotes() {
   const select = document.getElementById('selectLoteRelatorio');
   select.innerHTML = '<option value="">Selecione um lote</option>';
@@ -14,9 +11,6 @@ function popularSelectLotes() {
   });
 }
 
-// -------------------------------
-// FILTRAR LOTE
-// -------------------------------
 function filtrarLote() {
   const loteNome = document.getElementById('selectLoteRelatorio').value.trim();
   if (!loteNome) return alert('Selecione um lote');
@@ -24,9 +18,6 @@ function filtrarLote() {
   renderTabela(loteNome);
 }
 
-// -------------------------------
-// RESUMO
-// -------------------------------
 function renderResumo(loteNome) {
   const resumo = document.getElementById('resumoLote');
   resumo.innerHTML = '';
@@ -62,9 +53,6 @@ function renderResumo(loteNome) {
   </div>`;
 }
 
-// -------------------------------
-// RENDER TABELA
-// -------------------------------
 function renderTabela(loteNome) {
   const tbody = document.querySelector('#tabelaRelatorio tbody');
   tbody.innerHTML = '';
@@ -115,22 +103,15 @@ function renderTabela(loteNome) {
     });
 }
 
-// -------------------------------
-// EXPORTAR EXCEL
-// -------------------------------
 function exportarExcel() {
   const table = document.getElementById('tabelaRelatorio');
   const wb = XLSX.utils.table_to_book(table, { sheet: "Lote" });
   XLSX.writeFile(wb, 'relatorio_lote.xlsx');
 }
 
-// -------------------------------
-// EXPORTAR PDF
-// -------------------------------
 function exportarPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: "landscape" });
-
   doc.setFontSize(14);
   doc.text("Relatório de Expedição", 14, 20);
 
@@ -145,9 +126,6 @@ function exportarPDF() {
   doc.save('relatorio_lote.pdf');
 }
 
-// -------------------------------
-// INICIALIZAÇÃO
-// -------------------------------
 window.addEventListener('load', () => {
   popularSelectLotes();
 });
