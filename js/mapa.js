@@ -1,5 +1,5 @@
 // ===============================
-// MAPA.JS — CONTROLE DO ARMAZÉM
+// MAPA.JS — CONTROLE DO ARMAZÉM (ATUALIZADO)
 // ===============================
 
 // ===============================
@@ -7,6 +7,7 @@
 // ===============================
 function criarPosicao() {
   return {
+    id: crypto.randomUUID(),
     ocupada: false,
     lote: null,
     rz: null,
@@ -156,7 +157,7 @@ window.renderMapa = function () {
 
           p.title =
             `Lote: ${posicao.lote}\n` +
-            `RZ: ${posicao.rz}\n` +
+            `RZ: ${posicao.rz || '-'}\n` +
             `Volume: ${posicao.volume || '-'}`;
         }
 
@@ -192,8 +193,30 @@ window.renderMapa = function () {
     mapa.appendChild(areaDiv);
   });
 
-  // Mantém dashboard sincronizado
+  // Atualiza dashboard se existir
   if (typeof renderDashboard === 'function') {
     renderDashboard();
   }
+};
+
+// ===============================
+// VALIDAR ALOCAÇÃO
+// ===============================
+window.validarAlocacao = function (loteNome, posicao) {
+  // Não permitir substituir lote sem remover primeiro
+  if (posicao.ocupada) {
+    alert('Posição já ocupada. Remova o lote antes de substituir.');
+    return false;
+  }
+
+  // Não permitir alocar lote já expedido
+  const loteExpedido = state.historicoExpedidos.some(
+    h => h.lote === loteNome
+  );
+  if (loteExpedido) {
+    alert('Este lote já foi expedido e não pode ser alocado.');
+    return false;
+  }
+
+  return true;
 };
