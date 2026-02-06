@@ -1,49 +1,27 @@
 // ===============================
-// MAPA.JS — CONTROLE DO ARMAZÉM (ATUALIZADO)
+// MAPA.JS — CONTROLE DO ARMAZÉM
 // ===============================
 
-// ===============================
-// HELPERS DE CRIAÇÃO
-// ===============================
+// HELPERS
 function criarPosicao() {
-  return {
-    id: crypto.randomUUID(),
-    ocupada: false,
-    lote: null,
-    rz: null,
-    volume: null
-  };
+  return { ocupada: false, lote: null, rz: null, volume: null };
 }
 
 function criarRua(nome, qtd) {
-  return {
-    id: crypto.randomUUID(),
-    nome,
-    posicoes: Array.from({ length: qtd }, criarPosicao)
-  };
+  return { id: crypto.randomUUID(), nome, posicoes: Array.from({ length: qtd }, criarPosicao) };
 }
 
 function criarArea(nome) {
-  return {
-    id: crypto.randomUUID(),
-    nome,
-    ruas: []
-  };
+  return { id: crypto.randomUUID(), nome, ruas: [] };
 }
 
 // ===============================
-// CRUD ÁREA
-// ===============================
+// ÁREA
 window.cadastrarArea = function () {
   const input = document.getElementById('areaNome');
   if (!input) return;
-
   const nome = input.value.trim();
-  if (!nome) {
-    alert('Informe o nome da área');
-    return;
-  }
-
+  if (!nome) return alert('Informe o nome da área');
   state.areas.push(criarArea(nome));
   input.value = '';
   saveState();
@@ -53,131 +31,75 @@ window.cadastrarArea = function () {
 window.excluirArea = function (areaId) {
   const area = state.areas.find(a => a.id === areaId);
   if (!area) return;
-
-  const possuiAlocacao = area.ruas.some(rua =>
-    rua.posicoes.some(p => p.ocupada)
-  );
-
-  if (possuiAlocacao) {
-    alert('Não é possível excluir. Existem gaylords alocadas.');
-    return;
-  }
-
+  if (area.ruas.some(r => r.posicoes.some(p => p.ocupada))) return alert('Não é possível excluir, existem gaylords alocadas.');
   if (!confirm('Excluir área?')) return;
-
   state.areas = state.areas.filter(a => a.id !== areaId);
   saveState();
   renderMapa();
 };
 
 // ===============================
-// CRUD RUA
-// ===============================
+// RUA
 window.adicionarRua = function (areaId) {
   const area = state.areas.find(a => a.id === areaId);
   if (!area) return;
-
-  const nome = prompt('Nome da rua');
-  if (!nome) return;
-
-  const qtd = Number(prompt('Quantidade de posições'));
-  if (!qtd || qtd <= 0) {
-    alert('Quantidade inválida');
-    return;
-  }
-
+  const nome = prompt('Nome da rua'); if (!nome) return;
+  const qtd = Number(prompt('Quantidade de posições')); if (!qtd || qtd <= 0) return alert('Quantidade inválida');
   area.ruas.push(criarRua(nome, qtd));
   saveState();
   renderMapa();
 };
 
 window.excluirRua = function (areaId, ruaId) {
-  const area = state.areas.find(a => a.id === areaId);
-  if (!area) return;
-
-  const rua = area.ruas.find(r => r.id === ruaId);
-  if (!rua) return;
-
-  if (rua.posicoes.some(p => p.ocupada)) {
-    alert('Não é possível excluir. Existem gaylords alocadas.');
-    return;
-  }
-
+  const area = state.areas.find(a => a.id === areaId); if (!area) return;
+  const rua = area.ruas.find(r => r.id === ruaId); if (!rua) return;
+  if (rua.posicoes.some(p => p.ocupada)) return alert('Não é possível excluir. Existem gaylords alocadas.');
   if (!confirm('Excluir rua?')) return;
-
   area.ruas = area.ruas.filter(r => r.id !== ruaId);
   saveState();
   renderMapa();
 };
 
 // ===============================
-// RENDER MAPA
-// ===============================
-window.renderMapa = function () {
-  const mapa = document.getElementById('mapa');
-  if (!mapa) return;
+// VALIDAÇÃO DE ALOCAÇÃO
+window.validarAlocacao = function (loteNome, posicao) {
+  if (posicao.ocupada) { alert('Esta posição já está ocupada.'); return false; }
+  const loteExpedido = state.historicoExpedidos.some(h => h.lote === loteNome);
+  if (loteExpedido) { alert('Este lote já foi expedido e não pode ser alocado.'); return false; }
+  return true;
+};
 
+// ===============================
+// RENDER MAPA
+window.renderMapa = function () {
+  const mapa = document.getElementById('mapa'); if (!mapa) return;
   mapa.innerHTML = '';
 
   state.areas.forEach(area => {
     const areaDiv = document.createElement('div');
     areaDiv.className = 'area';
-
-    areaDiv.innerHTML = `
-      <strong>${area.nome}</strong>
-      <button onclick="excluirArea('${area.id}')">Excluir Área</button>
-    `;
+    areaDiv.innerHTML = `<strong>${area.nome}</strong><button onclick="excluirArea('${area.id}')">Excluir Área</button>`;
 
     area.ruas.forEach(rua => {
       const ruaDiv = document.createElement('div');
       ruaDiv.className = 'rua';
+      ruaDiv.innerHTML = `Rua ${rua.nome}<button onclick="excluirRua('${area.id}','${rua.id}')">Excluir Rua</button>`;
 
-      ruaDiv.innerHTML = `
-        Rua ${rua.nome}
-        <button onclick="excluirRua('${area.id}','${rua.id}')">Excluir Rua</button>
-      `;
-
-      const posicoesDiv = document.createElement('div');
-      posicoesDiv.className = 'posicoes';
+      const posicoesDiv = document.createElement('div'); posicoesDiv.className = 'posicoes';
 
       rua.posicoes.forEach((posicao, posicaoIndex) => {
-        const p = document.createElement('div');
-        p.className = 'posicao';
+        const p = document.createElement('div'); p.className = 'posicao';
 
-        // ----------------------------
-        // POSIÇÃO OCUPADA
-        // ----------------------------
         if (posicao.ocupada) {
           p.classList.add('ocupada');
-
           const lote = state.lotes.find(l => l.nome === posicao.lote);
-          if (lote) {
-            p.style.background = lote.cor;
-          }
-
-          p.title =
-            `Lote: ${posicao.lote}\n` +
-            `RZ: ${posicao.rz || '-'}\n` +
-            `Volume: ${posicao.volume || '-'}`;
+          if (lote) p.style.background = lote.cor;
+          p.title = `Lote: ${posicao.lote}\nRZ: ${posicao.rz}\nVolume: ${posicao.volume || '-'}`;
         }
 
-        // ----------------------------
-        // DESTAQUE DA BUSCA
-        // ----------------------------
-        if (posicao._highlight) {
-          p.classList.add('highlight');
-        }
+        if (posicao._highlight) p.classList.add('highlight');
 
-        // ----------------------------
-        // CLICK → ABRIR MODAL
-        // ----------------------------
-        p.onclick = () => {
-          const areaIndex = state.areas.findIndex(a => a.id === area.id);
-          const ruaIndex = area.ruas.findIndex(r => r.id === rua.id);
-
-          abrirModal(areaIndex, ruaIndex, posicaoIndex);
-        };
-
+        p.onclick = () => abrirModal(area.id, rua.id, posicaoIndex);
         posicoesDiv.appendChild(p);
       });
 
@@ -188,35 +110,10 @@ window.renderMapa = function () {
     const btnRua = document.createElement('button');
     btnRua.textContent = 'Adicionar Rua';
     btnRua.onclick = () => adicionarRua(area.id);
-
     areaDiv.appendChild(btnRua);
+
     mapa.appendChild(areaDiv);
   });
 
-  // Atualiza dashboard se existir
-  if (typeof renderDashboard === 'function') {
-    renderDashboard();
-  }
-};
-
-// ===============================
-// VALIDAR ALOCAÇÃO
-// ===============================
-window.validarAlocacao = function (loteNome, posicao) {
-  // Não permitir substituir lote sem remover primeiro
-  if (posicao.ocupada) {
-    alert('Posição já ocupada. Remova o lote antes de substituir.');
-    return false;
-  }
-
-  // Não permitir alocar lote já expedido
-  const loteExpedido = state.historicoExpedidos.some(
-    h => h.lote === loteNome
-  );
-  if (loteExpedido) {
-    alert('Este lote já foi expedido e não pode ser alocado.');
-    return false;
-  }
-
-  return true;
+  if (typeof renderDashboard === 'function') renderDashboard();
 };
