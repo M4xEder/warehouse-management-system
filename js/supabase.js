@@ -1,20 +1,18 @@
-// ===============================
-// SUPABASE.JS — CONFIGURAÇÃO BASE
-// ===============================
+// =======================================
+// SUPABASE.JS — FRONTEND (GITHUB PAGES)
+// =======================================
 
-// 🔐 CONFIGURAÇÃO DO SEU PROJETO
-// ⚠️ CONFIRA SE ESTÃO CORRETAS
-const SUPABASE_URL = 'https://SEU-PROJETO.supabase.co';
-const SUPABASE_ANON_KEY = 'SUA-CHAVE-ANONIMA';
+const SUPABASE_URL = 'https://fctxvszjqhkfstzqgvat.supabase.co';
 
-// Cliente Supabase
-const supabase = window.supabase.createClient(
+const SUPABASE_ANON_KEY =
+  'eyJhbGci0iJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // cola inteira aqui
+
+window.supabaseClient = window.supabase.createClient(
   SUPABASE_URL,
   SUPABASE_ANON_KEY
 );
 
-console.log('Supabase conectado');
-
+console.log('✅ Supabase conectado com sucesso');
 // ===============================
 // BUSCAR LOTES DO BANCO
 // ===============================
