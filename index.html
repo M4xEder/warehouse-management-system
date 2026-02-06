@@ -5,45 +5,58 @@
   <title>Sistema de Armazém</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <!-- CSS -->
   <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
 
-<!-- LOGIN -->
-<script src="js/login.js"></script>
-<script>
-  checarSessao();
-</script>
+  <!-- LOGIN -->
+  <script src="js/login.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      checarSessao();
+    });
+  </script>
 
-<!-- SUPABASE -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase.js"></script>
+  <!-- SUPABASE -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js"></script>
 
-<!-- STATE -->
-<script src="js/state.js"></script>
+  <!-- ESTADO -->
+  <script src="js/state.js"></script>
 
-<!-- HEADER -->
-<div id="header"></div>
-<script src="js/header.js"></script>
+  <!-- HEADER -->
+  <div id="header"></div>
+  <script src="js/header.js"></script>
 
-<h1>Mapa do Armazém</h1>
+  <h1>Mapa do Armazém</h1>
 
-<!-- BOTÕES -->
-<div class="acoes">
-  <button onclick="abrirModalNovoLote()">Novo Lote</button>
-  <button onclick="abrirModalExpedir()">Expedir</button>
-</div>
+  <!-- BOTÕES -->
+  <div class="acoes">
+    <button onclick="abrirModalNovoLote()">Novo Lote</button>
+    <button onclick="abrirModalExpedir()">Expedir</button>
+  </div>
 
-<!-- MAPA -->
-<div id="mapaArmazem"></div>
+  <!-- MAPA -->
+  <div id="mapaArmazem"></div>
 
-<!-- MODAIS -->
-<script src="js/modais/modal-lote.js"></script>
-<script src="js/modais/modal-expedicao.js"></script>
+  <!-- MODAIS -->
+  <div id="modalLote" class="modal hidden"></div>
+  <div id="modalExpedicao" class="modal hidden"></div>
 
-<!-- SISTEMA -->
-<script src="js/mapa.js"></script>
+  <script src="js/modais/modal-lote.js"></script>
+  <script src="js/modais/modal-expedicao.js"></script>
+
+  <!-- SISTEMA -->
+  <script src="js/mapa.js"></script>
+
+  <!-- GARANTIR LOAD STATE -->
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (typeof loadState === 'function') await loadState();
+    });
+  </script>
 
 </body>
 </html>
