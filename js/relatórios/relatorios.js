@@ -1,146 +1,227 @@
 // =======================================
-// RELATÓRIOS.JS — Tabela Horizontal + Export
+// RELATORIOS.JS — TABELA, RESUMO, EXPORTAÇÃO
 // =======================================
 
+document.addEventListener('DOMContentLoaded', () => {
+  preencherSelectLotes();
+  renderTabelaRelatorios();
+});
+
 // -------------------------------
-// RENDER TABELA RELATÓRIO
+// PREENCHER SELECT DE LOTES
 // -------------------------------
-window.renderTabelaRelatorio = function() {
+function preencherSelectLotes() {
+  const select = document.getElementById('selectLote');
+  select.innerHTML = '<option value="">Todos os lotes</option>';
+
+  state.lotes.forEach(lote => {
+    const option = document.createElement('option');
+    option.value = lote.nome;
+    option.textContent = lote.nome;
+    select.appendChild(option);
+  });
+}
+
+// -------------------------------
+// FILTRAR TABELA
+// -------------------------------
+function filtrarTabela() {
+  renderTabelaRelatorios();
+}
+
+// -------------------------------
+// RENDERIZAR TABELA
+// -------------------------------
+function renderTabelaRelatorios() {
   const tabela = document.getElementById('tabelaRelatorio').querySelector('tbody');
   tabela.innerHTML = '';
 
-  const filtro = document.getElementById('selectLote').value;
-  let lotesParaExibir = state.lotes;
+  const select = document.getElementById('selectLote');
+  const filtro = select.value;
 
-  if (filtro) {
-    lotesParaExibir = state.lotes.filter(l => l.nome === filtro);
+  const linhas = [];
+
+  // -------------------------------
+  // FUNÇÃO AUXILIAR PARA STATUS
+  // -------------------------------
+  function getStatus(pos) {
+    return pos.ocupada ? 'Ativa' : 'Expedida';
   }
 
-  lotesParaExibir.forEach(lote => {
-    // Gaylords alocadas
-    state.areas.forEach(area => {
-      area.ruas.forEach(rua => {
-        rua.posicoes.forEach((pos) => {
-          if (pos.ocupada && pos.lote === lote.nome) {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-              <td>${lote.nome}</td>
-              <td>${pos.rz || '-'}</td>
-              <td>${pos.volume || '-'}</td>
-              <td>Ativa</td>
-              <td>${area.nome}</td>
-              <td>${rua.nome}</td>
-              <td>-</td>
-              <td>-</td>
-            `;
-            tabela.appendChild(tr);
-          }
+  // -------------------------------
+  // PREENCHER LINHAS
+  // -------------------------------
+  state.areas.forEach(area => {
+    area.ruas.forEach(rua => {
+      rua.posicoes.forEach(pos => {
+        if (!pos.lote) return;
+        if (filtro && pos.lote !== filtro) return;
+
+        linhas.push({
+          lote: pos.lote,
+          rz: pos.rz || '-',
+          volume: pos.volume || '-',
+          status: getStatus(pos),
+          area: area.nome,
+          rua: rua.nome,
+          data: '-', // Sem expedição
+          hora: '-'
         });
       });
     });
+  });
 
-    // Gaylords expedidas
-    state.historicoExpedidos.forEach(exp => {
-      if (exp.lote === lote.nome) {
-        exp.detalhes.forEach(d => {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td>${lote.nome}</td>
-            <td>${d.rz || '-'}</td>
-            <td>${d.volume || '-'}</td>
-            <td>Expedida (${exp.tipo})</td>
-            <td>${d.area}</td>
-            <td>${d.rua}</td>
-            <td>${exp.data}</td>
-            <td>${exp.hora}</td>
-          `;
-          tabela.appendChild(tr);
-        });
-      }
+  // -------------------------------
+  // PREENCHER EXPEDIÇÕES
+  // -------------------------------
+  state.historicoExpedidos.forEach(exp => {
+    if (filtro && exp.lote !== filtro) return;
+
+    exp.detalhes.forEach(d => {
+      linhas.push({
+        lote: exp.lote,
+        rz: d.rz || '-',
+        volume: d.volume || '-',
+        status: exp.tipo === 'TOTAL' ? 'Expedida' : 'Parcial',
+        area: d.area,
+        rua: d.rua,
+        data: exp.data,
+        hora: exp.hora
+      });
     });
   });
-};
+
+  // -------------------------------
+  // ORDENAR POR LOTE, ÁREA, RUA
+  // -------------------------------
+  linhas.sort((a, b) => {
+    if (a.lote !== b.lote) return a.lote.localeCompare(b.lote);
+    if (a.area !== b.area) return a.area.localeCompare(b.area);
+    if (a.rua !== b.rua) return a.rua.localeCompare(b.rua);
+    return 0;
+  });
+
+  // -------------------------------
+  // PREENCHER HTML
+  // -------------------------------
+  linhas.forEach(l => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${l.lote}</td>
+      <td>${l.rz}</td>
+      <td>${l.volume}</td>
+      <td>${l.status}</td>
+      <td>${l.area}</td>
+      <td>${l.rua}</td>
+      <td>${l.data}</td>
+      <td>${l.hora}</td>
+    `;
+    tabela.appendChild(tr);
+  });
+
+  // -------------------------------
+  // ATUALIZAR RESUMO
+  // -------------------------------
+  atualizarResumo(filtro);
+}
 
 // -------------------------------
-// FILTRO DE LOTE
+// RESUMO DO LOTE
 // -------------------------------
-window.filtrarTabela = function() {
-  renderTabelaRelatorio();
-};
+function atualizarResumo(filtro) {
+  const resumoDiv = document.getElementById('resumoLote');
+
+  if (!filtro) {
+    resumoDiv.style.display = 'none';
+    return;
+  }
+
+  const lote = state.lotes.find(l => l.nome === filtro);
+  if (!lote) {
+    resumoDiv.style.display = 'none';
+    return;
+  }
+
+  const expeds = state.historicoExpedidos.filter(e => e.lote === filtro);
+  const totalExp = expeds.reduce((acc, e) => acc + e.quantidadeExpedida, 0);
+  const parciais = expeds.filter(e => e.tipo === 'PARCIAL').length;
+  const primeira = expeds[0];
+  const ultima = expeds[expeds.length - 1];
+
+  const naoAlocadas = contarNaoAlocadas(filtro);
+  const ativas = contarAtivas(filtro);
+
+  let html = `<strong>Resumo do Lote "${filtro}"</strong><br>`;
+  html += `Total de gaylords: ${lote.total}<br>`;
+  html += `Expedições parciais: ${parciais}<br>`;
+
+  if (expeds.length > 0) {
+    html += `Primeira expedição: ${primeira.quantidadeExpedida} gaylords - ${primeira.data} ${primeira.hora}<br>`;
+    if (expeds.length > 1) {
+      for (let i = 1; i < expeds.length; i++) {
+        const e = expeds[i];
+        html += `Expedição ${i + 1}: ${e.quantidadeExpedida} gaylords - ${e.data} ${e.hora}<br>`;
+      }
+    }
+  }
+
+  html += `Gaylords não alocadas: ${naoAlocadas}<br>`;
+  html += `Gaylords ativas: ${ativas}<br>`;
+
+  if (totalExp >= lote.total) {
+    html += `<strong style="color:#16a34a">Lote expedido por completo</strong>`;
+  }
+
+  resumoDiv.innerHTML = html;
+  resumoDiv.style.display = 'block';
+}
+
+// -------------------------------
+// CONTAGEM AUXILIAR
+// -------------------------------
+function contarNaoAlocadas(lote) {
+  let count = 0;
+  state.areas.forEach(area => {
+    area.ruas.forEach(rua => {
+      rua.posicoes.forEach(pos => {
+        if (pos.lote === lote && !pos.rz && !pos.volume) count++;
+      });
+    });
+  });
+  return count;
+}
+
+function contarAtivas(lote) {
+  let count = 0;
+  state.areas.forEach(area => {
+    area.ruas.forEach(rua => {
+      rua.posicoes.forEach(pos => {
+        if (pos.lote === lote && pos.ocupada) count++;
+      });
+    });
+  });
+  return count;
+}
 
 // -------------------------------
 // EXPORTAR EXCEL
 // -------------------------------
-window.exportarExcel = function() {
-  const wb = XLSX.utils.book_new();
-  const ws_data = [];
-  const headers = ['Lote','RZ','Volume','Status','Área','Rua','Data','Hora'];
-  ws_data.push(headers);
-
-  const rows = document.querySelectorAll('#tabelaRelatorio tbody tr');
-  rows.forEach(row => {
-    const data = Array.from(row.children).map(td => td.textContent);
-    ws_data.push(data);
-  });
-
-  const ws = XLSX.utils.aoa_to_sheet(ws_data);
-  XLSX.utils.book_append_sheet(wb, ws, 'Relatório');
-  XLSX.writeFile(wb, 'RelatorioExpedicao.xlsx');
-};
+function exportarExcel() {
+  const tabela = document.getElementById('tabelaRelatorio');
+  const wb = XLSX.utils.table_to_book(tabela, { sheet: "Relatorio" });
+  XLSX.writeFile(wb, "relatorio_expedicao.xlsx");
+}
 
 // -------------------------------
 // EXPORTAR PDF
 // -------------------------------
-window.exportarPDF = function() {
+function exportarPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF('l', 'pt', 'a4');
 
-  doc.setFontSize(10);
-  doc.text('Relatório de Expedição', 40, 30);
+  doc.setFontSize(12);
+  doc.text("Relatório de Expedição", 40, 40);
 
-  const headers = [['Lote','RZ','Volume','Status','Área','Rua','Data','Hora']];
-  const rows = [];
-
-  document.querySelectorAll('#tabelaRelatorio tbody tr').forEach(tr => {
-    rows.push(Array.from(tr.children).map(td => td.textContent));
-  });
-
-  if (rows.length === 0) {
-    alert('Não há dados para gerar o PDF.');
-    return;
-  }
-
-  doc.autoTable({
-    head: headers,
-    body: rows,
-    startY: 50,
-    theme: 'grid',
-    styles: { fontSize: 8 }
-  });
-
-  doc.save('RelatorioExpedicao.pdf');
-};
-
-// -------------------------------
-// POPULAR SELECT LOTES
-// -------------------------------
-window.popularSelectLotes = function() {
-  const select = document.getElementById('selectLote');
-  if (!select) return;
-
-  select.innerHTML = '<option value="">Todos os lotes</option>';
-  state.lotes.forEach(l => {
-    const option = document.createElement('option');
-    option.value = l.nome;
-    option.textContent = l.nome;
-    select.appendChild(option);
-  });
-};
-
-// -------------------------------
-// INIT
-// -------------------------------
-document.addEventListener('DOMContentLoaded', () => {
-  popularSelectLotes();
-  renderTabelaRelatorio();
-});
+  doc.autoTable({ html: '#tabelaRelatorio', startY: 60 });
+  doc.save('relatorio_expedicao.pdf');
+}
