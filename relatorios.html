@@ -4,41 +4,88 @@
   <meta charset="UTF-8">
   <title>Relatórios de Expedição</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
+
+  <!-- CSS -->
   <link rel="stylesheet" href="css/style.css">
+
+  <!-- PDF & Excel -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
   <style>
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 15px;
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
     }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 6px;
+
+    #header {
+      margin-bottom: 20px;
+    }
+
+    h1 {
       text-align: center;
-      font-size: 14px;
+      margin-bottom: 20px;
     }
-    th {
-      background-color: #f3f3f3;
+
+    .filtro {
+      margin-bottom: 20px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
     }
-    #resumoLote {
-      margin-top: 15px;
-      padding: 10px;
-      background: #f0f4f8;
-      border-left: 4px solid #16a34a;
-      display: none; /* inicialmente escondido */
-    }
-    button {
-      margin-top: 10px;
+
+    select, button {
       padding: 8px 12px;
+      font-size: 14px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      cursor: pointer;
+    }
+
+    button {
       background: #16a34a;
       color: #fff;
       border: none;
-      border-radius: 4px;
-      cursor: pointer;
     }
+
     button:hover {
       background: #13803d;
+    }
+
+    #resumo {
+      display: none;
+      margin-bottom: 15px;
+      padding: 12px;
+      background: #e0f7fa;
+      border-left: 5px solid #00796b;
+      font-size: 14px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      margin-bottom: 20px;
+    }
+
+    table th, table td {
+      border: 1px solid #ccc;
+      padding: 8px 6px;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    table th {
+      background: #00796b;
+      color: #fff;
+      font-weight: bold;
+    }
+
+    table tr:nth-child(even) {
+      background: #f1f1f1;
     }
   </style>
 </head>
@@ -47,43 +94,41 @@
   <!-- HEADER DINÂMICO -->
   <div id="header"></div>
 
-  <main id="app">
-    <h1>Relatórios de Expedição</h1>
+  <h1>Relatórios de Expedição</h1>
 
-    <label>Filtrar por lote:</label>
-    <select id="selectLote" onchange="filtrarTabela()">
-      <option value="">Selecione um lote</option>
-      <option value="todos">Todos</option>
-    </select>
+  <div class="filtro">
+    <label>
+      Lote:
+      <select id="selectLote"></select>
+    </label>
+    <button onclick="gerarRelatorio()">Gerar Relatório</button>
+    <button onclick="exportarExcel()">Exportar Excel</button>
+    <button onclick="exportarPDF()">Exportar PDF</button>
+  </div>
 
-    <button onclick="exportarLoteExcel()">Exportar Lote Selecionado (Excel)</button>
-    <button onclick="exportarTodosLotesExcel()">Exportar Todos os Lotes (Excel)</button>
+  <div id="resumo"></div>
 
-    <div id="resumoLote"></div>
+  <table id="tabelaRelatorio">
+    <thead>
+      <tr>
+        <th>Lote</th>
+        <th>RZ</th>
+        <th>Volume</th>
+        <th>Status</th>
+        <th>Área</th>
+        <th>Rua</th>
+        <th>Data</th>
+        <th>Hora</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
-    <table id="tabelaRelatorio">
-      <thead>
-        <tr>
-          <th>Lote</th>
-          <th>RZ</th>
-          <th>Volume</th>
-          <th>Status</th>
-          <th>Área</th>
-          <th>Rua</th>
-          <th>Data</th>
-          <th>Hora</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Linhas adicionadas dinamicamente -->
-      </tbody>
-    </table>
-  </main>
-
-  <!-- SCRIPTS -->
+  <!-- JS -->
   <script src="js/supabase.js"></script>
   <script src="js/header.js"></script>
   <script src="js/state.js"></script>
-  <script src="js/relatórios/relatorios.js"></script>
+  <script src="js/relatorios.js"></script>
+
 </body>
 </html>
