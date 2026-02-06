@@ -4,119 +4,63 @@
   <meta charset="UTF-8">
   <title>Relatórios de Expedição</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <!-- CSS -->
+  
   <link rel="stylesheet" href="css/style.css">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 20px;
-      background: #f5f5f5;
-    }
-
-    h1 {
-      text-align: center;
-      margin-bottom: 20px;
-      color: #16a34a;
-    }
-
-    .filtros, .acoes-export {
-      margin-bottom: 20px;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    select, button {
-      padding: 8px 12px;
-      font-size: 14px;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      cursor: pointer;
-      background: #fff;
-    }
-
-    button:hover {
-      background-color: #e0e0e0;
-    }
-
-    /* RESUMO */
-    #resumoLote {
-      margin-bottom: 15px;
-      padding: 12px;
-      background: #f0fdf4;
-      border-left: 6px solid #16a34a;
-      font-size: 14px;
-      display: none;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-      line-height: 1.5;
-    }
-
-    /* TABELA ESTILIZADA */
     table {
       width: 100%;
       border-collapse: collapse;
-      background: #fff;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      margin-top: 15px;
     }
-
-    table th, table td {
+    th, td {
       border: 1px solid #ccc;
-      padding: 8px 10px;
-      text-align: left;
-      font-size: 12px;
+      padding: 6px;
+      text-align: center;
+      font-size: 14px;
     }
-
-    table th {
-      background-color: #16a34a;
+    th {
+      background-color: #f3f3f3;
+    }
+    #resumoLote {
+      margin-top: 15px;
+      padding: 10px;
+      background: #f0f4f8;
+      border-left: 4px solid #16a34a;
+      display: none; /* inicialmente escondido */
+    }
+    button {
+      margin-top: 10px;
+      padding: 8px 12px;
+      background: #16a34a;
       color: #fff;
-      position: sticky;
-      top: 0;
-      z-index: 1;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
     }
-
-    tbody tr:nth-child(even) {
-      background: #f9f9f9;
-    }
-
-    tbody tr:hover {
-      background: #e0f2f1;
+    button:hover {
+      background: #13803d;
     }
   </style>
-
-  <!-- JS EXTERNOS -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
 
   <!-- HEADER DINÂMICO -->
   <div id="header"></div>
 
-  <main>
+  <main id="app">
     <h1>Relatórios de Expedição</h1>
 
-    <!-- FILTRO -->
-    <div class="filtros">
-      <label for="selectLote">Filtrar por lote:</label>
-      <select id="selectLote" onchange="filtrarTabela()">
-        <option value="">Todos os lotes</option>
-      </select>
-    </div>
+    <label>Filtrar por lote:</label>
+    <select id="selectLote" onchange="filtrarTabela()">
+      <option value="">Selecione um lote</option>
+      <option value="todos">Todos</option>
+    </select>
 
-    <!-- RESUMO DO LOTE -->
+    <button onclick="exportarLoteExcel()">Exportar Lote Selecionado (Excel)</button>
+    <button onclick="exportarTodosLotesExcel()">Exportar Todos os Lotes (Excel)</button>
+
     <div id="resumoLote"></div>
 
-    <!-- BOTÕES DE EXPORTAÇÃO -->
-    <div class="acoes-export">
-      <button onclick="exportarExcel()">📊 Exportar Excel</button>
-      <button onclick="exportarPDF()">📄 Exportar PDF</button>
-    </div>
-
-    <!-- TABELA RELATÓRIO -->
     <table id="tabelaRelatorio">
       <thead>
         <tr>
@@ -131,7 +75,7 @@
         </tr>
       </thead>
       <tbody>
-        <!-- Linhas preenchidas pelo relatorios.js -->
+        <!-- Linhas adicionadas dinamicamente -->
       </tbody>
     </table>
   </main>
@@ -140,7 +84,6 @@
   <script src="js/supabase.js"></script>
   <script src="js/header.js"></script>
   <script src="js/state.js"></script>
-  <script src="js/relatórios/relatorios.js"></script>
-
+  <script src="js/relatorios.js"></script>
 </body>
 </html>
