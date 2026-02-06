@@ -7,175 +7,113 @@
 
   <!-- CSS -->
   <link rel="stylesheet" href="css/style.css">
-
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f4f4f6;
       margin: 0;
-      padding: 0;
+      padding: 20px;
+      background: #f5f5f5;
     }
 
     h1 {
       text-align: center;
-      margin: 20px 0;
-      color: #111827;
+      margin-bottom: 20px;
     }
 
-    section.cadastros {
-      background: #fff;
-      margin: 10px auto;
-      padding: 15px;
-      border-radius: 6px;
-      max-width: 1200px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    .filtros, .acoes-export {
+      margin-bottom: 20px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
     }
 
-    #resumoLote {
-      background: #e0f2fe;
-      padding: 12px 16px;
-      border-left: 4px solid #2563eb;
-      margin: 10px auto;
-      max-width: 1200px;
-      border-radius: 4px;
+    select, button {
+      padding: 8px 12px;
       font-size: 14px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #ddd;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      margin: 10px auto;
-      max-width: 1200px;
       background: #fff;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     }
 
-    th, td {
-      border: 1px solid #cbd5e1;
-      padding: 8px 10px;
-      text-align: center;
-      font-size: 13px;
+    table th, table td {
+      border: 1px solid #ccc;
+      padding: 6px 10px;
+      text-align: left;
+      font-size: 12px;
     }
 
-    th {
-      background-color: #2563eb;
-      color: #fff;
-      font-weight: 600;
-    }
-
-    tr:nth-child(even) {
-      background-color: #f9fafb;
-    }
-
-    button {
-      padding: 8px 16px;
-      margin: 4px 4px 10px 0;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 13px;
-    }
-
-    button:hover {
-      opacity: 0.9;
-    }
-
-    button.excel {
+    table th {
       background-color: #16a34a;
       color: #fff;
+      position: sticky;
+      top: 0;
     }
 
-    button.pdf {
-      background-color: #2563eb;
-      color: #fff;
+    tbody tr:nth-child(even) {
+      background: #f9f9f9;
     }
 
-    select, input {
-      padding: 6px 10px;
-      border-radius: 4px;
-      border: 1px solid #cbd5e1;
-      font-size: 13px;
-      margin-right: 8px;
-    }
-
-    /* Responsividade */
-    @media(max-width: 768px){
-      table, thead, tbody, th, td, tr {
-        display: block;
-      }
-      th {
-        position: absolute;
-        top: -9999px;
-        left: -9999px;
-      }
-      td {
-        position: relative;
-        padding-left: 50%;
-        text-align: left;
-        border: none;
-        border-bottom: 1px solid #e2e8f0;
-      }
-      td:before {
-        content: attr(data-label);
-        position: absolute;
-        left: 10px;
-        font-weight: bold;
-      }
+    tbody tr:hover {
+      background: #e0f2f1;
     }
   </style>
 
-  <!-- SheetJS (Excel) -->
+  <!-- JS EXTERNOS -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-  <!-- jsPDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
 
   <!-- HEADER DINÂMICO -->
   <div id="header"></div>
 
-  <main id="app">
+  <main>
     <h1>Relatórios de Expedição</h1>
 
     <!-- FILTRO -->
-    <section class="cadastros">
-      <h2>Filtrar lote</h2>
-      <select id="selectLoteRelatorio">
-        <option value="">Selecione um lote</option>
+    <div class="filtros">
+      <label for="selectLote">Filtrar por lote:</label>
+      <select id="selectLote" onchange="filtrarTabela()">
+        <option value="">Todos os lotes</option>
       </select>
-      <button onclick="filtrarLote()">Pesquisar</button>
-    </section>
+    </div>
 
-    <!-- RESUMO -->
-    <section id="resumoLote"></section>
+    <!-- BOTÕES DE EXPORTAÇÃO -->
+    <div class="acoes-export">
+      <button onclick="exportarExcel()">📊 Exportar Excel</button>
+      <button onclick="exportarPDF()">📄 Exportar PDF</button>
+    </div>
 
-    <!-- TABELA -->
-    <section>
-      <table id="tabelaRelatorio">
-        <thead>
-          <tr>
-            <th>Lote</th>
-            <th>RZ</th>
-            <th>Volume</th>
-            <th>Status</th>
-            <th>Área</th>
-            <th>Rua</th>
-            <th>Data</th>
-            <th>Hora</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </section>
-
-    <!-- EXPORTAÇÃO -->
-    <section style="margin-top:15px;">
-      <button class="excel" onclick="exportarExcel()">📊 Exportar Excel</button>
-      <button class="pdf" onclick="exportarPDF()">📄 Exportar PDF</button>
-    </section>
-
+    <!-- TABELA RELATÓRIO -->
+    <table id="tabelaRelatorio">
+      <thead>
+        <tr>
+          <th>Lote</th>
+          <th>RZ</th>
+          <th>Volume</th>
+          <th>Status</th>
+          <th>Área</th>
+          <th>Rua</th>
+          <th>Data</th>
+          <th>Hora</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Linhas preenchidas pelo relatorios.js -->
+      </tbody>
+    </table>
   </main>
 
   <!-- SCRIPTS -->
