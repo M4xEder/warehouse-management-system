@@ -1,39 +1,30 @@
 // =======================================
-// RELATORIOS.JS — VERSÃO BLINDADA
+// RELATORIOS.JS — ESTÁVEL + SAFE
 // =======================================
 
 let dadosRelatorio = [];
 
 // -------------------------------
-// AGUARDA DOM + STATE
+// AGUARDAR STATE
 // -------------------------------
 document.addEventListener('DOMContentLoaded', () => {
   aguardarState();
 });
 
 function aguardarState() {
-  if (
-    !window.state ||
-    !Array.isArray(state.lotes) ||
-    !Array.isArray(state.areas) ||
-    !Array.isArray(state.historicoExpedidos)
-  ) {
+  if (!window.state || !Array.isArray(state.lotes)) {
     setTimeout(aguardarState, 100);
     return;
   }
-
   popularSelectLotes();
 }
 
 // -------------------------------
-// POPULA SELECT
+// POPULAR SELECT
 // -------------------------------
 function popularSelectLotes() {
   const select = document.getElementById('selectLote');
-  if (!select) {
-    console.warn('Select de lote não encontrado');
-    return;
-  }
+  if (!select) return;
 
   select.innerHTML = `
     <option value="">Selecione um lote</option>
@@ -41,8 +32,6 @@ function popularSelectLotes() {
   `;
 
   state.lotes.forEach(lote => {
-    if (!lote || !lote.nome) return;
-
     const opt = document.createElement('option');
     opt.value = lote.nome;
     opt.textContent = lote.nome;
@@ -53,21 +42,16 @@ function popularSelectLotes() {
 // -------------------------------
 // GERAR RELATÓRIO
 // -------------------------------
-function gerarRelatorio() {
-  const select = document.getElementById('selectLote');
+window.gerarRelatorio = function () {
+  const loteSelecionado = document.getElementById('selectLote')?.value;
   const tbody = document.querySelector('#tabelaRelatorio tbody');
   const resumo = document.getElementById('resumo');
 
-  if (!select || !tbody || !resumo) {
-    console.error('Elementos do relatório não encontrados');
-    return;
-  }
-
-  const loteSelecionado = select.value;
+  if (!tbody || !resumo) return;
 
   tbody.innerHTML = '';
-  resumo.style.display = 'none';
   resumo.innerHTML = '';
+  resumo.style.display = 'none';
   dadosRelatorio = [];
 
   if (!loteSelecionado) return;
@@ -107,26 +91,19 @@ function gerarRelatorio() {
   });
 
   resumo.style.display = 'block';
-}
+};
 
 // -------------------------------
-// GERAR DADOS DO LOTE
+// GERAR DADOS
 // -------------------------------
 function gerarDadosDoLote(lote) {
   const linhas = [];
   let ativas = 0;
   let naoEnderecadas = 0;
 
-  // ATIVAS
   state.areas.forEach(area => {
-    if (!area.ruas) return;
-
-    area.ruas.forEach(rua => {
-      if (!rua.posicoes) return;
-
-      rua.posicoes.forEach(pos => {
-        if (!pos) return;
-
+    area.ruas?.forEach(rua => {
+      rua.posicoes?.forEach(pos => {
         if (pos.lote === lote.nome && pos.ocupada) {
           ativas++;
           linhas.push({
@@ -134,8 +111,8 @@ function gerarDadosDoLote(lote) {
             rz: pos.rz || '-',
             volume: pos.volume || '-',
             status: 'Ativa',
-            area: area.nome || '-',
-            rua: rua.nome || '-',
+            area: area.nome,
+            rua: rua.nome,
             data: '-',
             hora: '-'
           });
@@ -148,31 +125,26 @@ function gerarDadosDoLote(lote) {
     });
   });
 
-  // EXPEDIDAS
-  const expedicoes = state.historicoExpedidos.filter(
-    e => e && e.lote === lote.nome
-  );
+  const expedicoes = state.historicoExpedidos.filter(e => e.lote === lote.nome);
 
   expedicoes.forEach(exp => {
-    if (!exp.detalhes) return;
-
-    exp.detalhes.forEach(d => {
+    exp.detalhes?.forEach(d => {
       linhas.push({
         lote: lote.nome,
         rz: d.rz || '-',
         volume: d.volume || '-',
         status: 'Expedida',
-        area: d.area || '-',
-        rua: d.rua || '-',
-        data: exp.data || '-',
-        hora: exp.hora || '-'
+        area: d.area,
+        rua: d.rua,
+        data: exp.data,
+        hora: exp.hora
       });
     });
   });
 
   return {
     linhas,
-    total: Number(lote.total) || 0,
+    total: lote.total,
     ativas,
     naoEnderecadas,
     expedicoes: expedicoes.length
@@ -182,7 +154,7 @@ function gerarDadosDoLote(lote) {
 // -------------------------------
 // EXPORTAR EXCEL
 // -------------------------------
-function exportarExcel() {
+window.exportarExcel = function () {
   if (!dadosRelatorio.length) {
     alert('Gere o relatório primeiro');
     return;
@@ -202,12 +174,12 @@ function exportarExcel() {
   });
 
   XLSX.writeFile(wb, 'relatorio_lotes.xlsx');
-}
+};
 
 // -------------------------------
 // EXPORTAR PDF
 // -------------------------------
-function exportarPDF() {
+window.exportarPDF = function () {
   if (!dadosRelatorio.length) {
     alert('Gere o relatório primeiro');
     return;
@@ -228,9 +200,8 @@ function exportarPDF() {
       l.area, l.rua, l.data, l.hora
     ]),
     startY: 50,
-    styles: { fontSize: 8 },
-    margin: { left: 30, right: 30 }
+    styles: { fontSize: 8 }
   });
 
   doc.save('relatorio.pdf');
-}
+};
