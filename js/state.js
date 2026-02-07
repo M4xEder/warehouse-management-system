@@ -1,68 +1,55 @@
-// ===============================
-// STATE.JS — LOCAL STORAGE PURO
+ // ===============================
+// STATE.JS — FONTE ÚNICA DA VERDADE
 // ===============================
 
-const STORAGE_KEY = 'gaylords-system-state';
+const STORAGE_KEY = 'estadoArmazem';
 
-window.state = {
+// -------------------------------
+// ESTADO PADRÃO
+// -------------------------------
+const estadoPadrao = {
   areas: [],
   lotes: [],
   historicoExpedidos: []
 };
 
+window.state = carregarState();
+
 // -------------------------------
-// LOAD
+// CARREGAR
 // -------------------------------
-function loadState() {
+function carregarState() {
+  const salvo = localStorage.getItem(STORAGE_KEY);
+  if (!salvo) return JSON.parse(JSON.stringify(estadoPadrao));
+
   try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    if (!data) return;
+    const data = JSON.parse(salvo);
 
-    const parsed = JSON.parse(data);
+    // Garantias de estrutura
+    data.areas ??= [];
+    data.lotes ??= [];
+    data.historicoExpedidos ??= [];
 
-    state.areas = parsed.areas || [];
-    state.historicoExpedidos = parsed.historicoExpedidos || [];
-
-    state.lotes = (parsed.lotes || []).map(l => ({
-      id: l.id || crypto.randomUUID(),
-      nome: l.nome,
-      total: Number(l.total) || 0,
-      saldo: Number(l.saldo ?? l.total) || 0,
-      ativo: l.ativo ?? true,
-      cor: l.cor || gerarCor()
-    }));
-
+    return data;
   } catch (e) {
     console.error('Erro ao carregar state:', e);
-    localStorage.removeItem(STORAGE_KEY);
+    return JSON.parse(JSON.stringify(estadoPadrao));
   }
 }
 
 // -------------------------------
-// SAVE
+// SALVAR
 // -------------------------------
-function saveState() {
+window.saveState = function () {
+  recalcularSaldoLotes();
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-}
+};
 
 // -------------------------------
-function gerarCor() {
-  return `hsl(${Math.random() * 360},70%,65%)`;
-}
-
+// RESET (opcional)
 // -------------------------------
 window.resetState = function () {
-  if (!confirm('Apagar todos os dados?')) return;
+  if (!confirm('Deseja apagar todos os dados?')) return;
   localStorage.removeItem(STORAGE_KEY);
   location.reload();
 };
-
-window.recalcularSaldoLotes = function () {
-  state.lotes.forEach(lote => {
-    const expedidas = contarExpedidasDoLote(lote.nome);
-    lote.saldo = Math.max(lote.total - expedidas, 0);
-    lote.ativo = lote.saldo > 0;
-  });
-};
-
-loadState();
