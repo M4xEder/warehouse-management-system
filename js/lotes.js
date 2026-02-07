@@ -16,10 +16,9 @@ function gerarCor() {
 // -------------------------------
 window.carregarLotes = async function () {
   console.log('🔄 Carregando lotes do Supabase...');
-
   const lotesDoBanco = await carregarLotesDoBanco();
 
-  if (lotesDoBanco.length === 0) {
+  if (!lotesDoBanco || lotesDoBanco.length === 0) {
     console.warn('⚠️ Nenhum lote do banco. Usando localStorage');
     carregarLocal();
     return;
@@ -60,10 +59,7 @@ window.cadastrarLote = async function () {
 
   const loteCriado = await criarLoteNoBanco(nome, total);
 
-  if (!loteCriado) {
-    alert('Erro ao criar lote no banco');
-    return;
-  }
+  if (!loteCriado) return alert('Erro ao criar lote no banco');
 
   const novoLote = {
     id: loteCriado.id,
