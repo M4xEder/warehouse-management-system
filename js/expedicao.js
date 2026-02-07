@@ -1,5 +1,5 @@
 // =======================================
-// EXPEDICAO.JS — EXPEDIÇÃO REAL
+// EXPEDICAO.JS — EXPEDIÇÃO REAL (CORRIGIDO)
 // =======================================
 
 let expedicaoContext = {
@@ -12,8 +12,9 @@ let expedicaoContext = {
 // -------------------------------
 window.expedirLote = function (nomeLote) {
   const lote = state.lotes.find(l => l.nome === nomeLote);
-  if (!lote) {
-    alert('Lote não encontrado');
+
+  if (!lote || lote.saldo <= 0) {
+    alert('Lote inválido ou já totalmente expedido');
     return;
   }
 
@@ -108,6 +109,9 @@ window.confirmarExpedicao = function () {
     return;
   }
 
+  const loteObj = state.lotes.find(l => l.nome === lote);
+  if (!loteObj) return;
+
   const detalhes = [];
 
   selecionados.forEach(id => {
@@ -128,24 +132,30 @@ window.confirmarExpedicao = function () {
     pos.volume = null;
   });
 
-  const loteObj = state.lotes.find(l => l.nome === lote);
-  const total = loteObj.total;
-  const expedidasAntes = contarExpedidasDoLote(lote);
-  const expedidasAgora = detalhes.length;
-  const totalExpedidas = expedidasAntes + expedidasAgora;
+  // -------------------------------
+  // ATUALIZA LOTE
+  // -------------------------------
+  loteObj.saldo -= detalhes.length;
+  if (loteObj.saldo < 0) loteObj.saldo = 0;
 
-  // 🔒 REGRA DEFINITIVA
+  if (loteObj.saldo === 0) {
+    loteObj.ativo = false;
+  }
+
   const tipo =
-    totalExpedidas === total
+    loteObj.saldo === 0
       ? 'TOTAL'
       : 'PARCIAL';
 
+  // -------------------------------
+  // HISTÓRICO
+  // -------------------------------
   state.historicoExpedidos.push({
     id: crypto.randomUUID(),
     lote,
     tipo,
-    quantidadeExpedida: expedidasAgora,
-    quantidadeTotal: total,
+    quantidadeExpedida: detalhes.length,
+    quantidadeTotal: loteObj.total,
     data: new Date().toLocaleDateString(),
     hora: new Date().toLocaleTimeString(),
     detalhes
@@ -155,7 +165,10 @@ window.confirmarExpedicao = function () {
   fecharModalExpedicao();
   renderMapa();
   renderDashboard();
-  renderExpedidos();
+
+  if (typeof renderExpedidos === 'function') {
+    renderExpedidos();
+  }
 
   alert(`Expedição ${tipo} realizada com sucesso`);
 };
