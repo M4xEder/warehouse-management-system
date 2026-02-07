@@ -21,9 +21,9 @@ window.abrirModal = function (areaIndex, ruaIndex, posicaoIndex) {
   const select = document.getElementById('modalLote');
   select.innerHTML = '<option value="">Selecione</option>';
 
-  // 🔒 Apenas lotes ATIVOS
+  // Apenas lotes ativos
   state.lotes
-    .filter(l => l.ativo === true)
+    .filter(l => l.ativo !== false)
     .forEach(lote => {
       const opt = document.createElement('option');
       opt.value = lote.nome;
@@ -70,11 +70,11 @@ window.confirmarEndereco = function () {
   }
 
   const lote = state.lotes.find(
-    l => l.nome === loteNome && l.ativo === true
+    l => l.nome === loteNome && l.ativo !== false
   );
 
   if (!lote) {
-    alert('Lote inválido ou já finalizado');
+    alert('Lote inválido ou finalizado');
     return;
   }
 
@@ -83,31 +83,16 @@ window.confirmarEndereco = function () {
       .ruas[ruaIndex]
       .posicoes[posicaoIndex];
 
-  const alocadas = contarGaylordsDoLote(loteNome);
-  const expedidas = contarExpedidasDoLote(loteNome);
-
-  const capacidadeReal = lote.total - expedidas;
+  const usados = contarGaylordsDoLote(loteNome);
 
   const mesmaPosicaoMesmoLote =
-    posicao.ocupada === true && posicao.lote === loteNome;
+    posicao.ocupada && posicao.lote === loteNome;
 
-  // ===============================
-  // REGRA CORRETA DE CAPACIDADE
-  // ===============================
-  if (
-    alocadas >= capacidadeReal &&
-    !mesmaPosicaoMesmoLote
-  ) {
-    alert(
-      `Lote "${loteNome}" está cheio ` +
-      `(${alocadas}/${capacidadeReal})`
-    );
+  if (usados >= lote.total && !mesmaPosicaoMesmoLote) {
+    alert(`Lote "${loteNome}" está cheio (${usados}/${lote.total})`);
     return;
   }
 
-  // ===============================
-  // ALOCAÇÃO LIMPA
-  // ===============================
   posicao.ocupada = true;
   posicao.lote = loteNome;
   posicao.rz = rz;
@@ -115,7 +100,6 @@ window.confirmarEndereco = function () {
 
   saveState();
   fecharModal();
-
   renderMapa();
   renderDashboard();
 };
@@ -126,9 +110,9 @@ window.confirmarEndereco = function () {
 window.removerGaylord = function () {
   if (!modalContext) return;
 
-  const { areaIndex, ruaIndex, posicaoIndex } = modalContext;
-
   if (!confirm('Remover gaylord deste endereço?')) return;
+
+  const { areaIndex, ruaIndex, posicaoIndex } = modalContext;
 
   const posicao =
     state.areas[areaIndex]
@@ -142,7 +126,6 @@ window.removerGaylord = function () {
 
   saveState();
   fecharModal();
-
   renderMapa();
   renderDashboard();
 };
