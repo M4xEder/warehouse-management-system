@@ -1,36 +1,38 @@
 // =======================================
-// EXPEDICAO.JS — CONTROLE DEFINITIVO
+// EXPEDICAO.JS — ESTÁVEL E DEFENSIVO
 // =======================================
 
 // -------------------------------
-// TOTAL JÁ EXPEDIDO DO LOTE
+// GARANTIA DE ARRAY
+// -------------------------------
+function garantirHistorico() {
+  if (!Array.isArray(state.historicoExpedidos)) {
+    state.historicoExpedidos = [];
+    saveState();
+  }
+}
+
+// -------------------------------
+// TOTAL JÁ EXPEDIDO
 // -------------------------------
 function totalExpedidoDoLote(nomeLote) {
+  garantirHistorico();
+
   return state.historicoExpedidos
     .filter(e => e.lote === nomeLote)
     .reduce((soma, e) => soma + e.quantidadeExpedida, 0);
 }
 
 // -------------------------------
-// SALDO DISPONÍVEL PARA EXPEDIÇÃO
-// (SEMPRE DINÂMICO)
-// -------------------------------
-function saldoParaExpedicao(nomeLote) {
-  const lote = state.lotes.find(l => l.nome === nomeLote);
-  if (!lote) return 0;
-
-  const totalExpedido = totalExpedidoDoLote(nomeLote);
-  return lote.total - totalExpedido;
-}
-
-// -------------------------------
 // EXPEDIR LOTE
 // -------------------------------
 window.expedirLote = function (nomeLote, quantidade) {
-  const lote = state.lotes.find(l => l.nome === nomeLote);
+  garantirHistorico();
+
+  const lote = state.lotes.find(l => l.nome === nomeLote && l.ativo !== false);
 
   if (!lote) {
-    alert('Lote não encontrado');
+    alert('Lote ativo não encontrado');
     return;
   }
 
@@ -51,18 +53,13 @@ window.expedirLote = function (nomeLote, quantidade) {
 
   if (quantidade > saldoDisponivel) {
     alert(
-      `Quantidade maior que o saldo disponível.\n\n` +
-      `Lote: ${nomeLote}\n` +
-      `Total do lote: ${lote.total}\n` +
-      `Já expedido: ${totalExpedido}\n` +
-      `Saldo disponível: ${saldoDisponivel}`
+      `Quantidade maior que o saldo disponível\n\n` +
+      `Saldo atual: ${saldoDisponivel}`
     );
     return;
   }
 
-  // -------------------------------
-  // REGISTRA EXPEDIÇÃO
-  // -------------------------------
+  // REGISTRO DA EXPEDIÇÃO
   state.historicoExpedidos.push({
     id: crypto.randomUUID(),
     lote: nomeLote,
@@ -72,15 +69,8 @@ window.expedirLote = function (nomeLote, quantidade) {
 
   saveState();
 
-  // Atualizações visuais
   if (typeof renderDashboard === 'function') renderDashboard();
   if (typeof renderLotesExpedidos === 'function') renderLotesExpedidos();
-};
 
-// -------------------------------
-// VERIFICA SE LOTE AINDA PODE EXPEDIR
-// (USADO EM MODAIS / SELECTS)
-// -------------------------------
-window.loteDisponivelParaExpedicao = function (nomeLote) {
-  return saldoParaExpedicao(nomeLote) > 0;
+  alert('Expedição realizada com sucesso');
 };
