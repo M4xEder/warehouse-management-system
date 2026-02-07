@@ -1,6 +1,6 @@
-// =======================================
-// STATE.JS — LOCAL + SUPABASE
-// =======================================
+// ===============================
+// STATE.JS — CONTROLE DE ESTADO
+// ===============================
 
 const STORAGE_KEY = 'gaylords-system-state';
 
@@ -10,71 +10,33 @@ window.state = {
   historicoExpedidos: []
 };
 
-// ===============================
-// LOAD STATE (SUPABASE → LOCAL)
-// ===============================
-async function loadState() {
+function loadState() {
   try {
-    const lotesDoBanco = await carregarLotesDoBanco();
+    const data = localStorage.getItem(STORAGE_KEY);
+    if (!data) return;
 
-    if (lotesDoBanco.length > 0) {
-      state.lotes = lotesDoBanco.map(lote => ({
-        id: lote.id,
-        nome: lote.nome,
-        total: lote.total_gaylords,
-        saldo: lote.total_gaylords,
-        ativo: true,
-        cor: `hsl(${Math.random() * 360},70%,65%)`
-      }));
-      console.log('✅ Lotes carregados do Supabase');
-    } else {
-      console.warn('⚠️ Nenhum lote no banco, fallback para localStorage');
-      carregarLocal(false);
-    }
+    const parsed = JSON.parse(data);
 
-    carregarLocal(false); // carrega áreas e histórico do local
-  } catch (err) {
-    console.error('❌ Erro loadState:', err);
-    carregarLocal();
-  }
-}
+    state.areas = parsed.areas || [];
+    state.historicoExpedidos = parsed.historicoExpedidos || [];
 
-// ===============================
-// FALLBACK LOCAL
-// ===============================
-function carregarLocal(carregarLotes = true) {
-  const data = localStorage.getItem(STORAGE_KEY);
-  if (!data) return;
-
-  const parsed = JSON.parse(data);
-
-  state.areas = parsed.areas || [];
-  state.historicoExpedidos = parsed.historicoExpedidos || [];
-
-  if (carregarLotes) {
-    state.lotes = (parsed.lotes || []).map(lote => ({
-      id: lote.id || crypto.randomUUID(),
-      nome: lote.nome,
-      total: Number(lote.total) || 0,
-      saldo: Number(lote.saldo ?? lote.total) || 0,
-      ativo: lote.ativo ?? true,
-      cor: lote.cor || `hsl(${Math.random() * 360},70%,65%)`
+    // garante compatibilidade
+    state.lotes = (parsed.lotes || []).map(l => ({
+      id: l.id || crypto.randomUUID(),
+      nome: l.nome,
+      total: Number(l.total),
+      cor: l.cor || '#999',
+      finalizado: l.finalizado === true
     }));
+
+  } catch (e) {
+    console.error(e);
+    localStorage.removeItem(STORAGE_KEY);
   }
 }
 
-// ===============================
-// SAVE STATE (LOCAL)
-// ===============================
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
-// ===============================
-// RESET
-// ===============================
-window.resetState = function () {
-  if (!confirm('Deseja apagar TODOS os dados?')) return;
-  localStorage.clear();
-  location.reload();
-};
+loadState();
