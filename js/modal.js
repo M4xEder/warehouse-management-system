@@ -5,26 +5,6 @@
 let modalContext = null;
 
 // ===============================
-// CONTADOR REAL DO LOTE
-// (MAPA É A VERDADE)
-// ===============================
-window.contarGaylordsDoLote = function (nomeLote) {
-  let total = 0;
-
-  state.areas.forEach(area => {
-    area.ruas.forEach(rua => {
-      rua.posicoes.forEach(pos => {
-        if (pos.ocupada === true && pos.lote === nomeLote) {
-          total++;
-        }
-      });
-    });
-  });
-
-  return total;
-};
-
-// ===============================
 // ABRIR MODAL
 // ===============================
 window.abrirModal = function (areaIndex, ruaIndex, posicaoIndex) {
@@ -41,9 +21,9 @@ window.abrirModal = function (areaIndex, ruaIndex, posicaoIndex) {
   const select = document.getElementById('modalLote');
   select.innerHTML = '<option value="">Selecione</option>';
 
-  // Apenas lotes ATIVOS
+  // 🔒 Apenas lotes ATIVOS
   state.lotes
-    .filter(l => l.ativo !== false)
+    .filter(l => l.ativo === true)
     .forEach(lote => {
       const opt = document.createElement('option');
       opt.value = lote.nome;
@@ -90,7 +70,7 @@ window.confirmarEndereco = function () {
   }
 
   const lote = state.lotes.find(
-    l => l.nome === loteNome && l.ativo !== false
+    l => l.nome === loteNome && l.ativo === true
   );
 
   if (!lote) {
@@ -103,23 +83,30 @@ window.confirmarEndereco = function () {
       .ruas[ruaIndex]
       .posicoes[posicaoIndex];
 
-  const usados = contarGaylordsDoLote(loteNome);
+  const alocadas = contarGaylordsDoLote(loteNome);
+  const expedidas = contarExpedidasDoLote(loteNome);
+
+  const capacidadeReal = lote.total - expedidas;
 
   const mesmaPosicaoMesmoLote =
     posicao.ocupada === true && posicao.lote === loteNome;
 
   // ===============================
-  // REGRA DE LOTE CHEIO (SEGURA)
+  // REGRA CORRETA DE CAPACIDADE
   // ===============================
-  if (usados >= lote.total && !mesmaPosicaoMesmoLote) {
+  if (
+    alocadas >= capacidadeReal &&
+    !mesmaPosicaoMesmoLote
+  ) {
     alert(
-      `Lote "${loteNome}" está cheio (${usados}/${lote.total})`
+      `Lote "${loteNome}" está cheio ` +
+      `(${alocadas}/${capacidadeReal})`
     );
     return;
   }
 
   // ===============================
-  // ALOCAÇÃO LIMPA (SEM DUPLICAR)
+  // ALOCAÇÃO LIMPA
   // ===============================
   posicao.ocupada = true;
   posicao.lote = loteNome;
