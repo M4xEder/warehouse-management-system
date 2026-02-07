@@ -1,11 +1,12 @@
 // ===============================
-// MODAL.JS — ENDEREÇAMENTO ESTÁVEL
+// MODAL.JS — ENDEREÇAMENTO
 // ===============================
 
 let modalContext = null;
 
 // ===============================
 // CONTADOR REAL DO LOTE
+// (MAPA É A VERDADE)
 // ===============================
 window.contarGaylordsDoLote = function (nomeLote) {
   let total = 0;
@@ -13,7 +14,7 @@ window.contarGaylordsDoLote = function (nomeLote) {
   state.areas.forEach(area => {
     area.ruas.forEach(rua => {
       rua.posicoes.forEach(pos => {
-        if (pos.ocupada && pos.lote === nomeLote) {
+        if (pos.ocupada === true && pos.lote === nomeLote) {
           total++;
         }
       });
@@ -30,27 +31,35 @@ window.abrirModal = function (areaIndex, ruaIndex, posicaoIndex) {
   const modal = document.getElementById('modal');
   if (!modal) return;
 
-  modalContext = { areaIndex, ruaIndex, posicaoIndex };
-
   const posicao =
     state.areas[areaIndex]
       .ruas[ruaIndex]
       .posicoes[posicaoIndex];
 
+  modalContext = { areaIndex, ruaIndex, posicaoIndex };
+
   const select = document.getElementById('modalLote');
   select.innerHTML = '<option value="">Selecione</option>';
 
+  // ===============================
+  // SOMENTE LOTES DISPONÍVEIS
+  // ativo === true E saldo > 0
+  // ===============================
   state.lotes
-    .filter(l => l.ativo !== false)
+    .filter(lote => lote.ativo === true && lote.saldo > 0)
     .forEach(lote => {
       const opt = document.createElement('option');
       opt.value = lote.nome;
-      opt.textContent = lote.nome;
+      opt.textContent =
+        `${lote.nome} (${lote.saldo}/${lote.total})`;
       select.appendChild(opt);
     });
 
+  // ===============================
+  // SE POSIÇÃO JÁ OCUPADA
+  // ===============================
   if (posicao.ocupada) {
-    select.value = posicao.lote;
+    select.value = posicao.lote || '';
     document.getElementById('modalRz').value = posicao.rz || '';
     document.getElementById('modalVolume').value = posicao.volume || '';
   } else {
@@ -66,7 +75,8 @@ window.abrirModal = function (areaIndex, ruaIndex, posicaoIndex) {
 // FECHAR MODAL
 // ===============================
 window.fecharModal = function () {
-  document.getElementById('modal').classList.add('hidden');
+  const modal = document.getElementById('modal');
+  if (modal) modal.classList.add('hidden');
   modalContext = null;
 };
 
@@ -87,42 +97,57 @@ window.confirmarEndereco = function () {
     return;
   }
 
+  const lote = state.lotes.find(
+    l => l.nome === loteNome && l.ativo === true
+  );
+
+  if (!lote) {
+    alert('Lote inválido ou indisponível');
+    return;
+  }
+
   const posicao =
     state.areas[areaIndex]
       .ruas[ruaIndex]
       .posicoes[posicaoIndex];
 
-  // 🔒 BLOQUEIO DEFINITIVO
-  if (posicao.ocupada) {
-    alert(
-      'Este endereço já está ocupado.\n' +
-      'Remova a gaylord antes de alocar outra.'
-    );
+  // ===============================
+  // NÃO PERMITIR DUPLA ALOCAÇÃO
+  // ===============================
+  if (posicao.ocupada && posicao.lote !== loteNome) {
+    alert('Endereço já ocupado. Remova primeiro.');
     return;
   }
 
   const usados = contarGaylordsDoLote(loteNome);
-  const lote = state.lotes.find(l => l.nome === loteNome);
 
-  if (!lote) {
-    alert('Lote inválido');
+  const mesmaPosicaoMesmoLote =
+    posicao.ocupada === true && posicao.lote === loteNome;
+
+  // ===============================
+  // REGRA DE SALDO
+  // ===============================
+  if (lote.saldo <= 0 && !mesmaPosicaoMesmoLote) {
+    alert(`Lote "${loteNome}" não possui saldo disponível`);
     return;
   }
 
-  if (usados >= lote.total) {
-    alert(
-      `Lote "${loteNome}" está cheio (${usados}/${lote.total})`
-    );
-    return;
-  }
-
+  // ===============================
+  // ALOCAÇÃO LIMPA
+  // ===============================
   posicao.ocupada = true;
   posicao.lote = loteNome;
   posicao.rz = rz;
   posicao.volume = volume || null;
 
+  // Atualiza saldo do lote
+  if (!mesmaPosicaoMesmoLote) {
+    lote.saldo--;
+  }
+
   saveState();
   fecharModal();
+
   renderMapa();
   renderDashboard();
 };
@@ -142,6 +167,11 @@ window.removerGaylord = function () {
       .ruas[ruaIndex]
       .posicoes[posicaoIndex];
 
+  if (posicao.ocupada && posicao.lote) {
+    const lote = state.lotes.find(l => l.nome === posicao.lote);
+    if (lote) lote.saldo++;
+  }
+
   posicao.ocupada = false;
   posicao.lote = null;
   posicao.rz = null;
@@ -149,6 +179,7 @@ window.removerGaylord = function () {
 
   saveState();
   fecharModal();
+
   renderMapa();
   renderDashboard();
 };
