@@ -1,78 +1,134 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Relatórios de Expedição</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- CSS -->
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/style.css">
 
-  <!-- XLSX -->
+  <!-- PDF & Excel -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-
-  <!-- PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-</head>
 
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+
+    #header {
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .filtro {
+      margin-bottom: 20px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    select, button {
+      padding: 8px 12px;
+      font-size: 14px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      cursor: pointer;
+    }
+
+    button {
+      background: #16a34a;
+      color: #fff;
+      border: none;
+    }
+
+    button:hover {
+      background: #13803d;
+    }
+
+    #resumo {
+      display: none;
+      margin-bottom: 15px;
+      padding: 12px;
+      background: #e0f7fa;
+      border-left: 5px solid #00796b;
+      font-size: 14px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      margin-bottom: 20px;
+    }
+
+    table th, table td {
+      border: 1px solid #ccc;
+      padding: 8px 6px;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    table th {
+      background: #00796b;
+      color: #fff;
+      font-weight: bold;
+    }
+
+    table tr:nth-child(even) {
+      background: #f1f1f1;
+    }
+  </style>
+</head>
 <body>
 
-<!-- LOGIN -->
-<script src="js/login.js"></script>
-<script>
-  checarSessao();
-</script>
+  <!-- HEADER DINÂMICO -->
+  <div id="header"></div>
 
-<!-- SUPABASE PRIMEIRO -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase.js"></script>
+  <h1>Relatórios de Expedição</h1>
 
-<!-- STATE (DEPENDE DO SUPABASE) -->
-<script src="js/state.js"></script>
+  <div class="filtro">
+    <label>
+      Lote:
+      <select id="selectLote"></select>
+    </label>
+    <button onclick="gerarRelatorio()">Gerar Relatório</button>
+    <button onclick="exportarExcel()">Exportar Excel</button>
+    <button onclick="exportarPDF()">Exportar PDF</button>
+  </div>
 
-<!-- HEADER -->
-<div id="header"></div>
-<script src="js/header.js"></script>
+  <div id="resumo"></div>
 
-<h1>Relatórios de Expedição</h1>
+  <table id="tabelaRelatorio">
+    <thead>
+      <tr>
+        <th>Lote</th>
+        <th>RZ</th>
+        <th>Volume</th>
+        <th>Status</th>
+        <th>Área</th>
+        <th>Rua</th>
+        <th>Data</th>
+        <th>Hora</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
-<!-- FILTROS -->
-<div class="filtro">
-  <label>
-    Lote:
-    <select id="selectLote">
-      <option value="">Carregando...</option>
-    </select>
-  </label>
-
-  <button onclick="gerarRelatorio()">Gerar Relatório</button>
-  <button onclick="exportarExcel()">Exportar Excel</button>
-  <button onclick="exportarPDF()">Exportar PDF</button>
-</div>
-
-<!-- RESUMO -->
-<div id="resumo" style="display:none"></div>
-
-<!-- TABELA -->
-<table id="tabelaRelatorio">
-  <thead>
-    <tr>
-      <th>Lote</th>
-      <th>RZ</th>
-      <th>Volume</th>
-      <th>Status</th>
-      <th>Área</th>
-      <th>Rua</th>
-      <th>Data</th>
-      <th>Hora</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
-
-<!-- RELATÓRIOS -->
-<script src="js/relatorios/relatorios.js"></script>
+  <!-- JS -->
+  <script src="js/supabase.js"></script>
+  <script src="js/header.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/relatorios.js"></script>
 
 </body>
 </html>
