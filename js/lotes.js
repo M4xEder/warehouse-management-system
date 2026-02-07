@@ -1,5 +1,5 @@
 // ===============================
-// LOTES.JS — COM SALDO REAL
+// LOTES.JS — CONTROLE LOCAL
 // ===============================
 
 function gerarCor() {
@@ -7,8 +7,11 @@ function gerarCor() {
 }
 
 window.cadastrarLote = function () {
-  const nome = loteNome.value.trim();
-  const total = Number(loteTotal.value);
+  const nomeInput = document.getElementById('loteNome');
+  const totalInput = document.getElementById('loteTotal');
+
+  const nome = nomeInput.value.trim();
+  const total = Number(totalInput.value);
 
   if (!nome || total <= 0) {
     alert('Informe nome e quantidade válida');
@@ -24,15 +27,15 @@ window.cadastrarLote = function () {
     id: crypto.randomUUID(),
     nome,
     total,
-    saldo: total,   // ← começa igual ao total
     ativo: true,
     cor: gerarCor()
   });
 
   saveState();
-  renderMapa();
-  renderDashboard();
 
-  loteNome.value = '';
-  loteTotal.value = '';
+  nomeInput.value = '';
+  totalInput.value = '';
+
+  renderDashboard();
+  renderMapa();
 };
