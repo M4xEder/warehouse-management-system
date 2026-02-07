@@ -3,9 +3,10 @@
 // =======================================
 
 const SUPABASE_URL = 'https://fctxvszjqhkfstzqgvat.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_MGb2JD0gYRYvihRdAbSEiQ_eeyu8tie';
+const SUPABASE_ANON_KEY =
+  'sb_publishable_MGb2JD0gYRYvihRdAbSEiQ_eeyu8tie';
 
-// Cria cliente Supabase corretamente
+// Cria cliente Supabase
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 console.log('Supabase conectado:', supabase);
