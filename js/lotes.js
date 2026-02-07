@@ -1,89 +1,53 @@
-// =======================================
-// LOTES.JS — GESTÃO DE LOTES (SUPABASE + LOCAL)
-// =======================================
+// ==================================
+// LOTES.JS — GESTÃO DE LOTES
+// ==================================
 
-console.log('lotes.js carregado');
-
-// -------------------------------
-// GERAR COR FIXA POR LOTE
-// -------------------------------
 function gerarCor() {
   return `hsl(${Math.random() * 360}, 70%, 65%)`;
 }
 
-// -------------------------------
-// CARREGAR LOTES (BANCO → STATE)
-// -------------------------------
-window.carregarLotes = async function () {
-  console.log('🔄 Carregando lotes do Supabase...');
-  const lotesDoBanco = await carregarLotesDoBanco();
+window.cadastrarLote = function () {
+  const nome = loteNome.value.trim();
+  const total = Number(loteTotal.value);
 
-  if (!lotesDoBanco || lotesDoBanco.length === 0) {
-    console.warn('⚠️ Nenhum lote do banco. Usando localStorage');
-    carregarLocal();
+  if (!nome || total <= 0) {
+    alert('Informe nome e quantidade válida');
     return;
   }
 
-  state.lotes = lotesDoBanco.map(l => ({
-    id: l.id,
-    nome: l.nome,
-    total: l.total_gaylords,
-    saldo: l.total_gaylords,
-    ativo: true,
-    cor: gerarCor()
-  }));
+  if (state.lotes.some(l => l.nome === nome)) {
+    alert('Lote já existe');
+    return;
+  }
 
-  console.log('✅ Lotes carregados no state:', state.lotes);
+  state.lotes.push({
+    id: crypto.randomUUID(),
+    nome,
+    total,
+    cor: gerarCor(),
+    finalizado: false
+  });
 
-  renderDashboard?.();
-  renderMapa?.();
+  loteNome.value = '';
+  loteTotal.value = '';
+
+  saveState();
+  renderDashboard();
+  renderMapa();
 };
 
-// -------------------------------
-// CRIAR LOTE (FRONT + BANCO)
-// -------------------------------
-window.cadastrarLote = async function () {
-  const nomeInput = document.getElementById('loteNome');
-  const totalInput = document.getElementById('loteTotal');
+window.alterarQuantidadeLote = function (nomeLote) {
+  const lote = state.lotes.find(l => l.nome === nomeLote);
+  if (!lote) return;
 
-  if (!nomeInput || !totalInput) return alert('Campos de lote não encontrados');
+  const novoTotal = Number(
+    prompt(`Nova quantidade total para o lote "${nomeLote}"`, lote.total)
+  );
 
-  const nome = nomeInput.value.trim();
-  const total = Number(totalInput.value);
+  if (!novoTotal || novoTotal <= 0) return;
 
-  if (!nome || total <= 0) return alert('Informe nome e quantidade válida');
+  lote.total = novoTotal;
 
-  if (state.lotes.some(l => l.nome === nome)) return alert('Lote já existe');
-
-  console.log('📦 Criando lote:', nome);
-
-  const loteCriado = await criarLoteNoBanco(nome, total);
-
-  if (!loteCriado) return alert('Erro ao criar lote no banco');
-
-  const novoLote = {
-    id: loteCriado.id,
-    nome: loteCriado.nome,
-    total: loteCriado.total_gaylords,
-    saldo: loteCriado.total_gaylords,
-    ativo: true,
-    cor: gerarCor()
-  };
-
-  state.lotes.push(novoLote);
-
-  nomeInput.value = '';
-  totalInput.value = '';
-
-  renderDashboard?.();
-  renderMapa?.();
-
-  console.log('✅ Lote criado com sucesso:', novoLote);
+  saveState();
+  renderDashboard();
 };
-
-// -------------------------------
-// BOOTSTRAP
-// -------------------------------
-document.addEventListener('DOMContentLoaded', () => {
-  carregarLotes();
-});
