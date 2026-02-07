@@ -45,6 +45,7 @@ window.cadastrarArea = function () {
 
   state.areas.push(criarArea(nome));
   input.value = '';
+
   saveState();
   renderMapa();
 };
@@ -58,11 +59,11 @@ window.excluirArea = function (areaId) {
   );
 
   if (possuiAlocacao) {
-    alert('Não é possível excluir. Existem gaylords alocadas.');
+    alert('Não é possível excluir a área. Existem gaylords alocadas.');
     return;
   }
 
-  if (!confirm('Excluir área?')) return;
+  if (!confirm('Deseja excluir esta área?')) return;
 
   state.areas = state.areas.filter(a => a.id !== areaId);
   saveState();
@@ -98,11 +99,11 @@ window.excluirRua = function (areaId, ruaId) {
   if (!rua) return;
 
   if (rua.posicoes.some(p => p.ocupada)) {
-    alert('Não é possível excluir. Existem gaylords alocadas.');
+    alert('Não é possível excluir a rua. Existem gaylords alocadas.');
     return;
   }
 
-  if (!confirm('Excluir rua?')) return;
+  if (!confirm('Deseja excluir esta rua?')) return;
 
   area.ruas = area.ruas.filter(r => r.id !== ruaId);
   saveState();
@@ -123,8 +124,12 @@ window.renderMapa = function () {
     areaDiv.className = 'area';
 
     areaDiv.innerHTML = `
-      <strong>${area.nome}</strong>
-      <button onclick="excluirArea('${area.id}')">Excluir Área</button>
+      <div class="area-header">
+        <strong>${area.nome}</strong>
+        <button class="danger" onclick="excluirArea('${area.id}')">
+          Excluir Área
+        </button>
+      </div>
     `;
 
     area.ruas.forEach(rua => {
@@ -132,8 +137,13 @@ window.renderMapa = function () {
       ruaDiv.className = 'rua';
 
       ruaDiv.innerHTML = `
-        Rua ${rua.nome}
-        <button onclick="excluirRua('${area.id}','${rua.id}')">Excluir Rua</button>
+        <div class="rua-header">
+          Rua ${rua.nome}
+          <button class="danger"
+                  onclick="excluirRua('${area.id}','${rua.id}')">
+            Excluir Rua
+          </button>
+        </div>
       `;
 
       const posicoesDiv = document.createElement('div');
@@ -143,11 +153,9 @@ window.renderMapa = function () {
         const p = document.createElement('div');
         p.className = 'posicao';
 
-        // DATASET PARA BUSCA
-        p.dataset.rz = posicao.rz || '';
-        p.dataset.lote = posicao.lote || '';
-
+        // ----------------------------
         // POSIÇÃO OCUPADA
+        // ----------------------------
         if (posicao.ocupada) {
           p.classList.add('ocupada');
 
@@ -162,13 +170,23 @@ window.renderMapa = function () {
             `Volume: ${posicao.volume || '-'}`;
         }
 
+        // ----------------------------
+        // DESTAQUE DA BUSCA
+        // ----------------------------
+        if (posicao._highlight) {
+          p.classList.add('highlight');
+        } else {
+          p.classList.remove('highlight');
+        }
+
+        // ----------------------------
         // CLICK → MODAL
+        // ----------------------------
         p.onclick = () => {
-          abrirModal(
-            state.areas.findIndex(a => a.id === area.id),
-            area.ruas.findIndex(r => r.id === rua.id),
-            posicaoIndex
-          );
+          const areaIndex = state.areas.findIndex(a => a.id === area.id);
+          const ruaIndex = area.ruas.findIndex(r => r.id === rua.id);
+
+          abrirModal(areaIndex, ruaIndex, posicaoIndex);
         };
 
         posicoesDiv.appendChild(p);
@@ -186,39 +204,8 @@ window.renderMapa = function () {
     mapa.appendChild(areaDiv);
   });
 
+  // Mantém dashboard sincronizado
   if (typeof renderDashboard === 'function') {
     renderDashboard();
   }
-};
-
-// ===============================
-// BUSCA (RZ OU LOTE)
-// ===============================
-window.buscarEndereco = function () {
-  const termo = document
-    .getElementById('buscaInput')
-    .value
-    .trim()
-    .toLowerCase();
-
-  document.querySelectorAll('.posicao').forEach(pos => {
-    const rz = pos.dataset.rz.toLowerCase();
-    const lote = pos.dataset.lote.toLowerCase();
-
-    if (!termo) {
-      pos.classList.remove('oculto');
-      return;
-    }
-
-    if (rz.includes(termo) || lote.includes(termo)) {
-      pos.classList.remove('oculto');
-    } else {
-      pos.classList.add('oculto');
-    }
-  });
-};
-
-window.limparBusca = function () {
-  document.getElementById('buscaInput').value = '';
-  buscarEndereco();
 };
