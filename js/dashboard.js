@@ -1,9 +1,9 @@
-// =======================================
-// DASHBOARD.JS — CONTROLE REAL DE LOTES
-// =======================================
+// ===============================
+// DASHBOARD.JS — VERDADE DO SISTEMA
+// ===============================
 
 // -------------------------------
-// CONTAR ALOCADAS (MAPA = VERDADE)
+// CONTAR ALOCADAS (MAPA)
 // -------------------------------
 window.contarGaylordsDoLote = function (nomeLote) {
   let total = 0;
@@ -11,9 +11,7 @@ window.contarGaylordsDoLote = function (nomeLote) {
   state.areas.forEach(area => {
     area.ruas.forEach(rua => {
       rua.posicoes.forEach(pos => {
-        if (pos.ocupada && pos.lote === nomeLote) {
-          total++;
-        }
+        if (pos.ocupada && pos.lote === nomeLote) total++;
       });
     });
   });
@@ -22,7 +20,7 @@ window.contarGaylordsDoLote = function (nomeLote) {
 };
 
 // -------------------------------
-// CONTAR EXPEDIDAS
+// CONTAR EXPEDIDAS (HISTÓRICO)
 // -------------------------------
 window.contarExpedidasDoLote = function (nomeLote) {
   let total = 0;
@@ -37,14 +35,14 @@ window.contarExpedidasDoLote = function (nomeLote) {
 };
 
 // -------------------------------
-// DASHBOARD
+// RENDER DASHBOARD
 // -------------------------------
 window.renderDashboard = function () {
   const dashboard = document.getElementById('dashboard');
   if (!dashboard) return;
 
   dashboard.innerHTML = '';
-  let temLote = false;
+  let temAtivo = false;
 
   state.lotes.forEach(lote => {
     const total = lote.total;
@@ -53,11 +51,13 @@ window.renderDashboard = function () {
     const saldo = total - expedidas;
     const naoAlocadas = Math.max(total - (alocadas + expedidas), 0);
 
-    const finalizado = saldo <= 0;
-    temLote = true;
+    if (saldo <= 0) return;
 
-    const percentual =
-      total > 0 ? Math.round((alocadas / total) * 100) : 0;
+    temAtivo = true;
+
+    const percentual = total > 0
+      ? Math.round((alocadas / total) * 100)
+      : 0;
 
     const card = document.createElement('div');
     card.className = 'lote-card';
@@ -80,9 +80,7 @@ window.renderDashboard = function () {
       </div>
 
       <div style="margin-top:8px">
-        ${finalizado ? '' : `
-          <button onclick="expedirLote('${lote.nome}')">Expedir</button>
-        `}
+        <button onclick="expedirLote('${lote.nome}')">Expedir</button>
         <button onclick="alterarQuantidadeLote('${lote.nome}')">
           Alterar quantidade
         </button>
@@ -96,7 +94,40 @@ window.renderDashboard = function () {
     dashboard.appendChild(card);
   });
 
-  if (!temLote) {
-    dashboard.innerHTML = '<p>Nenhum lote cadastrado</p>';
+  if (!temAtivo) {
+    dashboard.innerHTML = '<p>Nenhum lote ativo</p>';
   }
+};
+
+// -------------------------------
+// ALTERAR QUANTIDADE (REGRA REAL)
+// -------------------------------
+window.alterarQuantidadeLote = function (nomeLote) {
+  const lote = state.lotes.find(l => l.nome === nomeLote);
+  if (!lote) return;
+
+  const alocadas = contarGaylordsDoLote(nomeLote);
+  const expedidas = contarExpedidasDoLote(nomeLote);
+  const minimo = alocadas + expedidas;
+
+  const novoTotal = Number(
+    prompt(
+      `Lote: ${nomeLote}\n\n` +
+      `Total atual: ${lote.total}\n` +
+      `Alocadas: ${alocadas}\n` +
+      `Expedidas: ${expedidas}\n\n` +
+      `Novo total (mínimo ${minimo})`
+    )
+  );
+
+  if (!novoTotal || novoTotal < minimo) {
+    alert(`O total não pode ser menor que ${minimo}`);
+    return;
+  }
+
+  lote.total = novoTotal;
+  saveState();
+
+  renderDashboard();
+  renderMapa();
 };
