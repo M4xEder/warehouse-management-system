@@ -2,9 +2,6 @@
 // MAPA.JS — CONTROLE DO ARMAZÉM
 // ===============================
 
-// -------------------------------
-// HELPERS
-// -------------------------------
 function criarPosicao() {
   return {
     ocupada: false,
@@ -31,7 +28,7 @@ function criarArea(nome) {
 }
 
 // -------------------------------
-// ÁREA
+// CADASTRAR ÁREA
 // -------------------------------
 window.cadastrarArea = function () {
   const input = document.getElementById('areaNome');
@@ -47,32 +44,14 @@ window.cadastrarArea = function () {
   renderMapa();
 };
 
-window.excluirArea = function (areaId) {
-  const area = state.areas.find(a => a.id === areaId);
-  if (!area) return;
-
-  const ocupada = area.ruas.some(r =>
-    r.posicoes.some(p => p.ocupada)
-  );
-
-  if (ocupada) {
-    alert('Existem gaylords alocadas');
-    return;
-  }
-
-  if (!confirm('Excluir área?')) return;
-
-  state.areas = state.areas.filter(a => a.id !== areaId);
-  saveState();
-  renderMapa();
-};
-
 // -------------------------------
-// RUA
+// ADICIONAR RUA
 // -------------------------------
 window.adicionarRua = function (areaId) {
   const area = state.areas.find(a => a.id === areaId);
   if (!area) return;
+
+  if (!Array.isArray(area.ruas)) area.ruas = [];
 
   const nome = prompt('Nome da rua');
   if (!nome) return;
@@ -81,25 +60,6 @@ window.adicionarRua = function (areaId) {
   if (!qtd || qtd <= 0) return alert('Quantidade inválida');
 
   area.ruas.push(criarRua(nome, qtd));
-  saveState();
-  renderMapa();
-};
-
-window.excluirRua = function (areaId, ruaId) {
-  const area = state.areas.find(a => a.id === areaId);
-  if (!area) return;
-
-  const rua = area.ruas.find(r => r.id === ruaId);
-  if (!rua) return;
-
-  if (rua.posicoes.some(p => p.ocupada)) {
-    alert('Existem gaylords alocadas');
-    return;
-  }
-
-  if (!confirm('Excluir rua?')) return;
-
-  area.ruas = area.ruas.filter(r => r.id !== ruaId);
   saveState();
   renderMapa();
 };
@@ -119,49 +79,40 @@ window.renderMapa = function () {
 
     areaDiv.innerHTML = `
       <strong>${area.nome}</strong>
-      <button onclick="excluirArea('${area.id}')">Excluir Área</button>
+      <button onclick="adicionarRua('${area.id}')">Adicionar Rua</button>
     `;
 
     area.ruas.forEach(rua => {
       const ruaDiv = document.createElement('div');
       ruaDiv.className = 'rua';
-
-      ruaDiv.innerHTML = `
-        Rua ${rua.nome}
-        <button onclick="excluirRua('${area.id}','${rua.id}')">Excluir Rua</button>
-      `;
+      ruaDiv.innerHTML = `<strong>Rua ${rua.nome}</strong>`;
 
       const posicoesDiv = document.createElement('div');
       posicoesDiv.className = 'posicoes';
 
-      rua.posicoes.forEach((pos, i) => {
-        const p = document.createElement('div');
-        p.className = 'posicao';
+      rua.posicoes.forEach((pos, pIndex) => {
+        const div = document.createElement('div');
+        div.className = 'posicao';
 
         if (pos.ocupada) {
-          p.classList.add('ocupada');
+          div.classList.add('ocupada');
           const lote = state.lotes.find(l => l.nome === pos.lote);
-          if (lote) p.style.background = lote.cor;
+          if (lote) div.style.background = lote.cor;
         }
 
-        p.onclick = () => {
-          const a = state.areas.findIndex(x => x.id === area.id);
-          const r = area.ruas.findIndex(x => x.id === rua.id);
-          abrirModal(a, r, i);
-        };
+        div.onclick = () => abrirModal(
+          state.areas.indexOf(area),
+          area.ruas.indexOf(rua),
+          pIndex
+        );
 
-        posicoesDiv.appendChild(p);
+        posicoesDiv.appendChild(div);
       });
 
       ruaDiv.appendChild(posicoesDiv);
       areaDiv.appendChild(ruaDiv);
     });
 
-    const btnRua = document.createElement('button');
-    btnRua.textContent = 'Adicionar Rua';
-    btnRua.onclick = () => adicionarRua(area.id);
-
-    areaDiv.appendChild(btnRua);
     mapa.appendChild(areaDiv);
   });
 };
