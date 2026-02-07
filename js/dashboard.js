@@ -47,16 +47,16 @@ window.renderDashboard = function () {
   let temAtivo = false;
 
   state.lotes.forEach(lote => {
+    // 🔒 REGRA ÚNICA
+    if (!lote.ativo) return;
+
+    temAtivo = true;
+
     const total = lote.total;
     const alocadas = contarGaylordsDoLote(lote.nome);
     const expedidas = contarExpedidasDoLote(lote.nome);
-    const saldo = total - expedidas;
+    const saldo = lote.saldo;
     const naoAlocadas = Math.max(total - (alocadas + expedidas), 0);
-
-    // 🔒 Se saldo = 0 → totalmente expedido → não é ativo
-    if (saldo <= 0) return;
-
-    temAtivo = true;
 
     const percentual =
       total > 0 ? Math.round((alocadas / total) * 100) : 0;
@@ -131,6 +131,11 @@ window.alterarQuantidadeLote = function (nomeLote) {
   }
 
   lote.total = novoTotal;
+
+  // 🔒 Ajusta saldo se necessário
+  const novoSaldo = novoTotal - expedidas;
+  lote.saldo = Math.max(novoSaldo, 0);
+  lote.ativo = lote.saldo > 0;
 
   saveState();
   renderDashboard();
