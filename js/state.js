@@ -57,4 +57,12 @@ window.resetState = function () {
   location.reload();
 };
 
+window.recalcularSaldoLotes = function () {
+  state.lotes.forEach(lote => {
+    const expedidas = contarExpedidasDoLote(lote.nome);
+    lote.saldo = Math.max(lote.total - expedidas, 0);
+    lote.ativo = lote.saldo > 0;
+  });
+};
+
 loadState();
