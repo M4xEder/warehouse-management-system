@@ -1,5 +1,5 @@
 // =======================================
-// LOTES.JS — GESTÃO DE LOTES (SUPABASE) — VERSÃO ESTÁVEL
+// LOTES.JS — GESTÃO DE LOTES (SUPABASE)
 // =======================================
 
 console.log('lotes.js carregado');
@@ -24,10 +24,14 @@ window.carregarLotes = async function () {
       .order('criado_em', { ascending: true });
 
     if (error) {
-      console.warn('❌ Erro ao carregar lotes do Supabase:', error.message);
-      alert('Falha ao carregar lotes do banco. Fallback para localStorage.');
-      carregarLotesLocal();
-      return;
+      console.error('❌ Erro ao carregar lotes do Supabase:', error.message);
+      alert('Erro ao carregar lotes do banco. Usando dados locais.');
+      return carregarLotesLocal();
+    }
+
+    if (!data || !Array.isArray(data)) {
+      console.warn('❌ Dados retornados do Supabase inválidos');
+      return carregarLotesLocal();
     }
 
     state.lotes = data.map(l => ({
@@ -36,37 +40,35 @@ window.carregarLotes = async function () {
       total: l.total_gaylords,
       saldo: l.total_gaylords,
       ativo: true,
-      cor: gerarCor()
+      cor: l.cor || gerarCor()
     }));
 
-    console.log('✅ Lotes carregados do banco:', state.lotes);
+    console.log('✅ Lotes carregados do Supabase:', state.lotes);
 
+    if (typeof renderDashboard === 'function') renderDashboard();
+    if (typeof renderMapa === 'function') renderMapa();
   } catch (err) {
-    console.error('Erro geral ao carregar lotes:', err);
-    alert('Erro ao carregar lotes do Supabase. Usando dados locais.');
+    console.error('❌ Falha geral ao carregar lotes:', err);
+    alert('Erro inesperado ao carregar lotes. Usando dados locais.');
     carregarLotesLocal();
   }
-
-  // Atualiza UI
-  if (typeof renderDashboard === 'function') renderDashboard();
-  if (typeof renderMapa === 'function') renderMapa();
 };
 
 // ----------------------------------
-// Fallback local
+// FALLBACK LOCAL
 // ----------------------------------
 function carregarLotesLocal() {
   const data = localStorage.getItem('gaylords-system-state');
   if (!data) return;
 
   const parsed = JSON.parse(data);
-  state.lotes = (parsed.lotes || []).map(lote => ({
-    id: lote.id || crypto.randomUUID(),
-    nome: lote.nome,
-    total: Number(lote.total) || 0,
-    saldo: Number(lote.saldo ?? lote.total) || 0,
-    ativo: lote.ativo ?? true,
-    cor: lote.cor || gerarCor()
+  state.lotes = (parsed.lotes || []).map(l => ({
+    id: l.id || crypto.randomUUID(),
+    nome: l.nome,
+    total: Number(l.total) || 0,
+    saldo: Number(l.saldo ?? l.total) || 0,
+    ativo: l.ativo ?? true,
+    cor: l.cor || gerarCor()
   }));
 
   console.log('⚠️ Lotes carregados do localStorage:', state.lotes);
@@ -76,7 +78,7 @@ function carregarLotesLocal() {
 }
 
 // ----------------------------------
-// CRIAR LOTE (BANCO + LOCAL)
+// CRIAR LOTE (SUPABASE + STATE)
 // ----------------------------------
 window.cadastrarLote = async function () {
   const nomeInput = document.getElementById('loteNome');
@@ -95,13 +97,10 @@ window.cadastrarLote = async function () {
     return;
   }
 
-  // 🔒 evita duplicado no front
   if (state.lotes.some(l => l.nome === nome)) {
     alert('Lote já existe');
     return;
   }
-
-  console.log('📦 Criando lote no Supabase:', { nome, total });
 
   try {
     const { data, error } = await supabase
@@ -111,8 +110,8 @@ window.cadastrarLote = async function () {
       .single();
 
     if (error) {
-      console.error('❌ Erro ao criar lote no banco:', error);
-      alert('Erro ao criar lote no banco. Verifique console.');
+      console.error('❌ Erro ao criar lote no Supabase:', error.message);
+      alert('Erro ao criar lote no banco');
       return;
     }
 
@@ -127,18 +126,16 @@ window.cadastrarLote = async function () {
 
     state.lotes.push(novoLote);
 
-    // Limpar inputs
     nomeInput.value = '';
     totalInput.value = '';
 
-    // Atualiza UI
     if (typeof renderDashboard === 'function') renderDashboard();
     if (typeof renderMapa === 'function') renderMapa();
 
     console.log('✅ Lote criado com sucesso:', novoLote);
   } catch (err) {
-    console.error('Erro inesperado ao criar lote:', err);
-    alert('Erro inesperado. Veja console para detalhes.');
+    console.error('❌ Falha inesperada ao criar lote:', err);
+    alert('Erro inesperado ao criar lote');
   }
 };
 
