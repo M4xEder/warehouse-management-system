@@ -1,5 +1,5 @@
 // ===============================
-// STATE.JS — CONTROLE DE ESTADO
+// STATE.JS — LOCAL STORAGE PURO
 // ===============================
 
 const STORAGE_KEY = 'gaylords-system-state';
@@ -10,6 +10,9 @@ window.state = {
   historicoExpedidos: []
 };
 
+// -------------------------------
+// LOAD
+// -------------------------------
 function loadState() {
   try {
     const data = localStorage.getItem(STORAGE_KEY);
@@ -20,23 +23,38 @@ function loadState() {
     state.areas = parsed.areas || [];
     state.historicoExpedidos = parsed.historicoExpedidos || [];
 
-    // garante compatibilidade
     state.lotes = (parsed.lotes || []).map(l => ({
       id: l.id || crypto.randomUUID(),
       nome: l.nome,
-      total: Number(l.total),
-      cor: l.cor || '#999',
-      finalizado: l.finalizado === true
+      total: Number(l.total) || 0,
+      saldo: Number(l.saldo ?? l.total) || 0,
+      ativo: l.ativo ?? true,
+      cor: l.cor || gerarCor()
     }));
 
   } catch (e) {
-    console.error(e);
+    console.error('Erro ao carregar state:', e);
     localStorage.removeItem(STORAGE_KEY);
   }
 }
 
+// -------------------------------
+// SAVE
+// -------------------------------
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
+
+// -------------------------------
+function gerarCor() {
+  return `hsl(${Math.random() * 360},70%,65%)`;
+}
+
+// -------------------------------
+window.resetState = function () {
+  if (!confirm('Apagar todos os dados?')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
+};
 
 loadState();
