@@ -27,7 +27,11 @@
 
 <!-- BUSCA -->
 <div class="busca">
-  <input type="text" id="buscaInput" placeholder="Buscar por lote, RZ ou volume" />
+  <input
+    type="text"
+    id="buscaInput"
+    placeholder="Buscar por lote ou RZ"
+  />
   <button onclick="buscar()">Buscar</button>
   <button onclick="limparBusca()">Limpar Destaque</button>
 </div>
@@ -42,7 +46,12 @@
 <section class="cadastros">
   <h2>Cadastrar Lote</h2>
   <input id="loteNome" placeholder="Nome do lote" />
-  <input id="loteTotal" type="number" min="1" placeholder="Quantidade total" />
+  <input
+    id="loteTotal"
+    type="number"
+    min="1"
+    placeholder="Quantidade total"
+  />
   <button onclick="cadastrarLote()">Cadastrar Lote</button>
 </section>
 
@@ -51,27 +60,32 @@
 
 <!-- DASHBOARD -->
 <h2>Lotes Ativos</h2>
-<div id="dashboard"></div>
+<div id="lotesAtivos"></div>
 
 <!-- HISTÓRICO -->
 <h2>Lotes Expedidos</h2>
 <div id="lotesExpedidos"></div>
 
-<!-- MODAIS -->
-
-<!-- Modal Endereçamento -->
+<!-- MODAL ENDEREÇAMENTO -->
 <div id="modal" class="modal hidden">
   <div class="modal-content">
     <h3>Endereçar Gaylord</h3>
-    <label>Lote:
+
+    <label>
+      Lote:
       <select id="modalLote"></select>
     </label>
-    <label>Volume:
+
+    <label>
+      Volume:
       <input id="modalVolume" type="text" />
     </label>
-    <label>RZ:
+
+    <label>
+      RZ:
       <input id="modalRz" type="text" />
     </label>
+
     <div class="acoes">
       <button onclick="confirmarEndereco()">Salvar</button>
       <button onclick="removerGaylord()">Remover</button>
@@ -80,52 +94,57 @@
   </div>
 </div>
 
-<!-- Modal Expedição -->
+<!-- MODAL EXPEDIÇÃO -->
 <div id="modalExpedicao" class="modal hidden">
-  <div class="modal-content" style="width:500px; max-height:80vh; overflow-y:auto;">
+  <div
+    class="modal-content"
+    style="width:500px; max-height:80vh; overflow-y:auto;"
+  >
     <h3>Expedir Gaylords do Lote</h3>
+
     <div style="margin-bottom:10px;">
-      <button onclick="selecionarTodosGaylords()">Selecionar todos</button>
-      <button onclick="desmarcarTodosGaylords()">Desmarcar todos</button>
+      <button onclick="selecionarTodosGaylords()">
+        Selecionar todos
+      </button>
+      <button onclick="desmarcarTodosGaylords()">
+        Desmarcar todos
+      </button>
     </div>
+
     <div id="listaExpedicao"></div>
+
     <div class="acoes" style="margin-top:15px;">
-      <button onclick="confirmarExpedicao()">Confirmar Expedição</button>
-      <button onclick="fecharModalExpedicao()">Cancelar</button>
+      <button onclick="confirmarExpedicao()">
+        Confirmar Expedição
+      </button>
+      <button onclick="fecharModalExpedicao()">
+        Cancelar
+      </button>
     </div>
   </div>
 </div>
 
-  <div id="lotesExpedidos"></div>
-
-<!-- Modal Detalhes Expedição -->
+<!-- MODAL DETALHES EXPEDIÇÃO -->
 <div id="modalDetalhesExpedicao" class="modal hidden">
   <div class="modal-content" style="max-width:600px;">
     <h3>Detalhes da Expedição</h3>
     <div id="conteudoDetalhesExpedicao"></div>
+
     <div style="margin-top:12px; text-align:right;">
-      <button onclick="fecharDetalhesExpedicao()">Fechar</button>
+      <button onclick="fecharDetalhesExpedicao()">
+        Fechar
+      </button>
     </div>
   </div>
 </div>
 
-<!-- SCRIPTS -->
-
-<!-- Base e infra -->
-<script src="js/header.js"></script>
+<!-- SCRIPTS FUNCIONAIS -->
 <script src="js/lotes.js"></script>
 <script src="js/mapa.js"></script>
 <script src="js/modal.js"></script>
 <script src="js/busca.js"></script>
 <script src="js/dashboard.js"></script>
 <script src="js/expedicao.js"></script>
-
-<!-- Relatórios e exportação podem ser carregados depois -->
-<!-- <script src="js/relatorios-expedicao.js"></script>
-<script src="js/exportacao-expedicao.js"></script> -->
-
-<!-- Main -->
-<script src="js/main.js"></script>
 
 </body>
 </html>
