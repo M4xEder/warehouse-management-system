@@ -1,14 +1,17 @@
-// ==================================
-// LOTES.JS — GESTÃO DE LOTES
-// ==================================
+// ===============================
+// LOTES.JS — LOCAL STORAGE
+// ===============================
 
 function gerarCor() {
-  return `hsl(${Math.random() * 360}, 70%, 65%)`;
+  return `hsl(${Math.random() * 360},70%,65%)`;
 }
 
 window.cadastrarLote = function () {
-  const nome = loteNome.value.trim();
-  const total = Number(loteTotal.value);
+  const nomeInput = document.getElementById('loteNome');
+  const totalInput = document.getElementById('loteTotal');
+
+  const nome = nomeInput.value.trim();
+  const total = Number(totalInput.value);
 
   if (!nome || total <= 0) {
     alert('Informe nome e quantidade válida');
@@ -20,34 +23,21 @@ window.cadastrarLote = function () {
     return;
   }
 
-  state.lotes.push({
+  const lote = {
     id: crypto.randomUUID(),
     nome,
     total,
-    cor: gerarCor(),
-    finalizado: false
-  });
+    saldo: total,
+    ativo: true,
+    cor: gerarCor()
+  };
 
-  loteNome.value = '';
-  loteTotal.value = '';
-
+  state.lotes.push(lote);
   saveState();
-  renderDashboard();
-  renderMapa();
-};
 
-window.alterarQuantidadeLote = function (nomeLote) {
-  const lote = state.lotes.find(l => l.nome === nomeLote);
-  if (!lote) return;
+  nomeInput.value = '';
+  totalInput.value = '';
 
-  const novoTotal = Number(
-    prompt(`Nova quantidade total para o lote "${nomeLote}"`, lote.total)
-  );
-
-  if (!novoTotal || novoTotal <= 0) return;
-
-  lote.total = novoTotal;
-
-  saveState();
-  renderDashboard();
+  if (typeof renderMapa === 'function') renderMapa();
+  if (typeof renderDashboard === 'function') renderDashboard();
 };
