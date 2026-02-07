@@ -1,50 +1,37 @@
-// =======================================
-// STATE.JS — FONTE ÚNICA DA VERDADE
-// =======================================
+// ===============================
+// STATE.JS — ESTADO GLOBAL
+// ===============================
 
-const STORAGE_KEY = 'mapa_armazem_state';
+const STORAGE_KEY = 'gaylords-system-state';
 
-// -------------------------------
-// ESTADO PADRÃO
-// -------------------------------
-const defaultState = {
+window.state = {
   areas: [],
   lotes: [],
   historicoExpedidos: []
 };
 
 // -------------------------------
-// STATE GLOBAL
+// CARREGAR STATE
 // -------------------------------
-window.state = carregarState();
+window.loadState = function () {
+  const data = localStorage.getItem(STORAGE_KEY);
+  if (!data) return;
+
+  const parsed = JSON.parse(data);
+
+  state.areas = parsed.areas || [];
+  state.lotes = parsed.lotes || [];
+  state.historicoExpedidos = parsed.historicoExpedidos || [];
+};
 
 // -------------------------------
-// CARREGAR
-// -------------------------------
-function carregarState() {
-  try {
-    const salvo = localStorage.getItem(STORAGE_KEY);
-    if (!salvo) {
-      console.warn('Nenhum estado salvo, usando padrão');
-      return structuredClone(defaultState);
-    }
-
-    const parsed = JSON.parse(salvo);
-
-    return {
-      areas: parsed.areas || [],
-      lotes: parsed.lotes || [],
-      historicoExpedidos: parsed.historicoExpedidos || []
-    };
-  } catch (e) {
-    console.error('Erro ao carregar state, resetando:', e);
-    return structuredClone(defaultState);
-  }
-}
-
-// -------------------------------
-// SALVAR
+// SALVAR STATE
 // -------------------------------
 window.saveState = function () {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 };
+
+// -------------------------------
+// INIT
+// -------------------------------
+loadState();
