@@ -102,6 +102,9 @@ button {
   margin-bottom: 10px;
 }
 
+.posicao.oculto {
+  display: none;
+}
 /* BARRA DE PROGRESSO */
 .progress-bar {
   background: #ddd;
