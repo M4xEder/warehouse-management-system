@@ -5,23 +5,41 @@
 let modalContext = null;
 
 // ===============================
+// CONTADOR REAL DO LOTE
+// ===============================
+window.contarGaylordsDoLote = function (nomeLote) {
+  let total = 0;
+
+  state.areas.forEach(area => {
+    area.ruas.forEach(rua => {
+      rua.posicoes.forEach(pos => {
+        if (pos.ocupada && pos.lote === nomeLote) {
+          total++;
+        }
+      });
+    });
+  });
+
+  return total;
+};
+
+// ===============================
 // ABRIR MODAL
 // ===============================
 window.abrirModal = function (areaIndex, ruaIndex, posicaoIndex) {
   const modal = document.getElementById('modal');
   if (!modal) return;
 
+  modalContext = { areaIndex, ruaIndex, posicaoIndex };
+
   const posicao =
     state.areas[areaIndex]
       .ruas[ruaIndex]
       .posicoes[posicaoIndex];
 
-  modalContext = { areaIndex, ruaIndex, posicaoIndex };
-
   const select = document.getElementById('modalLote');
   select.innerHTML = '<option value="">Selecione</option>';
 
-  // Apenas lotes ativos
   state.lotes
     .filter(l => l.ativo !== false)
     .forEach(lote => {
@@ -69,27 +87,32 @@ window.confirmarEndereco = function () {
     return;
   }
 
-  const lote = state.lotes.find(
-    l => l.nome === loteNome && l.ativo !== false
-  );
-
-  if (!lote) {
-    alert('Lote inválido ou finalizado');
-    return;
-  }
-
   const posicao =
     state.areas[areaIndex]
       .ruas[ruaIndex]
       .posicoes[posicaoIndex];
 
+  // 🔒 BLOQUEIO DEFINITIVO
+  if (posicao.ocupada) {
+    alert(
+      'Este endereço já está ocupado.\n' +
+      'Remova a gaylord antes de alocar outra.'
+    );
+    return;
+  }
+
   const usados = contarGaylordsDoLote(loteNome);
+  const lote = state.lotes.find(l => l.nome === loteNome);
 
-  const mesmaPosicaoMesmoLote =
-    posicao.ocupada && posicao.lote === loteNome;
+  if (!lote) {
+    alert('Lote inválido');
+    return;
+  }
 
-  if (usados >= lote.total && !mesmaPosicaoMesmoLote) {
-    alert(`Lote "${loteNome}" está cheio (${usados}/${lote.total})`);
+  if (usados >= lote.total) {
+    alert(
+      `Lote "${loteNome}" está cheio (${usados}/${lote.total})`
+    );
     return;
   }
 
@@ -110,9 +133,9 @@ window.confirmarEndereco = function () {
 window.removerGaylord = function () {
   if (!modalContext) return;
 
-  if (!confirm('Remover gaylord deste endereço?')) return;
-
   const { areaIndex, ruaIndex, posicaoIndex } = modalContext;
+
+  if (!confirm('Remover gaylord deste endereço?')) return;
 
   const posicao =
     state.areas[areaIndex]
