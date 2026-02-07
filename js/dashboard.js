@@ -22,7 +22,7 @@ window.contarGaylordsDoLote = function (nomeLote) {
 };
 
 // -------------------------------
-// CONTAR EXPEDIDAS (HISTÓRICO)
+// CONTAR EXPEDIDAS
 // -------------------------------
 window.contarExpedidasDoLote = function (nomeLote) {
   let total = 0;
@@ -44,19 +44,17 @@ window.renderDashboard = function () {
   if (!dashboard) return;
 
   dashboard.innerHTML = '';
-  let temAtivo = false;
+  let temLote = false;
 
   state.lotes.forEach(lote => {
-    // 🔒 REGRA ÚNICA
-    if (!lote.ativo) return;
-
-    temAtivo = true;
-
     const total = lote.total;
     const alocadas = contarGaylordsDoLote(lote.nome);
     const expedidas = contarExpedidasDoLote(lote.nome);
-    const saldo = lote.saldo;
+    const saldo = total - expedidas;
     const naoAlocadas = Math.max(total - (alocadas + expedidas), 0);
+
+    const finalizado = saldo <= 0;
+    temLote = true;
 
     const percentual =
       total > 0 ? Math.round((alocadas / total) * 100) : 0;
@@ -82,7 +80,9 @@ window.renderDashboard = function () {
       </div>
 
       <div style="margin-top:8px">
-        <button onclick="expedirLote('${lote.nome}')">Expedir</button>
+        ${finalizado ? '' : `
+          <button onclick="expedirLote('${lote.nome}')">Expedir</button>
+        `}
         <button onclick="alterarQuantidadeLote('${lote.nome}')">
           Alterar quantidade
         </button>
@@ -96,48 +96,7 @@ window.renderDashboard = function () {
     dashboard.appendChild(card);
   });
 
-  if (!temAtivo) {
-    dashboard.innerHTML = '<p>Nenhum lote ativo</p>';
+  if (!temLote) {
+    dashboard.innerHTML = '<p>Nenhum lote cadastrado</p>';
   }
-};
-
-// -------------------------------
-// ALTERAR QUANTIDADE (REGRA REAL)
-// -------------------------------
-window.alterarQuantidadeLote = function (nomeLote) {
-  const lote = state.lotes.find(l => l.nome === nomeLote);
-  if (!lote) return alert('Lote não encontrado');
-
-  const alocadas = contarGaylordsDoLote(nomeLote);
-  const expedidas = contarExpedidasDoLote(nomeLote);
-  const minimo = alocadas + expedidas;
-
-  const novoTotal = Number(
-    prompt(
-      `Lote: ${nomeLote}\n\n` +
-      `Total atual: ${lote.total}\n` +
-      `Alocadas: ${alocadas}\n` +
-      `Expedidas: ${expedidas}\n\n` +
-      `Novo total (mínimo permitido: ${minimo})`
-    )
-  );
-
-  if (!novoTotal || novoTotal < minimo) {
-    alert(
-      `Quantidade inválida.\n` +
-      `O total não pode ser menor que ${minimo}.`
-    );
-    return;
-  }
-
-  lote.total = novoTotal;
-
-  // 🔒 Ajusta saldo se necessário
-  const novoSaldo = novoTotal - expedidas;
-  lote.saldo = Math.max(novoSaldo, 0);
-  lote.ativo = lote.saldo > 0;
-
-  saveState();
-  renderDashboard();
-  renderMapa();
 };
