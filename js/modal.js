@@ -1,12 +1,11 @@
 // ===============================
-// MODAL.JS — ENDEREÇAMENTO
+// MODAL.JS — ENDEREÇAMENTO SEGURO
 // ===============================
 
 let modalContext = null;
 
 // ===============================
-// CONTADOR REAL DO LOTE
-// (MAPA É A VERDADE)
+// CONTADORES REAIS (MAPA + HISTÓRICO)
 // ===============================
 window.contarGaylordsDoLote = function (nomeLote) {
   let total = 0;
@@ -14,11 +13,23 @@ window.contarGaylordsDoLote = function (nomeLote) {
   state.areas.forEach(area => {
     area.ruas.forEach(rua => {
       rua.posicoes.forEach(pos => {
-        if (pos.ocupada === true && pos.lote === nomeLote) {
+        if (pos.ocupada && pos.lote === nomeLote) {
           total++;
         }
       });
     });
+  });
+
+  return total;
+};
+
+window.contarExpedidasDoLote = function (nomeLote) {
+  let total = 0;
+
+  state.historicoExpedidos.forEach(exp => {
+    if (exp.lote === nomeLote) {
+      total += exp.quantidadeExpedida;
+    }
   });
 
   return total;
@@ -41,25 +52,22 @@ window.abrirModal = function (areaIndex, ruaIndex, posicaoIndex) {
   const select = document.getElementById('modalLote');
   select.innerHTML = '<option value="">Selecione</option>';
 
-  // ===============================
-  // SOMENTE LOTES DISPONÍVEIS
-  // ativo === true E saldo > 0
-  // ===============================
-  state.lotes
-    .filter(lote => lote.ativo === true && lote.saldo > 0)
-    .forEach(lote => {
+  // 🔒 APENAS LOTES COM SALDO
+  state.lotes.forEach(lote => {
+    const expedidos = contarExpedidasDoLote(lote.nome);
+    const alocados = contarGaylordsDoLote(lote.nome);
+    const saldo = lote.total - (expedidos + alocados);
+
+    if (saldo > 0) {
       const opt = document.createElement('option');
       opt.value = lote.nome;
-      opt.textContent =
-        `${lote.nome} (${lote.saldo}/${lote.total})`;
+      opt.textContent = `${lote.nome} (saldo ${saldo})`;
       select.appendChild(opt);
-    });
+    }
+  });
 
-  // ===============================
-  // SE POSIÇÃO JÁ OCUPADA
-  // ===============================
   if (posicao.ocupada) {
-    select.value = posicao.lote || '';
+    select.value = posicao.lote;
     document.getElementById('modalRz').value = posicao.rz || '';
     document.getElementById('modalVolume').value = posicao.volume || '';
   } else {
@@ -75,8 +83,7 @@ window.abrirModal = function (areaIndex, ruaIndex, posicaoIndex) {
 // FECHAR MODAL
 // ===============================
 window.fecharModal = function () {
-  const modal = document.getElementById('modal');
-  if (modal) modal.classList.add('hidden');
+  document.getElementById('modal').classList.add('hidden');
   modalContext = null;
 };
 
@@ -97,12 +104,9 @@ window.confirmarEndereco = function () {
     return;
   }
 
-  const lote = state.lotes.find(
-    l => l.nome === loteNome && l.ativo === true
-  );
-
+  const lote = state.lotes.find(l => l.nome === loteNome);
   if (!lote) {
-    alert('Lote inválido ou indisponível');
+    alert('Lote inválido');
     return;
   }
 
@@ -111,43 +115,43 @@ window.confirmarEndereco = function () {
       .ruas[ruaIndex]
       .posicoes[posicaoIndex];
 
-  // ===============================
-  // NÃO PERMITIR DUPLA ALOCAÇÃO
-  // ===============================
+  // 🚫 ENDEREÇO OCUPADO (OBRIGA REMOVER ANTES)
   if (posicao.ocupada && posicao.lote !== loteNome) {
-    alert('Endereço já ocupado. Remova primeiro.');
+    alert('Este endereço já está ocupado. Remova antes de alocar outro lote.');
     return;
   }
 
-  const usados = contarGaylordsDoLote(loteNome);
+  const alocados = contarGaylordsDoLote(loteNome);
+  const expedidos = contarExpedidasDoLote(loteNome);
+  const totalPermitido = lote.total;
 
   const mesmaPosicaoMesmoLote =
-    posicao.ocupada === true && posicao.lote === loteNome;
+    posicao.ocupada && posicao.lote === loteNome;
 
-  // ===============================
-  // REGRA DE SALDO
-  // ===============================
-  if (lote.saldo <= 0 && !mesmaPosicaoMesmoLote) {
-    alert(`Lote "${loteNome}" não possui saldo disponível`);
+  // 🔒 REGRA FINAL — NÃO ULTRAPASSAR TOTAL
+  if (
+    alocados + expedidos >= totalPermitido &&
+    !mesmaPosicaoMesmoLote
+  ) {
+    alert(
+      `Não é possível alocar.\n\n` +
+      `Lote: ${loteNome}\n` +
+      `Total: ${totalPermitido}\n` +
+      `Alocados: ${alocados}\n` +
+      `Expedidos: ${expedidos}\n\n` +
+      `👉 Para alocar mais, altere a quantidade do lote.`
+    );
     return;
   }
 
-  // ===============================
-  // ALOCAÇÃO LIMPA
-  // ===============================
+  // ✅ ALOCAÇÃO SEGURA
   posicao.ocupada = true;
   posicao.lote = loteNome;
   posicao.rz = rz;
   posicao.volume = volume || null;
 
-  // Atualiza saldo do lote
-  if (!mesmaPosicaoMesmoLote) {
-    lote.saldo--;
-  }
-
   saveState();
   fecharModal();
-
   renderMapa();
   renderDashboard();
 };
@@ -158,19 +162,14 @@ window.confirmarEndereco = function () {
 window.removerGaylord = function () {
   if (!modalContext) return;
 
-  const { areaIndex, ruaIndex, posicaoIndex } = modalContext;
-
   if (!confirm('Remover gaylord deste endereço?')) return;
+
+  const { areaIndex, ruaIndex, posicaoIndex } = modalContext;
 
   const posicao =
     state.areas[areaIndex]
       .ruas[ruaIndex]
       .posicoes[posicaoIndex];
-
-  if (posicao.ocupada && posicao.lote) {
-    const lote = state.lotes.find(l => l.nome === posicao.lote);
-    if (lote) lote.saldo++;
-  }
 
   posicao.ocupada = false;
   posicao.lote = null;
@@ -179,7 +178,6 @@ window.removerGaylord = function () {
 
   saveState();
   fecharModal();
-
   renderMapa();
   renderDashboard();
 };
