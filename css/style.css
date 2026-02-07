@@ -84,8 +84,10 @@ button {
 }
 
 .posicao.highlight {
-  outline: 3px solid red;
-  animation: piscar 1s infinite;
+  outline: 4px solid #ff9800;
+  box-shadow: 0 0 12px rgba(255, 152, 0, 0.9);
+  transform: scale(1.05);
+  z-index: 10;
 }
 
 @keyframes piscar {
@@ -102,9 +104,6 @@ button {
   margin-bottom: 10px;
 }
 
-.posicao.oculto {
-  display: none;
-}
 /* BARRA DE PROGRESSO */
 .progress-bar {
   background: #ddd;
