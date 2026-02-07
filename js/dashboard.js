@@ -1,10 +1,7 @@
 // ===============================
-// DASHBOARD.JS — VERDADE DO SISTEMA
+// DASHBOARD.JS
 // ===============================
 
-// -------------------------------
-// CONTAR ALOCADAS (MAPA)
-// -------------------------------
 window.contarGaylordsDoLote = function (nomeLote) {
   let total = 0;
 
@@ -19,88 +16,48 @@ window.contarGaylordsDoLote = function (nomeLote) {
   return total;
 };
 
-// -------------------------------
-// CONTAR EXPEDIDAS (HISTÓRICO)
-// -------------------------------
 window.contarExpedidasDoLote = function (nomeLote) {
   let total = 0;
-
-  state.historicoExpedidos.forEach(exp => {
-    if (exp.lote === nomeLote) {
-      total += exp.quantidadeExpedida;
-    }
+  state.historicoExpedidos.forEach(e => {
+    if (e.lote === nomeLote) total += e.quantidadeExpedida;
   });
-
   return total;
 };
 
-// -------------------------------
-// RENDER DASHBOARD
-// -------------------------------
 window.renderDashboard = function () {
   const dashboard = document.getElementById('dashboard');
   if (!dashboard) return;
 
   dashboard.innerHTML = '';
-  let temAtivo = false;
 
   state.lotes.forEach(lote => {
-    const total = lote.total;
     const alocadas = contarGaylordsDoLote(lote.nome);
     const expedidas = contarExpedidasDoLote(lote.nome);
-    const saldo = total - expedidas;
-    const naoAlocadas = Math.max(total - (alocadas + expedidas), 0);
+    const saldo = lote.total - expedidas;
 
     if (saldo <= 0) return;
-
-    temAtivo = true;
-
-    const percentual = total > 0
-      ? Math.round((alocadas / total) * 100)
-      : 0;
 
     const card = document.createElement('div');
     card.className = 'lote-card';
 
     card.innerHTML = `
       <strong>${lote.nome}</strong>
+      <div>Total: ${lote.total}</div>
+      <div>Alocadas: ${alocadas}</div>
+      <div>Expedidas: ${expedidas}</div>
+      <div>Saldo: ${saldo}</div>
 
-      <div style="font-size:13px; margin-top:6px;">
-        <div>Total: <strong>${total}</strong></div>
-        <div>Alocadas: <strong>${alocadas}</strong></div>
-        <div>Expedidas: <strong>${expedidas}</strong></div>
-        <div>Não alocadas: <strong>${naoAlocadas}</strong></div>
-        <div>Saldo: <strong>${saldo}</strong></div>
-      </div>
-
-      <div class="progress-bar">
-        <div class="progress-fill"
-             style="width:${percentual}%; background:${lote.cor}">
-        </div>
-      </div>
-
-      <div style="margin-top:8px">
-        <button onclick="expedirLote('${lote.nome}')">Expedir</button>
-        <button onclick="alterarQuantidadeLote('${lote.nome}')">
-          Alterar quantidade
-        </button>
-        <button class="danger"
-                onclick="excluirLote('${lote.nome}')">
-          Excluir
-        </button>
-      </div>
+      <button onclick="expedirLote('${lote.nome}')">Expedir</button>
+      <button onclick="alterarQuantidadeLote('${lote.nome}')">Alterar quantidade</button>
+      <button class="danger" onclick="excluirLote('${lote.nome}')">Excluir</button>
     `;
 
     dashboard.appendChild(card);
   });
-
-  if (!temAtivo) {
-    dashboard.innerHTML = '<p>Nenhum lote ativo</p>';
-  }
 };
 
 // -------------------------------
-// ALTERAR QUANTIDADE (REGRA REAL)
+// ALTERAR QUANTIDADE
 // -------------------------------
 window.alterarQuantidadeLote = function (nomeLote) {
   const lote = state.lotes.find(l => l.nome === nomeLote);
@@ -110,24 +67,10 @@ window.alterarQuantidadeLote = function (nomeLote) {
   const expedidas = contarExpedidasDoLote(nomeLote);
   const minimo = alocadas + expedidas;
 
-  const novoTotal = Number(
-    prompt(
-      `Lote: ${nomeLote}\n\n` +
-      `Total atual: ${lote.total}\n` +
-      `Alocadas: ${alocadas}\n` +
-      `Expedidas: ${expedidas}\n\n` +
-      `Novo total (mínimo ${minimo})`
-    )
-  );
-
-  if (!novoTotal || novoTotal < minimo) {
-    alert(`O total não pode ser menor que ${minimo}`);
-    return;
-  }
+  const novoTotal = Number(prompt(`Novo total (mínimo ${minimo})`));
+  if (!novoTotal || novoTotal < minimo) return alert('Valor inválido');
 
   lote.total = novoTotal;
   saveState();
-
   renderDashboard();
-  renderMapa();
 };
