@@ -1,14 +1,23 @@
 window.cadastrarArea = function () {
-  const nome = document.getElementById('areaNome').value.trim();
-  if (!nome) return alert('Informe o nome da área');
+  const input = document.getElementById('areaNome');
+  const nome = input.value.trim();
+
+  if (!nome) {
+    alert('Informe o nome da área');
+    return;
+  }
+
+  if (state.areas.some(a => a.nome === nome)) {
+    alert('Área já existe');
+    return;
+  }
 
   state.areas.push({
     nome,
-    ruas: [
-      { posicoes: Array.from({ length: 10 }, () => ({ ocupada: false })) }
-    ]
+    ruas: []
   });
 
+  input.value = '';
   saveState();
   renderMapa();
 };
