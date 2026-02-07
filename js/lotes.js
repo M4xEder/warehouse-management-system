@@ -1,5 +1,5 @@
 // ===============================
-// LOTES.JS — CONTROLE LOCAL
+// LOTES.JS — CONTROLE DE LOTES
 // ===============================
 
 function gerarCor() {
@@ -12,8 +12,6 @@ function gerarCor() {
 window.cadastrarLote = function () {
   const nomeInput = document.getElementById('loteNome');
   const totalInput = document.getElementById('loteTotal');
-
-  if (!nomeInput || !totalInput) return;
 
   const nome = nomeInput.value.trim();
   const total = Number(totalInput.value);
@@ -28,33 +26,32 @@ window.cadastrarLote = function () {
     return;
   }
 
-  const lote = {
+  state.lotes.push({
     id: crypto.randomUUID(),
     nome,
     total,
     ativo: true,
     cor: gerarCor()
-  };
+  });
 
-  state.lotes.push(lote);
   saveState();
 
   nomeInput.value = '';
   totalInput.value = '';
 
-  renderDashboard();
   renderMapa();
+  renderDashboard();
 };
 
 // -------------------------------
-// EXCLUIR LOTE (SEGURO)
+// EXCLUIR LOTE
 // -------------------------------
 window.excluirLote = function (nomeLote) {
   const alocadas = contarGaylordsDoLote(nomeLote);
   const expedidas = contarExpedidasDoLote(nomeLote);
 
   if (alocadas > 0 || expedidas > 0) {
-    alert('Não é possível excluir.\nExistem gaylords alocadas ou expedidas.');
+    alert('Não é possível excluir lote com movimentação.');
     return;
   }
 
@@ -63,6 +60,6 @@ window.excluirLote = function (nomeLote) {
   state.lotes = state.lotes.filter(l => l.nome !== nomeLote);
   saveState();
 
-  renderDashboard();
   renderMapa();
+  renderDashboard();
 };
