@@ -1,6 +1,6 @@
-// ===============================
+// =======================================
 // STATE.JS — LOCAL + SUPABASE
-// ===============================
+// =======================================
 
 const STORAGE_KEY = 'gaylords-system-state';
 
@@ -11,35 +11,30 @@ window.state = {
 };
 
 // ===============================
-// LOAD STATE
+// LOAD STATE (SUPABASE → LOCAL)
 // ===============================
 async function loadState() {
   try {
-    const { data: lotesDB, error } = await supabase
-      .from('lotes')
-      .select('*')
-      .order('criado_em', { ascending: true });
+    const lotesDoBanco = await carregarLotesDoBanco();
 
-    if (error) {
-      console.warn('Supabase indisponível, usando localStorage', error);
-      carregarLocal();
-      return;
+    if (lotesDoBanco.length > 0) {
+      state.lotes = lotesDoBanco.map(lote => ({
+        id: lote.id,
+        nome: lote.nome,
+        total: lote.total_gaylords,
+        saldo: lote.total_gaylords,
+        ativo: true,
+        cor: `hsl(${Math.random() * 360},70%,65%)`
+      }));
+      console.log('✅ Lotes carregados do Supabase');
+    } else {
+      console.warn('⚠️ Nenhum lote no banco, fallback para localStorage');
+      carregarLocal(false);
     }
 
-    state.lotes = lotesDB.map(lote => ({
-      id: lote.id,
-      nome: lote.nome,
-      total: lote.total_gaylords,
-      saldo: lote.total_gaylords,
-      ativo: true,
-      cor: gerarCorFallback()
-    }));
-
-    carregarLocal(false);
-
-    console.log('State carregado do Supabase');
+    carregarLocal(false); // carrega áreas e histórico do local
   } catch (err) {
-    console.error('Erro geral loadState:', err);
+    console.error('❌ Erro loadState:', err);
     carregarLocal();
   }
 }
@@ -63,13 +58,13 @@ function carregarLocal(carregarLotes = true) {
       total: Number(lote.total) || 0,
       saldo: Number(lote.saldo ?? lote.total) || 0,
       ativo: lote.ativo ?? true,
-      cor: lote.cor || gerarCorFallback()
+      cor: lote.cor || `hsl(${Math.random() * 360},70%,65%)`
     }));
   }
 }
 
 // ===============================
-// SAVE STATE
+// SAVE STATE (LOCAL)
 // ===============================
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -83,15 +78,3 @@ window.resetState = function () {
   localStorage.clear();
   location.reload();
 };
-
-// ===============================
-// COR FALLBACK
-// ===============================
-function gerarCorFallback() {
-  return `hsl(${Math.random() * 360}, 70%, 65%)`;
-}
-
-// ===============================
-// INIT
-// ===============================
-loadState();
