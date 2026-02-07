@@ -1,5 +1,5 @@
 // =======================================
-// LOTES.JS — GESTÃO DE LOTES (SUPABASE)
+// LOTES.JS — GESTÃO DE LOTES (SUPABASE) — VERSÃO ESTÁVEL
 // =======================================
 
 console.log('lotes.js carregado');
@@ -17,11 +17,6 @@ function gerarCor() {
 window.carregarLotes = async function () {
   console.log('🔄 Carregando lotes do Supabase...');
 
-  if (!supabase) {
-    console.error('Supabase não inicializado');
-    return;
-  }
-
   try {
     const { data, error } = await supabase
       .from('lotes')
@@ -29,13 +24,12 @@ window.carregarLotes = async function () {
       .order('criado_em', { ascending: true });
 
     if (error) {
-      console.error('❌ Erro ao carregar lotes:', error.message);
-      alert('Erro ao carregar lotes do banco. Usando localStorage.');
-      carregarLocalLotes();
+      console.warn('❌ Erro ao carregar lotes do Supabase:', error.message);
+      alert('Falha ao carregar lotes do banco. Fallback para localStorage.');
+      carregarLotesLocal();
       return;
     }
 
-    // Atualiza state.lotes
     state.lotes = data.map(l => ({
       id: l.id,
       nome: l.nome,
@@ -47,21 +41,26 @@ window.carregarLotes = async function () {
 
     console.log('✅ Lotes carregados do banco:', state.lotes);
 
-    if (typeof renderDashboard === 'function') renderDashboard();
-    if (typeof renderMapa === 'function') renderMapa();
-
   } catch (err) {
     console.error('Erro geral ao carregar lotes:', err);
-    carregarLocalLotes();
+    alert('Erro ao carregar lotes do Supabase. Usando dados locais.');
+    carregarLotesLocal();
   }
+
+  // Atualiza UI
+  if (typeof renderDashboard === 'function') renderDashboard();
+  if (typeof renderMapa === 'function') renderMapa();
 };
 
 // ----------------------------------
-// FALLBACK LOCAL (quando banco falha)
+// Fallback local
 // ----------------------------------
-function carregarLocalLotes() {
-  const data = JSON.parse(localStorage.getItem('gaylords-system-state') || '{}');
-  state.lotes = (data.lotes || []).map(lote => ({
+function carregarLotesLocal() {
+  const data = localStorage.getItem('gaylords-system-state');
+  if (!data) return;
+
+  const parsed = JSON.parse(data);
+  state.lotes = (parsed.lotes || []).map(lote => ({
     id: lote.id || crypto.randomUUID(),
     nome: lote.nome,
     total: Number(lote.total) || 0,
@@ -70,13 +69,14 @@ function carregarLocalLotes() {
     cor: lote.cor || gerarCor()
   }));
 
-  console.log('✅ Lotes carregados do localStorage:', state.lotes);
+  console.log('⚠️ Lotes carregados do localStorage:', state.lotes);
+
   if (typeof renderDashboard === 'function') renderDashboard();
   if (typeof renderMapa === 'function') renderMapa();
 }
 
 // ----------------------------------
-// CRIAR LOTE (BANCO + STATE)
+// CRIAR LOTE (BANCO + LOCAL)
 // ----------------------------------
 window.cadastrarLote = async function () {
   const nomeInput = document.getElementById('loteNome');
@@ -95,15 +95,15 @@ window.cadastrarLote = async function () {
     return;
   }
 
-  // 🔒 Evita duplicado no front
+  // 🔒 evita duplicado no front
   if (state.lotes.some(l => l.nome === nome)) {
     alert('Lote já existe');
     return;
   }
 
-  try {
-    console.log('📦 Criando lote no banco:', nome);
+  console.log('📦 Criando lote no Supabase:', { nome, total });
 
+  try {
     const { data, error } = await supabase
       .from('lotes')
       .insert([{ nome, total_gaylords: total }])
@@ -111,12 +111,11 @@ window.cadastrarLote = async function () {
       .single();
 
     if (error) {
-      console.error('❌ Erro ao criar lote:', error.message);
-      alert('Erro ao salvar lote no banco');
+      console.error('❌ Erro ao criar lote no banco:', error);
+      alert('Erro ao criar lote no banco. Verifique console.');
       return;
     }
 
-    // Atualiza state.lotes
     const novoLote = {
       id: data.id,
       nome: data.nome,
@@ -132,26 +131,20 @@ window.cadastrarLote = async function () {
     nomeInput.value = '';
     totalInput.value = '';
 
-    // Atualiza mapa e dashboard
+    // Atualiza UI
     if (typeof renderDashboard === 'function') renderDashboard();
     if (typeof renderMapa === 'function') renderMapa();
 
     console.log('✅ Lote criado com sucesso:', novoLote);
-
   } catch (err) {
-    console.error('Erro ao criar lote:', err);
-    alert('Erro inesperado ao criar lote.');
+    console.error('Erro inesperado ao criar lote:', err);
+    alert('Erro inesperado. Veja console para detalhes.');
   }
 };
 
 // ----------------------------------
-// BOOTSTRAP — CARREGA LOTES AUTOMATICAMENTE
+// BOOTSTRAP
 // ----------------------------------
 document.addEventListener('DOMContentLoaded', () => {
-  if (window.supabase) {
-    carregarLotes();
-  } else {
-    console.warn('Supabase não encontrado, carregando lotes do localStorage');
-    carregarLocalLotes();
-  }
+  carregarLotes();
 });
