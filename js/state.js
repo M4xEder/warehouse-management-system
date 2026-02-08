@@ -1,3 +1,6 @@
+// ===============================
+// STATE.JS — ESTADO GLOBAL
+// ===============================
 const STORAGE_KEY = 'gaylords-system-state';
 
 window.state = {
@@ -11,6 +14,7 @@ window.loadState = function () {
   if (!data) return;
 
   const parsed = JSON.parse(data);
+
   state.areas = parsed.areas || [];
   state.lotes = parsed.lotes || [];
   state.historicoExpedidos = parsed.historicoExpedidos || [];
