@@ -8,47 +8,49 @@ let expedicaoContext = {
 };
 
 // -------------------------------
-// GARANTIA
+// GARANTIR HISTÓRICO
 // -------------------------------
 function garantirHistorico() {
   if (!Array.isArray(state.historicoExpedidos)) {
     state.historicoExpedidos = [];
-    saveState();
   }
 }
 
 // -------------------------------
-// TOTAL JÁ EXPEDIDO
+// TOTAL JÁ EXPEDIDO DO LOTE
 // -------------------------------
 function totalExpedidoDoLote(nomeLote) {
   garantirHistorico();
 
   return state.historicoExpedidos
-    .filter(e => e.lote === nomeLote)
-    .reduce((soma, e) => soma + e.quantidadeExpedida, 0);
+    .filter(h => h.lote === nomeLote)
+    .reduce((soma, h) => soma + h.quantidadeExpedida, 0);
 }
 
 // -------------------------------
-// ABRIR MODAL
+// ABRIR MODAL DE EXPEDIÇÃO
 // -------------------------------
 window.expedirLote = function (nomeLote) {
   garantirHistorico();
 
   const lote = state.lotes.find(l => l.nome === nomeLote && l.ativo !== false);
   if (!lote) {
-    alert('Lote não encontrado ou já finalizado');
+    alert('Lote não encontrado ou inativo');
     return;
   }
 
-  const saldo = lote.total - totalExpedidoDoLote(nomeLote);
+  const totalExpedido = totalExpedidoDoLote(nomeLote);
+  const saldo = lote.total - totalExpedido;
 
   if (saldo <= 0) {
     alert('Este lote já foi totalmente expedido');
     return;
   }
 
-  expedicaoContext.lote = nomeLote;
-  expedicaoContext.selecionados = [];
+  expedicaoContext = {
+    lote: nomeLote,
+    selecionados: []
+  };
 
   const lista = document.getElementById('listaExpedicao');
   lista.innerHTML = '';
@@ -68,11 +70,13 @@ window.expedirLote = function (nomeLote) {
 
           div.innerHTML = `
             <label>
-              <input type="checkbox" value="${id}" onchange="toggleSelecionado(this)">
+              <input type="checkbox"
+                     value="${id}"
+                     onchange="toggleSelecionado(this)">
               Área: ${area.nome} |
               Rua: ${rua.nome} |
               Pos: ${p + 1} |
-              RZ: ${pos.rz} |
+              RZ: ${pos.rz || '-'} |
               Vol: ${pos.volume || '-'}
             </label>
           `;
@@ -84,7 +88,7 @@ window.expedirLote = function (nomeLote) {
   });
 
   if (encontrados === 0) {
-    alert('Nenhuma gaylord alocada neste lote');
+    alert('Não há gaylords alocadas para este lote');
     return;
   }
 
@@ -94,13 +98,15 @@ window.expedirLote = function (nomeLote) {
 };
 
 // -------------------------------
-// SELEÇÃO
+// CONTROLE DE SELEÇÃO
 // -------------------------------
 window.toggleSelecionado = function (checkbox) {
   const id = checkbox.value;
 
   if (checkbox.checked) {
-    expedicaoContext.selecionados.push(id);
+    if (!expedicaoContext.selecionados.includes(id)) {
+      expedicaoContext.selecionados.push(id);
+    }
   } else {
     expedicaoContext.selecionados =
       expedicaoContext.selecionados.filter(x => x !== id);
@@ -123,7 +129,7 @@ window.desmarcarTodosGaylords = function () {
 
   document
     .querySelectorAll('#listaExpedicao input[type="checkbox"]')
-    .forEach(cb => (cb.checked = false));
+    .forEach(cb => cb.checked = false);
 };
 
 // -------------------------------
@@ -140,14 +146,15 @@ window.confirmarExpedicao = function () {
   }
 
   const loteObj = state.lotes.find(l => l.nome === lote);
-  const totalExpedido = totalExpedidoDoLote(lote);
-  const saldo = loteObj.total - totalExpedido;
+  if (!loteObj) {
+    alert('Lote inválido');
+    return;
+  }
+
+  const saldo = loteObj.total - totalExpedidoDoLote(lote);
 
   if (selecionados.length > saldo) {
-    alert(
-      `Quantidade selecionada maior que o saldo do lote\n\n` +
-      `Saldo disponível: ${saldo}`
-    );
+    alert(`Quantidade selecionada excede o saldo do lote (${saldo})`);
     return;
   }
 
@@ -161,7 +168,7 @@ window.confirmarExpedicao = function () {
       area: state.areas[a].nome,
       rua: state.areas[a].ruas[r].nome,
       posicao: p + 1,
-      rz: pos.rz,
+      rz: pos.rz || '-',
       volume: pos.volume || '-'
     });
 
@@ -181,10 +188,11 @@ window.confirmarExpedicao = function () {
   });
 
   saveState();
-  fecharModalExpedicao();
 
+  fecharModalExpedicao();
   renderMapa();
   renderDashboard();
+
   if (typeof renderLotesExpedidos === 'function') {
     renderLotesExpedidos();
   }
