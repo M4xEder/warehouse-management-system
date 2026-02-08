@@ -1,5 +1,5 @@
 // ===============================
-// DASHBOARD.JS — FINAL ESTÁVEL
+// DASHBOARD.JS — FINAL, ESTÁVEL E BLINDADO
 // ===============================
 
 window.renderDashboard = function () {
@@ -16,20 +16,39 @@ function renderLotesAtivos() {
 
   div.innerHTML = '';
 
-  state.lotes.forEach(lote => {
-    const alocados = contarGaylordsDoLote(lote.nome);
-    const expedidos = totalExpedidoDoLote(lote.nome);
-    const naoAlocados = lote.total - alocados - expedidos;
-    const saldo = lote.total - expedidos;
+  if (!Array.isArray(state.lotes) || state.lotes.length === 0) {
+    div.innerHTML = '<p>Nenhum lote cadastrado.</p>';
+    return;
+  }
 
-    // 🔴 Se saldo acabou, não é mais ativo
+  let exibiu = false;
+
+  state.lotes.forEach(lote => {
+    const total = Number(lote.total) || 0;
+
+    const alocados =
+      typeof contarGaylordsDoLote === 'function'
+        ? contarGaylordsDoLote(lote.nome)
+        : 0;
+
+    const expedidos =
+      typeof totalExpedidoDoLote === 'function'
+        ? totalExpedidoDoLote(lote.nome)
+        : 0;
+
+    const naoAlocados = Math.max(total - alocados - expedidos, 0);
+    const saldo = Math.max(total - expedidos, 0);
+
+    // 🔴 Totalmente expedido → não é mais ativo
     if (saldo <= 0) return;
+
+    exibiu = true;
 
     div.innerHTML += `
       <div class="lote-card">
         <h3>${lote.nome}</h3>
 
-        <p><strong>Total:</strong> ${lote.total}</p>
+        <p><strong>Total:</strong> ${total}</p>
         <p><strong>Alocados:</strong> ${alocados}</p>
         <p><strong>Não alocados:</strong> ${naoAlocados}</p>
         <p><strong>Expedidos:</strong> ${expedidos}</p>
@@ -44,7 +63,8 @@ function renderLotesAtivos() {
             Alterar Quantidade
           </button>
 
-          <button class="danger" onclick="excluirLote('${lote.nome}')">
+          <button class="danger"
+            onclick="excluirLote('${lote.nome}')">
             Excluir
           </button>
         </div>
@@ -52,13 +72,13 @@ function renderLotesAtivos() {
     `;
   });
 
-  if (div.innerHTML.trim() === '') {
+  if (!exibiu) {
     div.innerHTML = '<p>Nenhum lote ativo.</p>';
   }
 }
 
 // ===============================
-// LOTES EXPEDIDOS (COMPLETOS)
+// LOTES EXPEDIDOS
 // ===============================
 function renderLotesExpedidos() {
   const div = document.getElementById('lotesExpedidos');
@@ -66,36 +86,50 @@ function renderLotesExpedidos() {
 
   div.innerHTML = '';
 
-  const historicoPorLote = {};
+  if (
+    !Array.isArray(state.historicoExpedidos) ||
+    state.historicoExpedidos.length === 0
+  ) {
+    div.innerHTML = '<p>Nenhum lote expedido.</p>';
+    return;
+  }
+
+  const porLote = {};
 
   state.historicoExpedidos.forEach(h => {
-    historicoPorLote[h.lote] ??= [];
-    historicoPorLote[h.lote].push(h);
+    if (!h || !h.lote || !Array.isArray(h.detalhes)) return;
+    porLote[h.lote] ??= [];
+    porLote[h.lote].push(h);
   });
 
-  Object.entries(historicoPorLote).forEach(([nomeLote, historico]) => {
+  let exibiu = false;
+
+  Object.entries(porLote).forEach(([nomeLote, historico]) => {
     const lote = state.lotes.find(l => l.nome === nomeLote);
     if (!lote) return;
 
-    const total = lote.total;
+    const total = Number(lote.total) || 0;
+
     const expedidos = historico.reduce(
-      (s, h) => s + h.detalhes.length,
+      (s, h) => s + (Array.isArray(h.detalhes) ? h.detalhes.length : 0),
       0
     );
 
-    // 🔴 Só mostra se foi totalmente expedido
+    // 🔴 Só aparece aqui se estiver 100% expedido
     if (expedidos < total) return;
 
-    const ultimaExpedicao = historico.at(-1);
+    exibiu = true;
+
+    const ultima = historico.at(-1);
 
     div.innerHTML += `
       <div class="lote-card expedido">
         <h3>${nomeLote}</h3>
 
         <p><strong>Total:</strong> ${total}</p>
-        <p><strong>Quantidade expedida:</strong> ${expedidos}</p>
+        <p><strong>Expedidos:</strong> ${expedidos}</p>
         <p><strong>Status:</strong> Completa</p>
-        <p><strong>Data da expedição:</strong> ${ultimaExpedicao.data}</p>
+        <p><strong>Data:</strong> ${ultima?.data || '-'}</p>
 
         <div class="acoes">
           <button onclick="mostrarDetalhes('${nomeLote}')">
@@ -111,8 +145,8 @@ function renderLotesExpedidos() {
     `;
   });
 
-  if (div.innerHTML.trim() === '') {
-    div.innerHTML = '<p>Nenhum lote expedido.</p>';
+  if (!exibiu) {
+    div.innerHTML = '<p>Nenhum lote totalmente expedido.</p>';
   }
 }
 
@@ -125,42 +159,39 @@ window.mostrarDetalhes = function (nomeLote) {
   );
 
   if (!historico.length) {
-    alert('Nenhum histórico encontrado');
+    alert('Nenhum histórico encontrado.');
     return;
   }
 
   const lote = state.lotes.find(l => l.nome === nomeLote);
-  const total = lote?.total || 0;
+  const total = Number(lote?.total) || 0;
 
   const totalExpedido = historico.reduce(
-    (s, h) => s + h.detalhes.length,
+    (s, h) => s + (Array.isArray(h.detalhes) ? h.detalhes.length : 0),
     0
   );
 
-  let msg = `Lote: ${nomeLote}\n\n`;
+  let msg = `Lote ${nomeLote}\n\n`;
 
   if (totalExpedido >= total) {
-    msg += `Status: Expedido por completo\n`;
-    msg += `Data final: ${historico.at(-1).data}\n\n`;
+    msg += `Expedido por completo em ${historico.at(-1).data}\n\n`;
   } else {
-    msg += `Status: Expedição parcial\n`;
-    msg += `Primeira expedição: ${historico[0].data}\n`;
-    msg += `Última expedição: ${historico.at(-1).data}\n\n`;
+    msg += `Expedição parcial\n`;
+    msg += `Primeira: ${historico[0].data}\n`;
+    msg += `Última: ${historico.at(-1).data}\n\n`;
   }
 
-  historico.forEach((exp, i) => {
-    msg += `Expedição ${i + 1} — ${exp.data}\n`;
-    exp.detalhes.forEach(d => {
-      msg += `RZ: ${d.rz} | Volume: ${d.volume || '-'}\n`;
+  historico.forEach(e => {
+    e.detalhes.forEach(d => {
+      msg += `RZ: ${d.rz} | Volume: ${d.volume || '-'} | Data: ${e.data}\n`;
     });
-    msg += '\n';
   });
 
   alert(msg);
 };
 
 // ===============================
-// EXCLUIR HISTÓRICO (SEM MAPA)
+// EXCLUIR HISTÓRICO (SEM AFETAR MAPA)
 // ===============================
 window.excluirHistoricoLote = function (nomeLote) {
   if (!confirm('Excluir apenas o histórico deste lote?')) return;
