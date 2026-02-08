@@ -6,20 +6,20 @@
 // ABRIR MODAL DE EXPEDIÇÃO
 // -------------------------------
 window.expedirLote = function (nomeLote) {
-  const lote = state.lotes.find(l => l.nome === nomeLote);
-  if (!lote) return;
+  const lista = document.getElementById('listaExpedicao');
+  lista.innerHTML = '';
 
   const gaylords = [];
 
-  // Percorre mapa buscando gaylords alocadas do lote
+  // Busca gaylords alocadas no mapa
   Object.values(state.areas).forEach(area => {
     Object.values(area.ruas).forEach(rua => {
-      Object.values(rua.posicoes).forEach(pos => {
+      Object.entries(rua.posicoes).forEach(([id, pos]) => {
         if (pos.lote === nomeLote) {
           gaylords.push({
             area: area.nome,
             rua: rua.nome,
-            posicao: pos.id,
+            posicao: id,
             rz: pos.rz,
             volume: pos.volume
           });
@@ -33,10 +33,7 @@ window.expedirLote = function (nomeLote) {
     return;
   }
 
-  const lista = document.getElementById('listaExpedicao');
-  lista.innerHTML = '';
-
-  gaylords.forEach((g, i) => {
+  gaylords.forEach(g => {
     lista.innerHTML += `
       <label class="linha-expedicao">
         <input
@@ -49,7 +46,7 @@ window.expedirLote = function (nomeLote) {
           data-volume="${g.volume}"
           checked
         />
-        Área: ${g.area} | Rua: ${g.rua} | 
+        Área: ${g.area} | Rua: ${g.rua} |
         RZ: ${g.rz} | Volume: ${g.volume}
       </label>
     `;
@@ -64,7 +61,7 @@ window.expedirLote = function (nomeLote) {
 window.selecionarTodosGaylords = function () {
   document
     .querySelectorAll('#listaExpedicao .chk-expedicao')
-    .forEach(chk => chk.checked = true);
+    .forEach(c => c.checked = true);
 };
 
 // -------------------------------
@@ -73,7 +70,7 @@ window.selecionarTodosGaylords = function () {
 window.desmarcarTodosGaylords = function () {
   document
     .querySelectorAll('#listaExpedicao .chk-expedicao')
-    .forEach(chk => chk.checked = false);
+    .forEach(c => c.checked = false);
 };
 
 // -------------------------------
@@ -85,52 +82,39 @@ window.confirmarExpedicao = function () {
   );
 
   if (checks.length === 0) {
-    alert('Selecione ao menos uma gaylord para expedir.');
+    alert('Selecione ao menos uma gaylord.');
     return;
   }
 
   const data = new Date().toLocaleString('pt-BR');
   const detalhes = [];
-  let nomeLote = null;
+  let loteNome = null;
 
   checks.forEach(chk => {
     const area = chk.dataset.area;
     const rua = chk.dataset.rua;
     const posicao = chk.dataset.posicao;
-    const rz = chk.dataset.rz;
-    const volume = chk.dataset.volume;
 
     const pos =
       state.areas[area].ruas[rua].posicoes[posicao];
 
-    nomeLote = pos.lote;
+    loteNome = pos.lote;
 
     detalhes.push({
-      rz,
-      volume
+      rz: pos.rz,
+      volume: pos.volume
     });
 
     // Remove do mapa
     delete state.areas[area].ruas[rua].posicoes[posicao];
   });
 
-  // Registra histórico
+  // Salva histórico (única fonte de expedição)
   state.historicoExpedidos.push({
-    lote: nomeLote,
+    lote: loteNome,
     data,
     detalhes
   });
-
-  // Atualiza lote
-  const lote = state.lotes.find(l => l.nome === nomeLote);
-  if (lote) {
-    lote.expedidos += detalhes.length;
-
-    // Se expediu tudo, desativa
-    if (lote.expedidos >= lote.total) {
-      lote.ativo = false;
-    }
-  }
 
   saveState();
 
