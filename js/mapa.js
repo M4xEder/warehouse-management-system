@@ -45,7 +45,6 @@ window.cadastrarArea = function () {
 
   state.areas.push(criarArea(nome));
   input.value = '';
-
   saveState();
   renderMapa();
 };
@@ -122,9 +121,13 @@ window.abrirModal = function (areaId, ruaId, posIndex) {
   modal.classList.remove('hidden');
 
   const select = document.getElementById('modalLote');
-  select.innerHTML = '';
+  select.innerHTML = '<option value="">-- Selecione o Lote --</option>'; // sempre vazio
+  select.disabled = false;
 
-  // Se posição ocupada, apenas mostra lote existente e desabilita seleção
+  const rzInput = document.getElementById('modalRz');
+  const volumeInput = document.getElementById('modalVolume');
+
+  // Posição ocupada: mostra dados, não permite alterar lote nem RZ
   if (pos.ocupada) {
     const loteAtual = state.lotes.find(l => l.nome === pos.lote);
     const opt = document.createElement('option');
@@ -132,11 +135,12 @@ window.abrirModal = function (areaId, ruaId, posIndex) {
     opt.textContent = loteAtual.nome;
     opt.selected = true;
     select.appendChild(opt);
-    select.disabled = true; // impede trocar lote
-    document.getElementById('modalRz').value = pos.rz || '';
-    document.getElementById('modalRz').disabled = true;
+    select.disabled = true;
+    rzInput.value = pos.rz || '';
+    rzInput.disabled = true;
+    volumeInput.value = pos.volume || '';
   } else {
-    // Posição vazia: mostra todos lotes disponíveis
+    // posição vazia: lote e RZ obrigatórios
     const lotesDisponiveis = state.lotes.filter(
       l => l.ativo !== false && calcularSaldoLote(l.nome) > 0
     );
@@ -154,17 +158,89 @@ window.abrirModal = function (areaId, ruaId, posIndex) {
       select.appendChild(opt);
     });
 
-    select.disabled = false;
-    document.getElementById('modalRz').value = '';
-    document.getElementById('modalRz').disabled = false;
+    rzInput.value = '';
+    rzInput.disabled = false;
+    volumeInput.value = '';
   }
 
-  document.getElementById('modalVolume').value = pos.volume || '';
-
-  // Salva referência da posição no modal
   modal.dataset.area = areaId;
   modal.dataset.rua = ruaId;
   modal.dataset.pos = posIndex;
+};
+
+// ===============================
+// SALVAR ENDEREÇO
+// ===============================
+window.confirmarEndereco = function () {
+  const modal = document.getElementById('modal');
+  const areaId = modal.dataset.area;
+  const ruaId = modal.dataset.rua;
+  const posIndex = Number(modal.dataset.pos);
+
+  const area = state.areas.find(a => a.id === areaId);
+  const rua = area.ruas.find(r => r.id === ruaId);
+  const pos = rua.posicoes[posIndex];
+
+  const loteNome = document.getElementById('modalLote').value.trim();
+  const rz = document.getElementById('modalRz').value.trim();
+  const volume = document.getElementById('modalVolume').value.trim();
+
+  // validação RZ obrigatória e lote
+  if (!rz) {
+    alert('RZ é obrigatório');
+    return;
+  }
+  if (!loteNome) {
+    alert('Selecione um lote');
+    return;
+  }
+
+  // validação posição ocupada
+  if (pos.ocupada) {
+    alert('Esta posição já está ocupada. Remova antes de alocar outro lote.');
+    return;
+  }
+
+  pos.ocupada = true;
+  pos.lote = loteNome;
+  pos.rz = rz;
+  pos.volume = volume || null;
+
+  saveState();
+  fecharModal();
+  renderMapa();
+};
+
+// ===============================
+// REMOVER GAYLORD
+// ===============================
+window.removerGaylord = function () {
+  const modal = document.getElementById('modal');
+  const areaId = modal.dataset.area;
+  const ruaId = modal.dataset.rua;
+  const posIndex = Number(modal.dataset.pos);
+
+  const area = state.areas.find(a => a.id === areaId);
+  const rua = area.ruas.find(r => r.id === ruaId);
+  const pos = rua.posicoes[posIndex];
+
+  if (!pos.ocupada) return;
+
+  pos.ocupada = false;
+  pos.lote = null;
+  pos.rz = null;
+  pos.volume = null;
+
+  saveState();
+  fecharModal();
+  renderMapa();
+};
+
+// ===============================
+// FECHAR MODAL
+// ===============================
+window.fecharModal = function () {
+  document.getElementById('modal').classList.add('hidden');
 };
 
 // ===============================
@@ -210,26 +286,19 @@ window.renderMapa = function () {
         const p = document.createElement('div');
         p.className = 'posicao';
 
-        // POSIÇÃO OCUPADA
         if (posicao.ocupada) {
           p.classList.add('ocupada');
-
           const lote = state.lotes.find(l => l.nome === posicao.lote);
           if (lote) p.style.background = lote.cor;
 
           p.title =
-            `Lote: ${posicao.lote}\n` +
-            `RZ: ${posicao.rz}\n` +
-            `Volume: ${posicao.volume || '-'}`;
+            `Lote: ${posicao.lote}\nRZ: ${posicao.rz}\nVolume: ${posicao.volume || '-'}`;
         }
 
-        // DESTAQUE BUSCA
         if (posicao._highlight) p.classList.add('highlight');
         else p.classList.remove('highlight');
 
-        // CLICK SEGURO
         p.onclick = () => abrirModal(area.id, rua.id, posicaoIndex);
-
         posicoesDiv.appendChild(p);
       });
 
