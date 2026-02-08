@@ -2,52 +2,40 @@
 // EXPEDICAO.JS — CONTROLE DE EXPEDIÇÃO
 // ===============================
 
-// -------------------------------
-// ABRIR MODAL DE EXPEDIÇÃO
-// -------------------------------
 window.expedirLote = function (nomeLote) {
   const lista = document.getElementById('listaExpedicao');
   lista.innerHTML = '';
 
-  const gaylords = [];
+  const selecionaveis = [];
 
-  // Busca gaylords alocadas no mapa
-  Object.values(state.areas).forEach(area => {
-    Object.values(area.ruas).forEach(rua => {
-      Object.entries(rua.posicoes).forEach(([id, pos]) => {
-        if (pos.lote === nomeLote) {
-          gaylords.push({
-            area: area.nome,
-            rua: rua.nome,
-            posicao: id,
-            rz: pos.rz,
-            volume: pos.volume
-          });
+  state.areas.forEach((area, ai) => {
+    area.ruas.forEach((rua, ri) => {
+      rua.posicoes.forEach((pos, pi) => {
+        if (pos.ocupada && pos.lote === nomeLote) {
+          selecionaveis.push({ ai, ri, pi, pos });
         }
       });
     });
   });
 
-  if (gaylords.length === 0) {
-    alert('Não há gaylords alocadas para este lote.');
+  if (selecionaveis.length === 0) {
+    alert('Nenhuma gaylord alocada neste lote.');
     return;
   }
 
-  gaylords.forEach(g => {
+  selecionaveis.forEach(({ ai, ri, pi, pos }) => {
     lista.innerHTML += `
       <label class="linha-expedicao">
-        <input
-          type="checkbox"
-          class="chk-expedicao"
-          data-area="${g.area}"
-          data-rua="${g.rua}"
-          data-posicao="${g.posicao}"
-          data-rz="${g.rz}"
-          data-volume="${g.volume}"
+        <input type="checkbox"
+          data-ai="${ai}"
+          data-ri="${ri}"
+          data-pi="${pi}"
           checked
         />
-        Área: ${g.area} | Rua: ${g.rua} |
-        RZ: ${g.rz} | Volume: ${g.volume}
+        Área: ${state.areas[ai].nome} |
+        Rua: ${state.areas[ai].ruas[ri].nome} |
+        RZ: ${pos.rz} |
+        Volume: ${pos.volume || '-'}
       </label>
     `;
   });
@@ -55,49 +43,35 @@ window.expedirLote = function (nomeLote) {
   document.getElementById('modalExpedicao').classList.remove('hidden');
 };
 
-// -------------------------------
-// SELECIONAR TODOS
-// -------------------------------
 window.selecionarTodosGaylords = function () {
-  document
-    .querySelectorAll('#listaExpedicao .chk-expedicao')
+  document.querySelectorAll('#listaExpedicao input[type="checkbox"]')
     .forEach(c => c.checked = true);
 };
 
-// -------------------------------
-// DESMARCAR TODOS
-// -------------------------------
 window.desmarcarTodosGaylords = function () {
-  document
-    .querySelectorAll('#listaExpedicao .chk-expedicao')
+  document.querySelectorAll('#listaExpedicao input[type="checkbox"]')
     .forEach(c => c.checked = false);
 };
 
-// -------------------------------
-// CONFIRMAR EXPEDIÇÃO
-// -------------------------------
 window.confirmarExpedicao = function () {
   const checks = document.querySelectorAll(
-    '#listaExpedicao .chk-expedicao:checked'
+    '#listaExpedicao input[type="checkbox"]:checked'
   );
 
   if (checks.length === 0) {
-    alert('Selecione ao menos uma gaylord.');
+    alert('Selecione ao menos uma gaylord');
     return;
   }
 
-  const data = new Date().toLocaleString('pt-BR');
   const detalhes = [];
   let loteNome = null;
 
   checks.forEach(chk => {
-    const area = chk.dataset.area;
-    const rua = chk.dataset.rua;
-    const posicao = chk.dataset.posicao;
+    const ai = Number(chk.dataset.ai);
+    const ri = Number(chk.dataset.ri);
+    const pi = Number(chk.dataset.pi);
 
-    const pos =
-      state.areas[area].ruas[rua].posicoes[posicao];
-
+    const pos = state.areas[ai].ruas[ri].posicoes[pi];
     loteNome = pos.lote;
 
     detalhes.push({
@@ -105,27 +79,25 @@ window.confirmarExpedicao = function () {
       volume: pos.volume
     });
 
-    // Remove do mapa
-    delete state.areas[area].ruas[rua].posicoes[posicao];
+    // 🔥 LIBERA POSIÇÃO — NÃO APAGA
+    pos.ocupada = false;
+    pos.lote = null;
+    pos.rz = null;
+    pos.volume = null;
   });
 
-  // Salva histórico (única fonte de expedição)
   state.historicoExpedidos.push({
     lote: loteNome,
-    data,
+    data: new Date().toLocaleDateString('pt-BR'),
     detalhes
   });
 
   saveState();
-
   fecharModalExpedicao();
   renderMapa();
   renderDashboard();
 };
 
-// -------------------------------
-// FECHAR MODAL
-// -------------------------------
 window.fecharModalExpedicao = function () {
   document.getElementById('modalExpedicao').classList.add('hidden');
 };
