@@ -1,107 +1,75 @@
-// =======================================
-// DASHBOARD.JS — Lotes Ativos e Expedidos
-// =======================================
-
+// ===============================
+// DASHBOARD.JS
+// ===============================
 window.renderDashboard = function () {
   renderLotesAtivos();
   renderLotesExpedidos();
 };
 
-// =======================================
-// LOTES ATIVOS
-// =======================================
 function renderLotesAtivos() {
-  const container = document.getElementById('lotesAtivos');
-  if (!container) return;
+  const div = document.getElementById('lotesAtivos');
+  div.innerHTML = '';
 
-  container.innerHTML = '';
+  state.lotes.filter(l => l.ativo).forEach(l => {
+    const alocados = contarGaylordsDoLote(l.nome);
+    const expedidos = totalExpedidoDoLote(l.nome);
+    const naoAlocados = l.total - alocados - expedidos;
 
-  const ativos = state.lotes.filter(l => l.ativo !== false);
-
-  if (ativos.length === 0) {
-    container.innerHTML = '<p>Nenhum lote ativo.</p>';
-    return;
-  }
-
-  ativos.forEach(lote => {
-    const alocados = contarGaylordsDoLote(lote.nome);
-    const expedidos = lote.expedidos || 0;
-    const saldo = lote.total - alocados - expedidos;
-
-    const div = document.createElement('div');
-    div.className = 'lote-card ativo';
-    div.style.borderLeft = `6px solid ${lote.cor}`;
-
-    div.innerHTML = `
-      <h3>${lote.nome}</h3>
-      <p><strong>Total:</strong> ${lote.total}</p>
-      <p><strong>Alocados:</strong> ${alocados}</p>
-      <p><strong>Expedidos:</strong> ${expedidos}</p>
-      <p><strong>Saldo:</strong> ${saldo}</p>
-
-      <div class="acoes">
-        <button onclick="abrirAlterarQuantidade('${lote.nome}')">
-          Alterar Quantidade
-        </button>
-
-        <button onclick="expedirLote('${lote.nome}')">
-          Expedir
-        </button>
-
-        <button class="danger" onclick="excluirLote('${lote.nome}')">
-          Excluir
-        </button>
+    div.innerHTML += `
+      <div class="lote-card">
+        <h3>${l.nome}</h3>
+        <p>Total: ${l.total}</p>
+        <p>Alocados: ${alocados}</p>
+        <p>Não alocados: ${naoAlocados}</p>
+        <p>Expedidos: ${expedidos}</p>
+        <p>Saldo: ${l.total - expedidos}</p>
+        <button onclick="expedirLote('${l.nome}')">Expedir</button>
+        <button onclick="alterarQuantidadeLote('${l.nome}')">Alterar</button>
       </div>
     `;
-
-    container.appendChild(div);
   });
 }
 
-// =======================================
-// LOTES EXPEDIDOS
-// =======================================
 function renderLotesExpedidos() {
-  const container = document.getElementById('lotesExpedidos');
-  if (!container) return;
+  const div = document.getElementById('lotesExpedidos');
+  div.innerHTML = '';
 
-  container.innerHTML = '';
+  const porLote = {};
 
-  const expedidos = state.lotes.filter(l => l.ativo === false);
+  state.historicoExpedidos.forEach(h => {
+    porLote[h.lote] ??= [];
+    porLote[h.lote].push(h);
+  });
 
-  if (expedidos.length === 0) {
-    container.innerHTML = '<p>Nenhum lote expedido.</p>';
-    return;
-  }
+  Object.entries(porLote).forEach(([lote, historico]) => {
+    const total = state.lotes.find(l => l.nome === lote)?.total || 0;
+    const qtd = historico.reduce((s, h) => s + h.detalhes.length, 0);
+    const status = qtd === total ? 'Completa' : 'Parcial';
 
-  expedidos.forEach(lote => {
-    const total = lote.total;
-    const totalExpedidos = lote.expedidos || total;
-    const parcial = totalExpedidos < total;
-
-    const div = document.createElement('div');
-    div.className = 'lote-card expedido';
-    div.style.borderLeft = `6px solid ${lote.cor}`;
-
-    div.innerHTML = `
-      <h3>${lote.nome}</h3>
-      <p><strong>Total:</strong> ${total}</p>
-      <p><strong>Expedidos:</strong> ${totalExpedidos}</p>
-      <p><strong>Status:</strong> ${
-        parcial ? 'Expedição Parcial' : 'Expedição Completa'
-      }</p>
-
-      <div class="acoes">
-        <button onclick="detalhesExpedicao('${lote.nome}')">
-          Detalhes
-        </button>
-
-        <button class="danger" onclick="excluirLote('${lote.nome}')">
-          Excluir
-        </button>
+    div.innerHTML += `
+      <div class="lote-card expedido">
+        <h3>${lote}</h3>
+        <p>Total: ${total}</p>
+        <p>Expedidos: ${qtd}</p>
+        <p>Status: ${status}</p>
+        <p>Última: ${historico.at(-1).data}</p>
+        <button onclick="mostrarDetalhes('${lote}')">Detalhes</button>
       </div>
     `;
-
-    container.appendChild(div);
   });
 }
+
+window.mostrarDetalhes = function (lote) {
+  const h = state.historicoExpedidos.filter(e => e.lote === lote);
+  let msg = `Lote ${lote}\n\n`;
+
+  h.forEach((e, i) => {
+    msg += `Expedição ${i + 1} - ${e.data}\n`;
+    e.detalhes.forEach(d =>
+      msg += `RZ:${d.rz} | Vol:${d.volume}\n`
+    );
+    msg += '\n';
+  });
+
+  alert(msg);
+};
