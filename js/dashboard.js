@@ -1,5 +1,5 @@
 // ===============================
-// DASHBOARD.JS — ATUALIZADO
+// DASHBOARD.JS — VERSÃO FINAL
 // ===============================
 
 window.renderDashboard = function () {
@@ -28,15 +28,27 @@ function renderLotesAtivos() {
       div.innerHTML += `
         <div class="lote-card">
           <h3>${l.nome}</h3>
+
           <p>Total: ${l.total}</p>
           <p>Alocados: ${alocados}</p>
           <p>Não alocados: ${naoAlocados}</p>
           <p>Expedidos: ${expedidos}</p>
           <p>Saldo: ${saldo}</p>
 
-          <button onclick="expedirLote('${l.nome}')">Expedir</button>
-          <button onclick="alterarQuantidadeLote('${l.nome}')">Alterar</button>
-          <button class="danger" onclick="excluirLote('${l.nome}')">Excluir</button>
+          <div class="acoes">
+            <button onclick="expedirLote('${l.nome}')">
+              Expedir
+            </button>
+
+            <button onclick="alterarQuantidadeLote('${l.nome}')">
+              Alterar Quantidade
+            </button>
+
+            <button class="danger"
+              onclick="excluirLote('${l.nome}')">
+              Excluir
+            </button>
+          </div>
         </div>
       `;
     });
@@ -65,39 +77,44 @@ function renderLotesExpedidos() {
       0
     );
 
-    const status = expedidos >= total
-      ? 'Completa'
-      : 'Parcial';
+    const status =
+      expedidos >= total ? 'Completa' : 'Parcial';
 
     const ultimaData = historico.at(-1)?.data || '-';
 
     div.innerHTML += `
       <div class="lote-card expedido">
         <h3>${lote}</h3>
+
         <p>Total: ${total}</p>
         <p>Quantidade expedida: ${expedidos}</p>
         <p>Status: ${status}</p>
         <p>Última expedição: ${ultimaData}</p>
 
-        <button onclick="mostrarDetalhes('${lote}')">Detalhes</button>
-        <button class="danger" onclick="excluirHistoricoLote('${lote}')">
-          Excluir Histórico
-        </button>
+        <div class="acoes">
+          <button onclick="mostrarDetalhes('${lote}')">
+            Detalhes
+          </button>
+
+          <button class="danger"
+            onclick="excluirHistoricoLote('${lote}')">
+            Excluir Histórico
+          </button>
+        </div>
       </div>
     `;
   });
 }
 
 // -------------------------------
-// DETALHES DO LOTE
+// DETALHES DO HISTÓRICO
 // -------------------------------
 window.mostrarDetalhes = function (lote) {
-  const historico = state.historicoExpedidos.filter(
-    h => h.lote === lote
-  );
+  const historico = state.historicoExpedidos
+    .filter(h => h.lote === lote);
 
   if (!historico.length) {
-    alert('Nenhum histórico encontrado');
+    alert('Nenhum histórico encontrado.');
     return;
   }
 
@@ -109,21 +126,19 @@ window.mostrarDetalhes = function (lote) {
     0
   );
 
-  let msg = '';
+  let msg = `Lote ${lote}\n\n`;
 
   if (totalExpedido >= total) {
-    msg += `Lote ${lote}\n`;
     msg += `Expedido por completo em ${historico.at(-1).data}\n\n`;
   } else {
-    msg += `Lote ${lote}\n`;
-    msg += `Status: Expedição parcial\n`;
+    msg += `Expedição parcial\n`;
     msg += `Primeira expedição: ${historico[0].data}\n`;
     msg += `Última expedição: ${historico.at(-1).data}\n\n`;
   }
 
-  historico.forEach((e) => {
+  historico.forEach(e => {
     e.detalhes.forEach(d => {
-      msg += `RZ: ${d.rz} | Volume: ${d.volume || '-'} | Data: ${e.data}\n`;
+      msg += `RZ: ${d.rz} | Volume: ${d.volume} | Data: ${e.data}\n`;
     });
   });
 
