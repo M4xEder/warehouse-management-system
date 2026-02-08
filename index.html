@@ -4,34 +4,16 @@
   <meta charset="UTF-8">
   <title>Gerenciamento de Gaylords</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <!-- CSS -->
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-<!-- LOGIN -->
-<script src="js/login.js"></script>
-<script>
-  checarSessao();
-</script>
-
-<!-- STATE GLOBAL -->
-<script src="js/state.js"></script>
-
 <!-- HEADER -->
-<div id="header"></div>
-<script src="js/header.js"></script>
-
-<h1>Gerenciamento de Gaylords</h1>
+<div id="header">Gerenciamento de Gaylords</div>
 
 <!-- BUSCA -->
 <div class="busca">
-  <input
-    type="text"
-    id="buscaInput"
-    placeholder="Buscar por lote ou RZ"
-  />
+  <input type="text" id="buscaInput" placeholder="Buscar por lote ou RZ">
   <button onclick="buscar()">Buscar</button>
   <button onclick="limparBusca()">Limpar Destaque</button>
 </div>
@@ -39,19 +21,14 @@
 <!-- CADASTROS -->
 <section class="cadastros">
   <h2>Cadastrar Área</h2>
-  <input id="areaNome" placeholder="Nome da área" />
+  <input id="areaNome" placeholder="Nome da área">
   <button onclick="cadastrarArea()">Cadastrar Área</button>
 </section>
 
 <section class="cadastros">
   <h2>Cadastrar Lote</h2>
-  <input id="loteNome" placeholder="Nome do lote" />
-  <input
-    id="loteTotal"
-    type="number"
-    min="1"
-    placeholder="Quantidade total"
-  />
+  <input id="loteNome" placeholder="Nome do lote">
+  <input id="loteTotal" type="number" min="1" placeholder="Quantidade total">
   <button onclick="cadastrarLote()">Cadastrar Lote</button>
 </section>
 
@@ -65,74 +42,32 @@
 <h2>Lotes Expedidos</h2>
 <div id="lotesExpedidos"></div>
 
-<!-- MODAL ENDEREÇAMENTO -->
-<div id="modal" class="modal hidden">
-  <div class="modal-content">
-    <h3>Endereçar Gaylord</h3>
-
-    <label>
-      Lote:
-      <select id="modalLote"></select>
-    </label>
-
-    <label>
-      Volume:
-      <input id="modalVolume" type="text" />
-    </label>
-
-    <label>
-      RZ:
-      <input id="modalRz" type="text" />
-    </label>
-
-    <div class="acoes">
-      <button onclick="confirmarEndereco()">Salvar</button>
-      <button onclick="removerGaylord()">Remover</button>
-      <button onclick="fecharModal()">Cancelar</button>
-    </div>
-  </div>
-</div>
-
 <!-- MODAL EXPEDIÇÃO -->
 <div id="modalExpedicao" class="modal hidden">
-  <div
-    class="modal-content"
-    style="width:500px; max-height:80vh; overflow-y:auto;"
-  >
+  <div class="modal-content">
     <h3>Expedir Gaylords do Lote</h3>
-
-    <div style="margin-bottom:10px;">
-      <button onclick="selecionarTodosGaylords()">Selecionar todos</button>
-      <button onclick="desmarcarTodosGaylords()">Desmarcar todos</button>
-    </div>
-
+    <button onclick="selecionarTodosGaylords()">Selecionar todos</button>
+    <button onclick="desmarcarTodosGaylords()">Desmarcar todos</button>
     <div id="listaExpedicao"></div>
-
-    <div class="acoes" style="margin-top:15px;">
-      <button onclick="confirmarExpedicao()">Confirmar Expedição</button>
-      <button onclick="fecharModalExpedicao()">Cancelar</button>
-    </div>
+    <button onclick="confirmarExpedicao()">Confirmar Expedição</button>
+    <button onclick="fecharModalExpedicao()">Cancelar</button>
   </div>
 </div>
 
-<!-- MODAL DETALHES EXPEDIÇÃO -->
-<div id="modalDetalhesExpedicao" class="modal hidden">
-  <div class="modal-content" style="max-width:600px;">
-    <h3>Detalhes da Expedição</h3>
-    <div id="conteudoDetalhesExpedicao"></div>
-
-    <div style="margin-top:12px; text-align:right;">
-      <button onclick="fecharDetalhesExpedicao()">Fechar</button>
-    </div>
-  </div>
-</div>
-
+<!-- SCRIPTS -->
 <script src="js/state.js"></script>
-<script src="js/lotes.js"></script>
-<script src="js/modal.js"></script> 
 <script src="js/mapa.js"></script>
-<script src="js/dashboard.js"></script>
+<script src="js/lotes.js"></script>
 <script src="js/expedicao.js"></script>
+<script src="js/dashboard.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    loadState();
+    renderMapa();
+    renderDashboard();
+  });
+</script>
 
 </body>
 </html>
