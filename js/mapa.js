@@ -1,10 +1,8 @@
 // ===============================
-// MAPA.JS — CONTROLE DO ARMAZÉM
+// MAPA.JS — CONTROLE DO MAPA
 // ===============================
 
-// ===============================
-// HELPERS
-// ===============================
+// ---------- HELPERS ----------
 function criarPosicao() {
   return {
     ocupada: false,
@@ -30,45 +28,40 @@ function criarArea(nome) {
   };
 }
 
-// ===============================
-// CRUD ÁREA
-// ===============================
+// ---------- CRUD ÁREA ----------
 window.cadastrarArea = function () {
   const input = document.getElementById('areaNome');
-  const nome = input.value.trim();
-  if (!nome) { alert('Informe o nome da área'); return; }
+  if (!input.value.trim()) return alert('Informe o nome da área');
 
-  state.areas.push(criarArea(nome));
+  state.areas.push(criarArea(input.value.trim()));
   input.value = '';
   saveState();
   renderMapa();
 };
 
-window.excluirArea = function (areaId) {
-  const area = state.areas.find(a => a.id === areaId);
+window.excluirArea = function (id) {
+  const area = state.areas.find(a => a.id === id);
   if (!area) return;
 
-  const possuiAlocacao = area.ruas.some(rua => rua.posicoes.some(p => p.ocupada));
-  if (possuiAlocacao) { alert('Não é possível excluir a área. Existem gaylords alocadas.'); return; }
-  if (!confirm('Deseja excluir esta área?')) return;
+  if (area.ruas.some(r => r.posicoes.some(p => p.ocupada))) {
+    return alert('Área possui gaylords alocadas');
+  }
 
-  state.areas = state.areas.filter(a => a.id !== areaId);
+  if (!confirm('Excluir área?')) return;
+  state.areas = state.areas.filter(a => a.id !== id);
   saveState();
   renderMapa();
 };
 
-// ===============================
-// CRUD RUA
-// ===============================
+// ---------- CRUD RUA ----------
 window.adicionarRua = function (areaId) {
   const area = state.areas.find(a => a.id === areaId);
   if (!area) return;
 
   const nome = prompt('Nome da rua');
-  if (!nome) return;
-
   const qtd = Number(prompt('Quantidade de posições'));
-  if (!qtd || qtd <= 0) { alert('Quantidade inválida'); return; }
+
+  if (!nome || qtd <= 0) return alert('Dados inválidos');
 
   area.ruas.push(criarRua(nome, qtd));
   saveState();
@@ -77,28 +70,27 @@ window.adicionarRua = function (areaId) {
 
 window.excluirRua = function (areaId, ruaId) {
   const area = state.areas.find(a => a.id === areaId);
-  if (!area) return;
-
-  const rua = area.ruas.find(r => r.id === ruaId);
+  const rua = area?.ruas.find(r => r.id === ruaId);
   if (!rua) return;
 
-  if (rua.posicoes.some(p => p.ocupada)) { alert('Não é possível excluir a rua. Existem gaylords alocadas.'); return; }
-  if (!confirm('Deseja excluir esta rua?')) return;
+  if (rua.posicoes.some(p => p.ocupada)) {
+    return alert('Rua possui gaylords alocadas');
+  }
 
+  if (!confirm('Excluir rua?')) return;
   area.ruas = area.ruas.filter(r => r.id !== ruaId);
   saveState();
   renderMapa();
 };
 
-// ===============================
-// RENDER MAPA
-// ===============================
+// ---------- RENDER MAPA ----------
 window.renderMapa = function () {
   const mapa = document.getElementById('mapa');
   if (!mapa) return;
+
   mapa.innerHTML = '';
 
-  state.areas.forEach(area => {
+  state.areas.forEach((area, ai) => {
     const areaDiv = document.createElement('div');
     areaDiv.className = 'area';
 
@@ -109,31 +101,44 @@ window.renderMapa = function () {
       </div>
     `;
 
-    area.ruas.forEach(rua => {
+    area.ruas.forEach((rua, ri) => {
       const ruaDiv = document.createElement('div');
       ruaDiv.className = 'rua';
 
       ruaDiv.innerHTML = `
         <div class="rua-header">
           Rua ${rua.nome}
-          <button class="danger" onclick="excluirRua('${area.id}','${rua.id}')">Excluir Rua</button>
+          <button class="danger"
+            onclick="excluirRua('${area.id}','${rua.id}')">
+            Excluir Rua
+          </button>
         </div>
       `;
 
       const posicoesDiv = document.createElement('div');
       posicoesDiv.className = 'posicoes';
 
-      rua.posicoes.forEach((posicao, idx) => {
+      rua.posicoes.forEach((pos, pi) => {
         const p = document.createElement('div');
         p.className = 'posicao';
-        if (posicao.ocupada) {
+
+        if (pos.ocupada) {
           p.classList.add('ocupada');
-          const lote = state.lotes.find(l => l.nome === posicao.lote);
+          const lote = state.lotes.find(l => l.nome === pos.lote);
           if (lote) p.style.background = lote.cor;
-          p.title = `Lote: ${posicao.lote}\nRZ: ${posicao.rz}\nVolume: ${posicao.volume || '-'}`;
+          p.title = `Lote: ${pos.lote}\nRZ: ${pos.rz}\nVol: ${pos.volume}`;
         }
 
-        p.onclick = () => abrirModal(area.id, rua.id, idx);
+        // 🔥 CLIQUE GARANTIDO
+        p.addEventListener('click', () => {
+          if (typeof abrirModal !== 'function') {
+            alert('Função abrirModal não carregada');
+            return;
+          }
+
+          abrirModal(ai, ri, pi);
+        });
+
         posicoesDiv.appendChild(p);
       });
 
@@ -144,8 +149,12 @@ window.renderMapa = function () {
     const btnRua = document.createElement('button');
     btnRua.textContent = 'Adicionar Rua';
     btnRua.onclick = () => adicionarRua(area.id);
-    areaDiv.appendChild(btnRua);
 
+    areaDiv.appendChild(btnRua);
     mapa.appendChild(areaDiv);
   });
+
+  if (typeof renderDashboard === 'function') {
+    renderDashboard();
+  }
 };
