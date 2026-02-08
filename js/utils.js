@@ -1,9 +1,9 @@
 // ===============================
-// UTILS.JS — FUNÇÕES GLOBAIS
+// UTILS.JS — FUNÇÕES AUXILIARES
 // ===============================
 
 // -------------------------------
-// CONTAR GAYLORDS ALOCADAS POR LOTE
+// CONTAR GAYLORDS ALOCADAS NO MAPA
 // -------------------------------
 window.contarGaylordsDoLote = function (nomeLote) {
   let total = 0;
@@ -19,4 +19,15 @@ window.contarGaylordsDoLote = function (nomeLote) {
   });
 
   return total;
+};
+
+// -------------------------------
+// TOTAL EXPEDIDO DO LOTE
+// -------------------------------
+window.totalExpedidoDoLote = function (nomeLote) {
+  if (!Array.isArray(state.historicoExpedidos)) return 0;
+
+  return state.historicoExpedidos
+    .filter(h => h.lote === nomeLote)
+    .reduce((soma, h) => soma + h.detalhes.length, 0);
 };
