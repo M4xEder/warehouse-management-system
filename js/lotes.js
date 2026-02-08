@@ -6,9 +6,9 @@ function gerarCor() {
   return `hsl(${Math.random() * 360},70%,65%)`;
 }
 
-// ===============================
+// -------------------------------
 // CRIAR LOTE
-// ===============================
+// -------------------------------
 window.cadastrarLote = function () {
   const nomeInput = document.getElementById('loteNome');
   const totalInput = document.getElementById('loteTotal');
@@ -30,7 +30,6 @@ window.cadastrarLote = function () {
     id: crypto.randomUUID(),
     nome,
     total,
-    expedidos: 0,
     ativo: true,
     cor: gerarCor()
   };
@@ -45,21 +44,53 @@ window.cadastrarLote = function () {
   renderMapa();
 };
 
-// ===============================
-// CALCULAR SALDO
-// saldo = total - expedidos - alocados
-// ===============================
+// -------------------------------
+// CONTAR GAYLORDS ALOCADAS NO MAPA
+// -------------------------------
+window.contarGaylordsDoLote = function (nomeLote) {
+  let total = 0;
+
+  state.areas.forEach(area => {
+    area.ruas.forEach(rua => {
+      rua.posicoes.forEach(pos => {
+        if (pos.ocupada && pos.lote === nomeLote) {
+          total++;
+        }
+      });
+    });
+  });
+
+  return total;
+};
+
+// -------------------------------
+// TOTAL EXPEDIDO PELO HISTÓRICO
+// -------------------------------
+function totalExpedidoDoLote(nomeLote) {
+  if (!Array.isArray(state.historicoExpedidos)) return 0;
+
+  return state.historicoExpedidos
+    .filter(h => h.lote === nomeLote)
+    .reduce((soma, h) => soma + h.quantidadeExpedida, 0);
+}
+
+// -------------------------------
+// CALCULAR SALDO REAL
+// saldo = total - expedidos (histórico) - alocados
+// -------------------------------
 window.calcularSaldoLote = function (nomeLote) {
   const lote = state.lotes.find(l => l.nome === nomeLote);
   if (!lote) return 0;
 
   const alocados = contarGaylordsDoLote(nomeLote);
-  return lote.total - lote.expedidos - alocados;
+  const expedidos = totalExpedidoDoLote(nomeLote);
+
+  return lote.total - alocados - expedidos;
 };
 
-// ===============================
+// -------------------------------
 // ALTERAR QUANTIDADE DO LOTE
-// ===============================
+// -------------------------------
 window.alterarQuantidadeLote = function (nomeLote) {
   const lote = state.lotes.find(l => l.nome === nomeLote);
   if (!lote) return;
@@ -74,27 +105,29 @@ window.alterarQuantidadeLote = function (nomeLote) {
   }
 
   const alocados = contarGaylordsDoLote(nomeLote);
-  const minimo = alocados + lote.expedidos;
+  const expedidos = totalExpedidoDoLote(nomeLote);
+  const minimoPermitido = alocados + expedidos;
 
-  if (novoTotal < minimo) {
+  if (novoTotal < minimoPermitido) {
     alert(
-      `Quantidade inválida.\n` +
-      `Mínimo permitido: ${minimo}\n` +
-      `(Alocados: ${alocados} | Expedidos: ${lote.expedidos})`
+      `Quantidade inválida.\n\n` +
+      `Mínimo permitido: ${minimoPermitido}\n` +
+      `(Alocados: ${alocados} | Expedidos: ${expedidos})`
     );
     return;
   }
 
   lote.total = novoTotal;
+  lote.ativo = true; // reativa se estava finalizado
 
   saveState();
   renderDashboard();
   renderMapa();
 };
 
-// ===============================
+// -------------------------------
 // EXCLUIR LOTE ATIVO
-// ===============================
+// -------------------------------
 window.excluirLote = function (nomeLote) {
   const lote = state.lotes.find(l => l.nome === nomeLote);
   if (!lote) {
@@ -111,10 +144,11 @@ window.excluirLote = function (nomeLote) {
     return;
   }
 
-  const temExpedicao = state.historicoExpedidos
-    && state.historicoExpedidos.some(e => e.lote === nomeLote);
+  const temHistorico =
+    Array.isArray(state.historicoExpedidos) &&
+    state.historicoExpedidos.some(h => h.lote === nomeLote);
 
-  if (temExpedicao) {
+  if (temHistorico) {
     alert(
       'Não é possível excluir o lote.\n' +
       'Este lote possui histórico de expedição.'
@@ -122,9 +156,7 @@ window.excluirLote = function (nomeLote) {
     return;
   }
 
-  if (!confirm(`Excluir definitivamente o lote "${nomeLote}"?`)) {
-    return;
-  }
+  if (!confirm(`Excluir definitivamente o lote "${nomeLote}"?`)) return;
 
   state.lotes = state.lotes.filter(l => l.nome !== nomeLote);
 
@@ -133,9 +165,9 @@ window.excluirLote = function (nomeLote) {
   renderMapa();
 };
 
-// ===============================
-// FINALIZAR LOTE (quando saldo = 0)
-// ===============================
+// -------------------------------
+// FINALIZAR LOTE AUTOMATICAMENTE
+// -------------------------------
 window.finalizarLoteSeNecessario = function (nomeLote) {
   const lote = state.lotes.find(l => l.nome === nomeLote);
   if (!lote) return;
