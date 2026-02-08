@@ -124,27 +124,41 @@ window.abrirModal = function (areaId, ruaId, posIndex) {
   const select = document.getElementById('modalLote');
   select.innerHTML = '';
 
-  // Lotess disponíveis ou a do que já está alocada na posição
-  const lotesDisponiveis = state.lotes.filter(
-    l => l.ativo !== false && (calcularSaldoLote(l.nome) > 0 || l.nome === pos.lote)
-  );
+  // Se posição ocupada, apenas mostra lote existente e desabilita seleção
+  if (pos.ocupada) {
+    const loteAtual = state.lotes.find(l => l.nome === pos.lote);
+    const opt = document.createElement('option');
+    opt.value = loteAtual.nome;
+    opt.textContent = loteAtual.nome;
+    opt.selected = true;
+    select.appendChild(opt);
+    select.disabled = true; // impede trocar lote
+    document.getElementById('modalRz').value = pos.rz || '';
+    document.getElementById('modalRz').disabled = true;
+  } else {
+    // Posição vazia: mostra todos lotes disponíveis
+    const lotesDisponiveis = state.lotes.filter(
+      l => l.ativo !== false && calcularSaldoLote(l.nome) > 0
+    );
 
-  if (lotesDisponiveis.length === 0) {
-    alert('Nenhum lote disponível para alocação');
-    modal.classList.add('hidden');
-    return;
+    if (lotesDisponiveis.length === 0) {
+      alert('Nenhum lote disponível para alocação');
+      modal.classList.add('hidden');
+      return;
+    }
+
+    lotesDisponiveis.forEach(l => {
+      const opt = document.createElement('option');
+      opt.value = l.nome;
+      opt.textContent = l.nome;
+      select.appendChild(opt);
+    });
+
+    select.disabled = false;
+    document.getElementById('modalRz').value = '';
+    document.getElementById('modalRz').disabled = false;
   }
 
-  lotesDisponiveis.forEach(l => {
-    const opt = document.createElement('option');
-    opt.value = l.nome;
-    opt.textContent = l.nome;
-    if (l.nome === pos.lote) opt.selected = true; // marca o lote já alocado
-    select.appendChild(opt);
-  });
-
-  // Preenche os campos com os dados da posição se já estiver ocupada
-  document.getElementById('modalRz').value = pos.rz || '';
   document.getElementById('modalVolume').value = pos.volume || '';
 
   // Salva referência da posição no modal
