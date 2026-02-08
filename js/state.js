@@ -19,6 +19,7 @@ window.loadState = function () {
 
   const parsed = JSON.parse(data);
 
+  // Mantém IDs persistentes
   state.areas = parsed.areas || [];
   state.lotes = parsed.lotes || [];
   state.historicoExpedidos = parsed.historicoExpedidos || [];
