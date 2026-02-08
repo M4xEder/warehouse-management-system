@@ -7,7 +7,6 @@
 // ===============================
 function criarPosicao() {
   return {
-    id: crypto.randomUUID(),
     ocupada: false,
     lote: null,
     rz: null,
@@ -112,74 +111,6 @@ window.excluirRua = function (areaId, ruaId) {
 };
 
 // ===============================
-// ABRIR MODAL DE ENDEREÇAMENTO
-// ===============================
-window.abrirModal = function (areaId, ruaId, posicaoId) {
-  const area = state.areas.find(a => a.id === areaId);
-  const rua = area?.ruas.find(r => r.id === ruaId);
-  const pos = rua?.posicoes.find(p => p.id === posicaoId);
-  if (!pos) return;
-
-  document.getElementById('modalLote').value = pos.lote || '';
-  document.getElementById('modalVolume').value = pos.volume || '';
-  document.getElementById('modalRz').value = pos.rz || '';
-
-  window.modalContext = { areaId, ruaId, posicaoId };
-
-  document.getElementById('modal').classList.remove('hidden');
-};
-
-// ===============================
-// FECHAR MODAL
-// ===============================
-window.fecharModal = function () {
-  document.getElementById('modal').classList.add('hidden');
-  window.modalContext = null;
-};
-
-// ===============================
-// CONFIRMAR ENDEREÇO
-// ===============================
-window.confirmarEndereco = function () {
-  if (!window.modalContext) return;
-  const { areaId, ruaId, posicaoId } = window.modalContext;
-
-  const area = state.areas.find(a => a.id === areaId);
-  const rua = area.ruas.find(r => r.id === ruaId);
-  const pos = rua.posicoes.find(p => p.id === posicaoId);
-
-  pos.lote = document.getElementById('modalLote').value;
-  pos.volume = document.getElementById('modalVolume').value;
-  pos.rz = document.getElementById('modalRz').value;
-  pos.ocupada = !!pos.lote;
-
-  saveState();
-  fecharModal();
-  renderMapa();
-};
-
-// ===============================
-// REMOVER POSIÇÃO
-// ===============================
-window.removerGaylord = function () {
-  if (!window.modalContext) return;
-  const { areaId, ruaId, posicaoId } = window.modalContext;
-
-  const area = state.areas.find(a => a.id === areaId);
-  const rua = area.ruas.find(r => r.id === ruaId);
-  const pos = rua.posicoes.find(p => p.id === posicaoId);
-
-  pos.lote = null;
-  pos.rz = null;
-  pos.volume = null;
-  pos.ocupada = false;
-
-  saveState();
-  fecharModal();
-  renderMapa();
-};
-
-// ===============================
 // RENDER MAPA
 // ===============================
 window.renderMapa = function () {
@@ -218,17 +149,35 @@ window.renderMapa = function () {
       const posicoesDiv = document.createElement('div');
       posicoesDiv.className = 'posicoes';
 
-      rua.posicoes.forEach(posicao => {
+      rua.posicoes.forEach((posicao, posicaoIndex) => {
         const p = document.createElement('div');
         p.className = 'posicao';
+
+        // POSIÇÃO OCUPADA
         if (posicao.ocupada) {
           p.classList.add('ocupada');
-          const loteObj = state.lotes.find(l => l.nome === posicao.lote);
-          if (loteObj) p.style.background = loteObj.cor;
-          p.title = `Lote: ${posicao.lote}\nRZ: ${posicao.rz}\nVol: ${posicao.volume || '-'}`;
+
+          const lote = state.lotes.find(l => l.nome === posicao.lote);
+          if (lote) p.style.background = lote.cor;
+
+          p.title =
+            `Lote: ${posicao.lote}\n` +
+            `RZ: ${posicao.rz}\n` +
+            `Volume: ${posicao.volume || '-'}`;
         }
 
-        p.onclick = () => abrirModal(area.id, rua.id, posicao.id);
+        // DESTAQUE DE BUSCA
+        if (posicao._highlight) p.classList.add('highlight');
+
+        // CLICK → ABRIR MODAL DE ENDEREÇO
+        p.onclick = () => {
+          abrirModal(
+            state.areas.indexOf(area),
+            area.ruas.indexOf(rua),
+            posicaoIndex
+          );
+        };
+
         posicoesDiv.appendChild(p);
       });
 
@@ -246,14 +195,14 @@ window.renderMapa = function () {
 
   if (typeof renderDashboard === 'function') renderDashboard();
 };
+
 // ===============================
-// ABRIR MODAL DE ENDEREÇAMENTO
+// MODAL DE ENDEREÇAMENTO
 // ===============================
 window.abrirModal = function (areaIndex, ruaIndex, posIndex) {
   const area = state.areas[areaIndex];
   const rua = area.ruas[ruaIndex];
   const pos = rua.posicoes[posIndex];
-
   if (!area || !rua || !pos) return;
 
   // Preencher select de lotes ativos
@@ -266,20 +215,14 @@ window.abrirModal = function (areaIndex, ruaIndex, posIndex) {
     loteSelect.appendChild(opt);
   });
 
-  // Preencher valores atuais se já existir
   document.getElementById('modalVolume').value = pos.volume || '';
   document.getElementById('modalRz').value = pos.rz || '';
   loteSelect.value = pos.lote || (state.lotes.find(l => l.ativo)?.nome || '');
 
-  // Guardar posição para salvar
   window.modalContext = { areaIndex, ruaIndex, posIndex };
-
   document.getElementById('modal').classList.remove('hidden');
 };
 
-// ===============================
-// CONFIRMAR ENDEREÇO
-// ===============================
 window.confirmarEndereco = function () {
   if (!window.modalContext) return;
 
@@ -295,7 +238,6 @@ window.confirmarEndereco = function () {
   if (!lote) { alert('Selecione um lote'); return; }
   if (!rz) { alert('Informe o RZ'); return; }
 
-  // Salvar informações
   pos.ocupada = true;
   pos.lote = lote;
   pos.rz = rz;
@@ -306,9 +248,6 @@ window.confirmarEndereco = function () {
   fecharModal();
 };
 
-// ===============================
-// REMOVER GAYLORD
-// ===============================
 window.removerGaylord = function () {
   if (!window.modalContext) return;
 
@@ -325,9 +264,6 @@ window.removerGaylord = function () {
   fecharModal();
 };
 
-// ===============================
-// FECHAR MODAL
-// ===============================
 window.fecharModal = function () {
   window.modalContext = null;
   document.getElementById('modal').classList.add('hidden');
