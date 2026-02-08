@@ -153,13 +153,19 @@ window.renderMapa = function () {
         const p = document.createElement('div');
         p.className = 'posicao';
 
+        // ----------------------------
         // POSIÇÃO OCUPADA
+        // ----------------------------
         if (posicao.ocupada) {
           p.classList.add('ocupada');
 
           const lote = state.lotes.find(l => l.nome === posicao.lote);
-          if (lote) {
+
+          // fallback visual para lote inexistente
+          if (lote && lote.cor) {
             p.style.background = lote.cor;
+          } else {
+            p.style.background = '#999';
           }
 
           p.title =
@@ -168,18 +174,19 @@ window.renderMapa = function () {
             `Volume: ${posicao.volume || '-'}`;
         }
 
+        // ----------------------------
         // DESTAQUE DE BUSCA
+        // ----------------------------
         if (posicao._highlight) {
           p.classList.add('highlight');
+        } else {
+          p.classList.remove('highlight');
         }
 
-        // CLICK SEGURO
+        // ----------------------------
+        // CLICK → MODAL
+        // ----------------------------
         p.onclick = () => {
-          if (typeof abrirModal !== 'function') {
-            alert('Erro: modal não carregado');
-            return;
-          }
-
           const areaIndex = state.areas.findIndex(a => a.id === area.id);
           const ruaIndex = area.ruas.findIndex(r => r.id === rua.id);
 
@@ -201,6 +208,7 @@ window.renderMapa = function () {
     mapa.appendChild(areaDiv);
   });
 
+  // mantém dashboard sincronizado
   if (typeof renderDashboard === 'function') {
     renderDashboard();
   }
