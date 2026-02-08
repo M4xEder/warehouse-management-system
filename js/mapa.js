@@ -153,9 +153,7 @@ window.renderMapa = function () {
         const p = document.createElement('div');
         p.className = 'posicao';
 
-        // ----------------------------
         // POSIÇÃO OCUPADA
-        // ----------------------------
         if (posicao.ocupada) {
           p.classList.add('ocupada');
 
@@ -170,19 +168,18 @@ window.renderMapa = function () {
             `Volume: ${posicao.volume || '-'}`;
         }
 
-        // ----------------------------
-        // DESTAQUE DA BUSCA
-        // ----------------------------
+        // DESTAQUE DE BUSCA
         if (posicao._highlight) {
           p.classList.add('highlight');
-        } else {
-          p.classList.remove('highlight');
         }
 
-        // ----------------------------
-        // CLICK → MODAL
-        // ----------------------------
+        // CLICK SEGURO
         p.onclick = () => {
+          if (typeof abrirModal !== 'function') {
+            alert('Erro: modal não carregado');
+            return;
+          }
+
           const areaIndex = state.areas.findIndex(a => a.id === area.id);
           const ruaIndex = area.ruas.findIndex(r => r.id === rua.id);
 
@@ -204,7 +201,6 @@ window.renderMapa = function () {
     mapa.appendChild(areaDiv);
   });
 
-  // Mantém dashboard sincronizado
   if (typeof renderDashboard === 'function') {
     renderDashboard();
   }
