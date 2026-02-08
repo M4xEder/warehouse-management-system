@@ -1,5 +1,5 @@
 // ===============================
-// DASHBOARD.JS — FINAL E ESTÁVEL
+// DASHBOARD.JS — FINAL ESTÁVEL
 // ===============================
 
 window.renderDashboard = function () {
@@ -22,7 +22,7 @@ function renderLotesAtivos() {
     const naoAlocados = lote.total - alocados - expedidos;
     const saldo = lote.total - expedidos;
 
-    // 🔴 Se saldo zerou, NÃO é mais ativo
+    // 🔴 Se saldo acabou, não é mais ativo
     if (saldo <= 0) return;
 
     div.innerHTML += `
@@ -58,7 +58,7 @@ function renderLotesAtivos() {
 }
 
 // ===============================
-// LOTES EXPEDIDOS
+// LOTES EXPEDIDOS (COMPLETOS)
 // ===============================
 function renderLotesExpedidos() {
   const div = document.getElementById('lotesExpedidos');
@@ -66,15 +66,15 @@ function renderLotesExpedidos() {
 
   div.innerHTML = '';
 
-  const porLote = {};
+  const historicoPorLote = {};
 
   state.historicoExpedidos.forEach(h => {
-    porLote[h.lote] ??= [];
-    porLote[h.lote].push(h);
+    historicoPorLote[h.lote] ??= [];
+    historicoPorLote[h.lote].push(h);
   });
 
-  Object.entries(porLote).forEach(([nome, historico]) => {
-    const lote = state.lotes.find(l => l.nome === nome);
+  Object.entries(historicoPorLote).forEach(([nomeLote, historico]) => {
+    const lote = state.lotes.find(l => l.nome === nomeLote);
     if (!lote) return;
 
     const total = lote.total;
@@ -83,27 +83,27 @@ function renderLotesExpedidos() {
       0
     );
 
-    // 🔴 Só entra aqui se foi totalmente expedido
+    // 🔴 Só mostra se foi totalmente expedido
     if (expedidos < total) return;
 
-    const ultima = historico.at(-1);
+    const ultimaExpedicao = historico.at(-1);
 
     div.innerHTML += `
       <div class="lote-card expedido">
-        <h3>${nome}</h3>
+        <h3>${nomeLote}</h3>
 
         <p><strong>Total:</strong> ${total}</p>
-        <p><strong>Expedidos:</strong> ${expedidos}</p>
+        <p><strong>Quantidade expedida:</strong> ${expedidos}</p>
         <p><strong>Status:</strong> Completa</p>
-        <p><strong>Data:</strong> ${ultima.data}</p>
+        <p><strong>Data da expedição:</strong> ${ultimaExpedicao.data}</p>
 
         <div class="acoes">
-          <button onclick="mostrarDetalhes('${nome}')">
+          <button onclick="mostrarDetalhes('${nomeLote}')">
             Detalhes
           </button>
 
           <button class="danger"
-            onclick="excluirHistoricoLote('${nome}')">
+            onclick="excluirHistoricoLote('${nomeLote}')">
             Excluir Histórico
           </button>
         </div>
@@ -115,3 +115,59 @@ function renderLotesExpedidos() {
     div.innerHTML = '<p>Nenhum lote expedido.</p>';
   }
 }
+
+// ===============================
+// DETALHES DO HISTÓRICO
+// ===============================
+window.mostrarDetalhes = function (nomeLote) {
+  const historico = state.historicoExpedidos.filter(
+    h => h.lote === nomeLote
+  );
+
+  if (!historico.length) {
+    alert('Nenhum histórico encontrado');
+    return;
+  }
+
+  const lote = state.lotes.find(l => l.nome === nomeLote);
+  const total = lote?.total || 0;
+
+  const totalExpedido = historico.reduce(
+    (s, h) => s + h.detalhes.length,
+    0
+  );
+
+  let msg = `Lote: ${nomeLote}\n\n`;
+
+  if (totalExpedido >= total) {
+    msg += `Status: Expedido por completo\n`;
+    msg += `Data final: ${historico.at(-1).data}\n\n`;
+  } else {
+    msg += `Status: Expedição parcial\n`;
+    msg += `Primeira expedição: ${historico[0].data}\n`;
+    msg += `Última expedição: ${historico.at(-1).data}\n\n`;
+  }
+
+  historico.forEach((exp, i) => {
+    msg += `Expedição ${i + 1} — ${exp.data}\n`;
+    exp.detalhes.forEach(d => {
+      msg += `RZ: ${d.rz} | Volume: ${d.volume || '-'}\n`;
+    });
+    msg += '\n';
+  });
+
+  alert(msg);
+};
+
+// ===============================
+// EXCLUIR HISTÓRICO (SEM MAPA)
+// ===============================
+window.excluirHistoricoLote = function (nomeLote) {
+  if (!confirm('Excluir apenas o histórico deste lote?')) return;
+
+  state.historicoExpedidos =
+    state.historicoExpedidos.filter(h => h.lote !== nomeLote);
+
+  saveState();
+  renderDashboard();
+};
