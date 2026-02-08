@@ -119,7 +119,7 @@ window.renderMapa = function () {
 
   mapa.innerHTML = '';
 
-  state.areas.forEach(area => {
+  state.areas.forEach((area, areaIndex) => {
     const areaDiv = document.createElement('div');
     areaDiv.className = 'area';
 
@@ -132,7 +132,7 @@ window.renderMapa = function () {
       </div>
     `;
 
-    area.ruas.forEach(rua => {
+    area.ruas.forEach((rua, ruaIndex) => {
       const ruaDiv = document.createElement('div');
       ruaDiv.className = 'rua';
 
@@ -156,7 +156,6 @@ window.renderMapa = function () {
         // POSIÇÃO OCUPADA
         if (posicao.ocupada) {
           p.classList.add('ocupada');
-
           const lote = state.lotes.find(l => l.nome === posicao.lote);
           if (lote) p.style.background = lote.cor;
 
@@ -166,17 +165,10 @@ window.renderMapa = function () {
             `Volume: ${posicao.volume || '-'}`;
         }
 
-        // DESTAQUE DE BUSCA
         if (posicao._highlight) p.classList.add('highlight');
 
-        // CLICK → ABRIR MODAL DE ENDEREÇO
-        p.onclick = () => {
-          abrirModal(
-            state.areas.indexOf(area),
-            area.ruas.indexOf(rua),
-            posicaoIndex
-          );
-        };
+        // CLICK → ABRIR MODAL
+        p.addEventListener('click', () => abrirModal(areaIndex, ruaIndex, posicaoIndex));
 
         posicoesDiv.appendChild(p);
       });
