@@ -1,88 +1,147 @@
 // ===============================
-// EXPEDICAO.JS
+// EXPEDICAO.JS — CONTROLE DE EXPEDIÇÃO
 // ===============================
-let expedicaoContext = { lote: null, selecionados: [] };
 
-function totalExpedidoDoLote(nome) {
-  return state.historicoExpedidos
-    .filter(e => e.lote === nome)
-    .reduce((s, e) => s + e.detalhes.length, 0);
-}
-
+// -------------------------------
+// ABRIR MODAL DE EXPEDIÇÃO
+// -------------------------------
 window.expedirLote = function (nomeLote) {
-  const lote = state.lotes.find(l => l.nome === nomeLote && l.ativo);
-  if (!lote) return alert('Lote inválido');
+  const lote = state.lotes.find(l => l.nome === nomeLote);
+  if (!lote) return;
 
-  const lista = document.getElementById('listaExpedicao');
-  lista.innerHTML = '';
-  expedicaoContext = { lote: nomeLote, selecionados: [] };
+  const gaylords = [];
 
-  state.areas.forEach((a, ai) => {
-    a.ruas.forEach((r, ri) => {
-      r.posicoes.forEach((p, pi) => {
-        if (p.ocupada && p.lote === nomeLote) {
-          const id = `${ai}-${ri}-${pi}`;
-          lista.innerHTML += `
-            <label>
-              <input type="checkbox" value="${id}"
-              onchange="toggleSelecionado(this)">
-              ${a.nome} | ${r.nome} | RZ:${p.rz} | Vol:${p.volume}
-            </label><br>
-          `;
+  // Percorre mapa buscando gaylords alocadas do lote
+  Object.values(state.areas).forEach(area => {
+    Object.values(area.ruas).forEach(rua => {
+      Object.values(rua.posicoes).forEach(pos => {
+        if (pos.lote === nomeLote) {
+          gaylords.push({
+            area: area.nome,
+            rua: rua.nome,
+            posicao: pos.id,
+            rz: pos.rz,
+            volume: pos.volume
+          });
         }
       });
     });
   });
 
+  if (gaylords.length === 0) {
+    alert('Não há gaylords alocadas para este lote.');
+    return;
+  }
+
+  const lista = document.getElementById('listaExpedicao');
+  lista.innerHTML = '';
+
+  gaylords.forEach((g, i) => {
+    lista.innerHTML += `
+      <label class="linha-expedicao">
+        <input
+          type="checkbox"
+          class="chk-expedicao"
+          data-area="${g.area}"
+          data-rua="${g.rua}"
+          data-posicao="${g.posicao}"
+          data-rz="${g.rz}"
+          data-volume="${g.volume}"
+          checked
+        />
+        Área: ${g.area} | Rua: ${g.rua} | 
+        RZ: ${g.rz} | Volume: ${g.volume}
+      </label>
+    `;
+  });
+
   document.getElementById('modalExpedicao').classList.remove('hidden');
 };
 
-window.toggleSelecionado = function (cb) {
-  cb.checked
-    ? expedicaoContext.selecionados.push(cb.value)
-    : expedicaoContext.selecionados =
-        expedicaoContext.selecionados.filter(x => x !== cb.value);
+// -------------------------------
+// SELECIONAR TODOS
+// -------------------------------
+window.selecionarTodosGaylords = function () {
+  document
+    .querySelectorAll('#listaExpedicao .chk-expedicao')
+    .forEach(chk => chk.checked = true);
 };
 
+// -------------------------------
+// DESMARCAR TODOS
+// -------------------------------
+window.desmarcarTodosGaylords = function () {
+  document
+    .querySelectorAll('#listaExpedicao .chk-expedicao')
+    .forEach(chk => chk.checked = false);
+};
+
+// -------------------------------
+// CONFIRMAR EXPEDIÇÃO
+// -------------------------------
 window.confirmarExpedicao = function () {
-  const { lote, selecionados } = expedicaoContext;
-  if (!selecionados.length) return alert('Selecione ao menos uma');
+  const checks = document.querySelectorAll(
+    '#listaExpedicao .chk-expedicao:checked'
+  );
 
+  if (checks.length === 0) {
+    alert('Selecione ao menos uma gaylord para expedir.');
+    return;
+  }
+
+  const data = new Date().toLocaleString('pt-BR');
   const detalhes = [];
+  let nomeLote = null;
 
-  selecionados.forEach(id => {
-    const [a, r, p] = id.split('-').map(Number);
-    const pos = state.areas[a].ruas[r].posicoes[p];
+  checks.forEach(chk => {
+    const area = chk.dataset.area;
+    const rua = chk.dataset.rua;
+    const posicao = chk.dataset.posicao;
+    const rz = chk.dataset.rz;
+    const volume = chk.dataset.volume;
+
+    const pos =
+      state.areas[area].ruas[rua].posicoes[posicao];
+
+    nomeLote = pos.lote;
 
     detalhes.push({
-      rz: pos.rz,
-      volume: pos.volume,
-      data: new Date().toLocaleString()
+      rz,
+      volume
     });
 
-    pos.ocupada = false;
-    pos.lote = pos.rz = pos.volume = null;
+    // Remove do mapa
+    delete state.areas[area].ruas[rua].posicoes[posicao];
   });
 
+  // Registra histórico
   state.historicoExpedidos.push({
-    id: crypto.randomUUID(),
-    lote,
-    detalhes,
-    data: new Date().toLocaleString()
+    lote: nomeLote,
+    data,
+    detalhes
   });
 
-  const total = state.lotes.find(l => l.nome === lote).total;
-  const expedidos = totalExpedidoDoLote(lote);
-  if (expedidos >= total) {
-    state.lotes.find(l => l.nome === lote).ativo = false;
+  // Atualiza lote
+  const lote = state.lotes.find(l => l.nome === nomeLote);
+  if (lote) {
+    lote.expedidos += detalhes.length;
+
+    // Se expediu tudo, desativa
+    if (lote.expedidos >= lote.total) {
+      lote.ativo = false;
+    }
   }
 
   saveState();
+
   fecharModalExpedicao();
   renderMapa();
   renderDashboard();
 };
 
+// -------------------------------
+// FECHAR MODAL
+// -------------------------------
 window.fecharModalExpedicao = function () {
   document.getElementById('modalExpedicao').classList.add('hidden');
 };
