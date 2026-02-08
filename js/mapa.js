@@ -2,9 +2,12 @@
 // MAPA.JS — CONTROLE DO ARMAZÉM
 // ===============================
 
+// ===============================
 // HELPERS
+// ===============================
 function criarPosicao() {
   return {
+    id: crypto.randomUUID(),
     ocupada: false,
     lote: null,
     rz: null,
@@ -28,9 +31,9 @@ function criarArea(nome) {
   };
 }
 
-// -------------------------------
+// ===============================
 // CRUD ÁREA
-// -------------------------------
+// ===============================
 window.cadastrarArea = function () {
   const input = document.getElementById('areaNome');
   if (!input) return;
@@ -68,9 +71,9 @@ window.excluirArea = function (areaId) {
   renderMapa();
 };
 
-// -------------------------------
+// ===============================
 // CRUD RUA
-// -------------------------------
+// ===============================
 window.adicionarRua = function (areaId) {
   const area = state.areas.find(a => a.id === areaId);
   if (!area) return;
@@ -108,9 +111,77 @@ window.excluirRua = function (areaId, ruaId) {
   renderMapa();
 };
 
-// -------------------------------
+// ===============================
+// ABRIR MODAL DE ENDEREÇAMENTO
+// ===============================
+window.abrirModal = function (areaId, ruaId, posicaoId) {
+  const area = state.areas.find(a => a.id === areaId);
+  const rua = area?.ruas.find(r => r.id === ruaId);
+  const pos = rua?.posicoes.find(p => p.id === posicaoId);
+  if (!pos) return;
+
+  document.getElementById('modalLote').value = pos.lote || '';
+  document.getElementById('modalVolume').value = pos.volume || '';
+  document.getElementById('modalRz').value = pos.rz || '';
+
+  window.modalContext = { areaId, ruaId, posicaoId };
+
+  document.getElementById('modal').classList.remove('hidden');
+};
+
+// ===============================
+// FECHAR MODAL
+// ===============================
+window.fecharModal = function () {
+  document.getElementById('modal').classList.add('hidden');
+  window.modalContext = null;
+};
+
+// ===============================
+// CONFIRMAR ENDEREÇO
+// ===============================
+window.confirmarEndereco = function () {
+  if (!window.modalContext) return;
+  const { areaId, ruaId, posicaoId } = window.modalContext;
+
+  const area = state.areas.find(a => a.id === areaId);
+  const rua = area.ruas.find(r => r.id === ruaId);
+  const pos = rua.posicoes.find(p => p.id === posicaoId);
+
+  pos.lote = document.getElementById('modalLote').value;
+  pos.volume = document.getElementById('modalVolume').value;
+  pos.rz = document.getElementById('modalRz').value;
+  pos.ocupada = !!pos.lote;
+
+  saveState();
+  fecharModal();
+  renderMapa();
+};
+
+// ===============================
+// REMOVER POSIÇÃO
+// ===============================
+window.removerGaylord = function () {
+  if (!window.modalContext) return;
+  const { areaId, ruaId, posicaoId } = window.modalContext;
+
+  const area = state.areas.find(a => a.id === areaId);
+  const rua = area.ruas.find(r => r.id === ruaId);
+  const pos = rua.posicoes.find(p => p.id === posicaoId);
+
+  pos.lote = null;
+  pos.rz = null;
+  pos.volume = null;
+  pos.ocupada = false;
+
+  saveState();
+  fecharModal();
+  renderMapa();
+};
+
+// ===============================
 // RENDER MAPA
-// -------------------------------
+// ===============================
 window.renderMapa = function () {
   const mapa = document.getElementById('mapa');
   if (!mapa) return;
@@ -147,30 +218,17 @@ window.renderMapa = function () {
       const posicoesDiv = document.createElement('div');
       posicoesDiv.className = 'posicoes';
 
-      rua.posicoes.forEach((posicao, posicaoIndex) => {
+      rua.posicoes.forEach(posicao => {
         const p = document.createElement('div');
         p.className = 'posicao';
-
         if (posicao.ocupada) {
           p.classList.add('ocupada');
-          const lote = state.lotes.find(l => l.nome === posicao.lote);
-          if (lote) p.style.background = lote.cor;
-
-          p.title = `Lote: ${posicao.lote}\nRZ: ${posicao.rz}\nVolume: ${posicao.volume || '-'}`;
+          const loteObj = state.lotes.find(l => l.nome === posicao.lote);
+          if (loteObj) p.style.background = loteObj.cor;
+          p.title = `Lote: ${posicao.lote}\nRZ: ${posicao.rz}\nVol: ${posicao.volume || '-'}`;
         }
 
-        if (posicao._highlight) {
-          p.classList.add('highlight');
-        }
-
-        p.onclick = () => {
-          if (typeof abrirModal === 'function') {
-            const areaIndex = state.areas.findIndex(a => a.id === area.id);
-            const ruaIndex = state.areas.findIndex(r => r.id === rua.id);
-            abrirModal(areaIndex, ruaIndex, posicaoIndex);
-          }
-        };
-
+        p.onclick = () => abrirModal(area.id, rua.id, posicao.id);
         posicoesDiv.appendChild(p);
       });
 
