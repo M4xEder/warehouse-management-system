@@ -1,23 +1,16 @@
 // ===============================
-// LOTES.JS — CONTROLE DE LOTES
+// LOTES.JS
 // ===============================
-
 function gerarCor() {
-  return `hsl(${Math.random() * 360},70%,65%)`;
+  return `hsl(${Math.random() * 360},70%,60%)`;
 }
 
-// ===============================
-// CRIAR LOTE
-// ===============================
 window.cadastrarLote = function () {
-  const nomeInput = document.getElementById('loteNome');
-  const totalInput = document.getElementById('loteTotal');
-
-  const nome = nomeInput.value.trim();
-  const total = Number(totalInput.value);
+  const nome = document.getElementById('loteNome').value.trim();
+  const total = Number(document.getElementById('loteTotal').value);
 
   if (!nome || total <= 0) {
-    alert('Informe nome e quantidade válida');
+    alert('Dados inválidos');
     return;
   }
 
@@ -26,123 +19,40 @@ window.cadastrarLote = function () {
     return;
   }
 
-  const lote = {
+  state.lotes.push({
     id: crypto.randomUUID(),
     nome,
     total,
-    expedidos: 0,
-    ativo: true,
-    cor: gerarCor()
-  };
-
-  state.lotes.push(lote);
-  saveState();
-
-  nomeInput.value = '';
-  totalInput.value = '';
-
-  renderDashboard();
-  renderMapa();
-};
-
-// ===============================
-// CONTAR ALOCADAS NO MAPA
-// ===============================
-function contarGaylordsDoLote(nomeLote) {
-  let total = 0;
-  state.areas.forEach(area => {
-    area.ruas.forEach(rua => {
-      rua.posicoes.forEach(pos => {
-        if (pos.ocupada && pos.lote === nomeLote) total++;
-      });
-    });
+    cor: gerarCor(),
+    ativo: true
   });
-  return total;
-}
 
-// ===============================
-// CALCULAR SALDO
-// saldo = total - expedidos - alocados
-// ===============================
-window.calcularSaldoLote = function (nomeLote) {
-  const lote = state.lotes.find(l => l.nome === nomeLote);
-  if (!lote) return 0;
-
-  const alocados = contarGaylordsDoLote(nomeLote);
-  return lote.total - lote.expedidos - alocados;
-};
-
-// ===============================
-// ALTERAR QUANTIDADE DO LOTE
-// ===============================
-window.abrirAlterarQuantidade = function (nomeLote) {
-  const lote = state.lotes.find(l => l.nome === nomeLote);
-  if (!lote) return;
-
-  const alocados = contarGaylordsDoLote(nomeLote);
-
-  const novoTotal = Number(
-    prompt(
-      `Nova quantidade total para o lote "${nomeLote}":\n` +
-      `(Mínimo permitido: ${alocados}, já alocados no mapa)`,
-      lote.total
-    )
-  );
-
-  if (!novoTotal || novoTotal < alocados) {
-    alert(`Quantidade inválida. Mínimo permitido: ${alocados}`);
-    return;
-  }
-
-  lote.total = novoTotal;
   saveState();
-
   renderDashboard();
-  renderMapa();
 };
 
-// ===============================
-// EXCLUIR LOTE
-// ===============================
-window.excluirLote = function (nomeLote) {
+window.alterarQuantidadeLote = function (nomeLote) {
   const lote = state.lotes.find(l => l.nome === nomeLote);
   if (!lote) return;
 
   const alocados = contarGaylordsDoLote(nomeLote);
-  if (alocados > 0) {
-    alert(
-      `Não é possível excluir o lote. Existem ${alocados} gaylords alocadas.`
-    );
+  const expedidos = totalExpedidoDoLote(nomeLote);
+
+  const novo = Number(prompt('Nova quantidade total:', lote.total));
+  if (!novo || novo < alocados + expedidos) {
+    alert('Quantidade menor que alocados + expedidos');
     return;
   }
 
-  const temExpedicao = state.historicoExpedidos
-    && state.historicoExpedidos.some(e => e.lote === nomeLote);
+  lote.total = novo;
+  saveState();
+  renderDashboard();
+};
 
-  if (temExpedicao) {
-    alert('Não é possível excluir o lote. Possui histórico de expedição.');
-    return;
-  }
-
-  if (!confirm(`Deseja excluir o lote "${nomeLote}"?`)) return;
+window.excluirLote = function (nomeLote) {
+  if (!confirm('Excluir lote?')) return;
 
   state.lotes = state.lotes.filter(l => l.nome !== nomeLote);
-
   saveState();
   renderDashboard();
-  renderMapa();
-};
-
-// ===============================
-// FINALIZAR LOTE SE NECESSÁRIO
-// ===============================
-window.finalizarLoteSeNecessario = function (nomeLote) {
-  const lote = state.lotes.find(l => l.nome === nomeLote);
-  if (!lote) return;
-
-  const saldo = calcularSaldoLote(nomeLote);
-  if (saldo <= 0) {
-    lote.ativo = false;
-    saveState();
-  }
 };
