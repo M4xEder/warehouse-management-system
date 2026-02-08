@@ -246,3 +246,89 @@ window.renderMapa = function () {
 
   if (typeof renderDashboard === 'function') renderDashboard();
 };
+// ===============================
+// ABRIR MODAL DE ENDEREÇAMENTO
+// ===============================
+window.abrirModal = function (areaIndex, ruaIndex, posIndex) {
+  const area = state.areas[areaIndex];
+  const rua = area.ruas[ruaIndex];
+  const pos = rua.posicoes[posIndex];
+
+  if (!area || !rua || !pos) return;
+
+  // Preencher select de lotes ativos
+  const loteSelect = document.getElementById('modalLote');
+  loteSelect.innerHTML = '';
+  state.lotes.filter(l => l.ativo).forEach(l => {
+    const opt = document.createElement('option');
+    opt.value = l.nome;
+    opt.textContent = l.nome;
+    loteSelect.appendChild(opt);
+  });
+
+  // Preencher valores atuais se já existir
+  document.getElementById('modalVolume').value = pos.volume || '';
+  document.getElementById('modalRz').value = pos.rz || '';
+  loteSelect.value = pos.lote || (state.lotes.find(l => l.ativo)?.nome || '');
+
+  // Guardar posição para salvar
+  window.modalContext = { areaIndex, ruaIndex, posIndex };
+
+  document.getElementById('modal').classList.remove('hidden');
+};
+
+// ===============================
+// CONFIRMAR ENDEREÇO
+// ===============================
+window.confirmarEndereco = function () {
+  if (!window.modalContext) return;
+
+  const { areaIndex, ruaIndex, posIndex } = window.modalContext;
+  const area = state.areas[areaIndex];
+  const rua = area.ruas[ruaIndex];
+  const pos = rua.posicoes[posIndex];
+
+  const lote = document.getElementById('modalLote').value;
+  const rz = document.getElementById('modalRz').value.trim();
+  const volume = document.getElementById('modalVolume').value.trim();
+
+  if (!lote) { alert('Selecione um lote'); return; }
+  if (!rz) { alert('Informe o RZ'); return; }
+
+  // Salvar informações
+  pos.ocupada = true;
+  pos.lote = lote;
+  pos.rz = rz;
+  pos.volume = volume;
+
+  saveState();
+  renderMapa();
+  fecharModal();
+};
+
+// ===============================
+// REMOVER GAYLORD
+// ===============================
+window.removerGaylord = function () {
+  if (!window.modalContext) return;
+
+  const { areaIndex, ruaIndex, posIndex } = window.modalContext;
+  const pos = state.areas[areaIndex].ruas[ruaIndex].posicoes[posIndex];
+
+  pos.ocupada = false;
+  pos.lote = null;
+  pos.rz = null;
+  pos.volume = null;
+
+  saveState();
+  renderMapa();
+  fecharModal();
+};
+
+// ===============================
+// FECHAR MODAL
+// ===============================
+window.fecharModal = function () {
+  window.modalContext = null;
+  document.getElementById('modal').classList.add('hidden');
+};
