@@ -1,22 +1,14 @@
 // ===============================
-// MAIN.JS — ORQUESTRAÇÃO FINAL
+// MAIN.JS — ORQUESTRAÇÃO
 // ===============================
 
 document.addEventListener('DOMContentLoaded', () => {
+  loadState();
 
-  // STATE já foi carregado pelo state.js
-  // Aqui apenas renderizamos
-
-  if (typeof renderMapa === 'function') {
-    renderMapa();
-  }
-
-  if (typeof renderDashboard === 'function') {
-    renderDashboard();
-  }
+  renderMapa();
+  renderDashboard();
 
   if (typeof renderLotesExpedidos === 'function') {
     renderLotesExpedidos();
   }
-
 });
