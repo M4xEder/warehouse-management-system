@@ -30,8 +30,3 @@ window.loadState = function () {
 window.saveState = function () {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 };
-
-// -------------------------------
-// INIT
-// -------------------------------
-loadState();
