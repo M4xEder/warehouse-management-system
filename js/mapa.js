@@ -2,9 +2,7 @@
 // MAPA.JS — CONTROLE DO ARMAZÉM
 // ===============================
 
-// ===============================
 // HELPERS
-// ===============================
 function criarPosicao() {
   return {
     ocupada: false,
@@ -30,9 +28,9 @@ function criarArea(nome) {
   };
 }
 
-// ===============================
+// -------------------------------
 // CRUD ÁREA
-// ===============================
+// -------------------------------
 window.cadastrarArea = function () {
   const input = document.getElementById('areaNome');
   if (!input) return;
@@ -70,9 +68,9 @@ window.excluirArea = function (areaId) {
   renderMapa();
 };
 
-// ===============================
+// -------------------------------
 // CRUD RUA
-// ===============================
+// -------------------------------
 window.adicionarRua = function (areaId) {
   const area = state.areas.find(a => a.id === areaId);
   if (!area) return;
@@ -110,9 +108,9 @@ window.excluirRua = function (areaId, ruaId) {
   renderMapa();
 };
 
-// ===============================
+// -------------------------------
 // RENDER MAPA
-// ===============================
+// -------------------------------
 window.renderMapa = function () {
   const mapa = document.getElementById('mapa');
   if (!mapa) return;
@@ -153,44 +151,24 @@ window.renderMapa = function () {
         const p = document.createElement('div');
         p.className = 'posicao';
 
-        // ----------------------------
-        // POSIÇÃO OCUPADA
-        // ----------------------------
         if (posicao.ocupada) {
           p.classList.add('ocupada');
-
           const lote = state.lotes.find(l => l.nome === posicao.lote);
+          if (lote) p.style.background = lote.cor;
 
-          // fallback visual para lote inexistente
-          if (lote && lote.cor) {
-            p.style.background = lote.cor;
-          } else {
-            p.style.background = '#999';
-          }
-
-          p.title =
-            `Lote: ${posicao.lote}\n` +
-            `RZ: ${posicao.rz}\n` +
-            `Volume: ${posicao.volume || '-'}`;
+          p.title = `Lote: ${posicao.lote}\nRZ: ${posicao.rz}\nVolume: ${posicao.volume || '-'}`;
         }
 
-        // ----------------------------
-        // DESTAQUE DE BUSCA
-        // ----------------------------
         if (posicao._highlight) {
           p.classList.add('highlight');
-        } else {
-          p.classList.remove('highlight');
         }
 
-        // ----------------------------
-        // CLICK → MODAL
-        // ----------------------------
         p.onclick = () => {
-          const areaIndex = state.areas.findIndex(a => a.id === area.id);
-          const ruaIndex = area.ruas.findIndex(r => r.id === rua.id);
-
-          abrirModal(areaIndex, ruaIndex, posicaoIndex);
+          if (typeof abrirModal === 'function') {
+            const areaIndex = state.areas.findIndex(a => a.id === area.id);
+            const ruaIndex = state.areas.findIndex(r => r.id === rua.id);
+            abrirModal(areaIndex, ruaIndex, posicaoIndex);
+          }
         };
 
         posicoesDiv.appendChild(p);
@@ -208,8 +186,5 @@ window.renderMapa = function () {
     mapa.appendChild(areaDiv);
   });
 
-  // mantém dashboard sincronizado
-  if (typeof renderDashboard === 'function') {
-    renderDashboard();
-  }
+  if (typeof renderDashboard === 'function') renderDashboard();
 };
