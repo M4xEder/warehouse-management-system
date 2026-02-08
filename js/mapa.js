@@ -129,13 +129,7 @@ window.renderMapa = function () {
           p.title = `Lote: ${pos.lote}\nRZ: ${pos.rz}\nVol: ${pos.volume}`;
         }
 
-        // 🔥 CLIQUE GARANTIDO
         p.addEventListener('click', () => {
-          if (typeof abrirModal !== 'function') {
-            alert('Função abrirModal não carregada');
-            return;
-          }
-
           abrirModal(ai, ri, pi);
         });
 
@@ -153,8 +147,4 @@ window.renderMapa = function () {
     areaDiv.appendChild(btnRua);
     mapa.appendChild(areaDiv);
   });
-
-  if (typeof renderDashboard === 'function') {
-    renderDashboard();
-  }
 };
