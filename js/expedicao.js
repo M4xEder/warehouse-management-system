@@ -1,7 +1,10 @@
 // ===============================
-// EXPEDICAO.JS — CONTROLE DE EXPEDIÇÃO
+// EXPEDICAO.JS — CONTROLE DE EXPEDIÇÃO (REVISADO)
 // ===============================
 
+// -------------------------------
+// ABRIR MODAL DE EXPEDIÇÃO
+// -------------------------------
 window.expedirLote = function (nomeLote) {
   const lista = document.getElementById('listaExpedicao');
   lista.innerHTML = '';
@@ -26,7 +29,8 @@ window.expedirLote = function (nomeLote) {
   selecionaveis.forEach(({ ai, ri, pi, pos }) => {
     lista.innerHTML += `
       <label class="linha-expedicao">
-        <input type="checkbox"
+        <input
+          type="checkbox"
           data-ai="${ai}"
           data-ri="${ri}"
           data-pi="${pi}"
@@ -40,19 +44,29 @@ window.expedirLote = function (nomeLote) {
     `;
   });
 
-  document.getElementById('modalExpedicao').classList.remove('hidden');
+  document
+    .getElementById('modalExpedicao')
+    .classList.remove('hidden');
 };
 
+// -------------------------------
+// SELECIONAR / DESMARCAR
+// -------------------------------
 window.selecionarTodosGaylords = function () {
-  document.querySelectorAll('#listaExpedicao input[type="checkbox"]')
+  document
+    .querySelectorAll('#listaExpedicao input[type="checkbox"]')
     .forEach(c => c.checked = true);
 };
 
 window.desmarcarTodosGaylords = function () {
-  document.querySelectorAll('#listaExpedicao input[type="checkbox"]')
+  document
+    .querySelectorAll('#listaExpedicao input[type="checkbox"]')
     .forEach(c => c.checked = false);
 };
 
+// -------------------------------
+// CONFIRMAR EXPEDIÇÃO
+// -------------------------------
 window.confirmarExpedicao = function () {
   const checks = document.querySelectorAll(
     '#listaExpedicao input[type="checkbox"]:checked'
@@ -60,6 +74,10 @@ window.confirmarExpedicao = function () {
 
   if (checks.length === 0) {
     alert('Selecione ao menos uma gaylord');
+    return;
+  }
+
+  if (!confirm(`Confirmar expedição de ${checks.length} gaylord(s)?`)) {
     return;
   }
 
@@ -72,6 +90,8 @@ window.confirmarExpedicao = function () {
     const pi = Number(chk.dataset.pi);
 
     const pos = state.areas[ai].ruas[ri].posicoes[pi];
+    if (!pos || !pos.ocupada) return;
+
     loteNome = pos.lote;
 
     detalhes.push({
@@ -79,16 +99,21 @@ window.confirmarExpedicao = function () {
       volume: pos.volume
     });
 
-    // 🔥 LIBERA POSIÇÃO — NÃO APAGA
+    // 🔥 LIBERA POSIÇÃO
     pos.ocupada = false;
     pos.lote = null;
     pos.rz = null;
     pos.volume = null;
   });
 
+  if (!loteNome) {
+    alert('Erro ao identificar lote');
+    return;
+  }
+
   state.historicoExpedidos.push({
     lote: loteNome,
-    data: new Date().toLocaleDateString('pt-BR'),
+    data: new Date().toLocaleString('pt-BR'),
     detalhes
   });
 
@@ -98,6 +123,11 @@ window.confirmarExpedicao = function () {
   renderDashboard();
 };
 
+// -------------------------------
+// FECHAR MODAL
+// -------------------------------
 window.fecharModalExpedicao = function () {
-  document.getElementById('modalExpedicao').classList.add('hidden');
+  document
+    .getElementById('modalExpedicao')
+    .classList.add('hidden');
 };
