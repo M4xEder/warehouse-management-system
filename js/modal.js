@@ -1,5 +1,5 @@
 // ===============================
-// MODAL.JS — ENDEREÇAMENTO
+// MODAL.JS — ENDEREÇAMENTO (AJUSTADO)
 // ===============================
 
 let modalContext = {
@@ -12,6 +12,13 @@ let modalContext = {
 // ABRIR MODAL
 // -------------------------------
 window.abrirModal = function (areaIndex, ruaIndex, posicaoIndex) {
+  if (
+    !state?.areas?.[areaIndex]?.ruas?.[ruaIndex]?.posicoes?.[posicaoIndex]
+  ) {
+    alert('Posição inválida');
+    return;
+  }
+
   modalContext = { areaIndex, ruaIndex, posicaoIndex };
 
   const pos =
@@ -27,15 +34,19 @@ window.abrirModal = function (areaIndex, ruaIndex, posicaoIndex) {
   inputRz.value = '';
   inputVolume.value = '';
 
-  // popula lotes ativos
-  state.lotes
-    .filter(l => l.ativo !== false)
-    .forEach(lote => {
-      const opt = document.createElement('option');
-      opt.value = lote.nome;
-      opt.textContent = lote.nome;
-      selectLote.appendChild(opt);
-    });
+  // popula apenas lotes COM SALDO
+  state.lotes.forEach(lote => {
+    const alocados = contarGaylordsDoLote(lote.nome);
+    const expedidos = totalExpedidoDoLote(lote.nome);
+    const saldo = lote.total - alocados - expedidos;
+
+    if (saldo <= 0) return;
+
+    const opt = document.createElement('option');
+    opt.value = lote.nome;
+    opt.textContent = `${lote.nome} (saldo: ${saldo})`;
+    selectLote.appendChild(opt);
+  });
 
   // POSIÇÃO OCUPADA → SOMENTE VISUALIZAÇÃO / REMOÇÃO
   if (pos.ocupada) {
@@ -80,14 +91,17 @@ window.confirmarEndereco = function () {
   }
 
   const lote = state.lotes.find(l => l.nome === loteNome);
-  if (!lote || lote.ativo === false) {
-    alert('Lote inválido ou já finalizado');
+  if (!lote) {
+    alert('Lote inválido');
     return;
   }
 
   const alocados = contarGaylordsDoLote(loteNome);
-  if (alocados >= lote.total) {
-    alert('Não é possível alocar mais que o total do lote');
+  const expedidos = totalExpedidoDoLote(loteNome);
+  const saldo = lote.total - alocados - expedidos;
+
+  if (saldo <= 0) {
+    alert('Este lote não possui saldo disponível');
     return;
   }
 
@@ -105,9 +119,9 @@ window.confirmarEndereco = function () {
   pos.volume = volume || null;
 
   saveState();
+  fecharModal();
   renderMapa();
   renderDashboard();
-  fecharModal();
 };
 
 // -------------------------------
@@ -115,10 +129,11 @@ window.confirmarEndereco = function () {
 // -------------------------------
 window.removerGaylord = function () {
   const { areaIndex, ruaIndex, posicaoIndex } = modalContext;
+
   const pos =
     state.areas[areaIndex].ruas[ruaIndex].posicoes[posicaoIndex];
 
-  if (!pos.ocupada) {
+  if (!pos?.ocupada) {
     alert('Posição já está vazia');
     return;
   }
@@ -133,6 +148,7 @@ window.removerGaylord = function () {
   saveState();
   fecharModal();
   renderMapa();
+  renderDashboard();
 };
 
 // -------------------------------
