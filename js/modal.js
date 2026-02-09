@@ -105,8 +105,9 @@ window.confirmarEndereco = function () {
   pos.volume = volume || null;
 
   saveState();
-  fecharModal();
   renderMapa();
+  renderDashboard();
+  fecharModal();
 };
 
 // -------------------------------
