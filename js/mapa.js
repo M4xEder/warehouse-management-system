@@ -1,5 +1,5 @@
 // ===============================
-// MAPA.JS — CONTROLE DO MAPA
+// MAPA.JS — CONTROLE DO MAPA (SEGURO)
 // ===============================
 
 // ---------- HELPERS ----------
@@ -31,7 +31,10 @@ function criarArea(nome) {
 // ---------- CRUD ÁREA ----------
 window.cadastrarArea = function () {
   const input = document.getElementById('areaNome');
-  if (!input.value.trim()) return alert('Informe o nome da área');
+  if (!input || !input.value.trim()) {
+    alert('Informe o nome da área');
+    return;
+  }
 
   state.areas.push(criarArea(input.value.trim()));
   input.value = '';
@@ -44,10 +47,12 @@ window.excluirArea = function (id) {
   if (!area) return;
 
   if (area.ruas.some(r => r.posicoes.some(p => p.ocupada))) {
-    return alert('Área possui gaylords alocadas');
+    alert('Área possui gaylords alocadas');
+    return;
   }
 
   if (!confirm('Excluir área?')) return;
+
   state.areas = state.areas.filter(a => a.id !== id);
   saveState();
   renderMapa();
@@ -61,7 +66,10 @@ window.adicionarRua = function (areaId) {
   const nome = prompt('Nome da rua');
   const qtd = Number(prompt('Quantidade de posições'));
 
-  if (!nome || qtd <= 0) return alert('Dados inválidos');
+  if (!nome || qtd <= 0) {
+    alert('Dados inválidos');
+    return;
+  }
 
   area.ruas.push(criarRua(nome, qtd));
   saveState();
@@ -74,10 +82,12 @@ window.excluirRua = function (areaId, ruaId) {
   if (!rua) return;
 
   if (rua.posicoes.some(p => p.ocupada)) {
-    return alert('Rua possui gaylords alocadas');
+    alert('Rua possui gaylords alocadas');
+    return;
   }
 
   if (!confirm('Excluir rua?')) return;
+
   area.ruas = area.ruas.filter(r => r.id !== ruaId);
   saveState();
   renderMapa();
@@ -86,7 +96,7 @@ window.excluirRua = function (areaId, ruaId) {
 // ---------- RENDER MAPA ----------
 window.renderMapa = function () {
   const mapa = document.getElementById('mapa');
-  if (!mapa) return;
+  if (!mapa || !state || !Array.isArray(state.areas)) return;
 
   mapa.innerHTML = '';
 
@@ -97,7 +107,9 @@ window.renderMapa = function () {
     areaDiv.innerHTML = `
       <div class="area-header">
         <strong>${area.nome}</strong>
-        <button class="danger" onclick="excluirArea('${area.id}')">Excluir Área</button>
+        <button class="danger" onclick="excluirArea('${area.id}')">
+          Excluir Área
+        </button>
       </div>
     `;
 
@@ -122,14 +134,29 @@ window.renderMapa = function () {
         const p = document.createElement('div');
         p.className = 'posicao';
 
+        // -------- POSIÇÃO OCUPADA --------
         if (pos.ocupada) {
           p.classList.add('ocupada');
-          const lote = state.lotes.find(l => l.nome === pos.lote);
-          if (lote) p.style.background = lote.cor;
+
+          const lote = state.lotes?.find(l => l.nome === pos.lote);
+          if (lote?.cor) {
+            p.style.background = lote.cor;
+          }
+
           p.title = `Lote: ${pos.lote}\nRZ: ${pos.rz}\nVol: ${pos.volume}`;
         }
 
+        // 🔎 DESTAQUE DA BUSCA
+        if (pos._highlight) {
+          p.classList.add('highlight');
+        }
+
+        // -------- CLIQUE SEGURO --------
         p.addEventListener('click', () => {
+          if (typeof abrirModal !== 'function') {
+            alert('Função abrirModal não carregada');
+            return;
+          }
           abrirModal(ai, ri, pi);
         });
 
@@ -147,4 +174,9 @@ window.renderMapa = function () {
     areaDiv.appendChild(btnRua);
     mapa.appendChild(areaDiv);
   });
+
+  // Atualiza dashboard junto
+  if (typeof renderDashboard === 'function') {
+    renderDashboard();
+  }
 };
