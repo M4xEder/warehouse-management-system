@@ -5,7 +5,7 @@
   <title>Relatórios de Expedição</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- CSS -->
+  <!-- CSS GLOBAL DO SISTEMA -->
   <link rel="stylesheet" href="css/style.css">
 
   <!-- PDF & Excel -->
@@ -13,51 +13,19 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
+  <!-- CSS ESPECÍFICO DO RELATÓRIO -->
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f5f5;
-      padding: 20px;
-    }
-
-    #header {
-      margin-bottom: 20px;
-    }
-
-    h1 {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
     .filtro {
-      margin-bottom: 20px;
+      margin: 20px;
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
       align-items: center;
     }
 
-    select, button {
-      padding: 8px 12px;
-      font-size: 14px;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      cursor: pointer;
-    }
-
-    button {
-      background: #16a34a;
-      color: #fff;
-      border: none;
-    }
-
-    button:hover {
-      background: #13803d;
-    }
-
     #resumo {
       display: none;
-      margin-bottom: 15px;
+      margin: 20px;
       padding: 12px;
       background: #e0f7fa;
       border-left: 5px solid #00796b;
@@ -65,33 +33,35 @@
     }
 
     table {
-      width: 100%;
+      width: calc(100% - 40px);
+      margin: 0 20px 20px 20px;
       border-collapse: collapse;
       background: #fff;
-      margin-bottom: 20px;
     }
 
     table th, table td {
       border: 1px solid #ccc;
-      padding: 8px 6px;
-      text-align: left;
+      padding: 8px;
       font-size: 13px;
     }
 
     table th {
-      background: #00796b;
-      color: #fff;
-      font-weight: bold;
+      background: #f4c430;
+      color: #000;
     }
 
     table tr:nth-child(even) {
-      background: #f1f1f1;
+      background: #f9f9f9;
     }
   </style>
 </head>
-<body>
 
-  <!-- HEADER DINÂMICO -->
+<body onload="checarSessao()">
+
+  <!-- LOGIN -->
+  <script src="js/login.js"></script>
+
+  <!-- HEADER DO SISTEMA -->
   <div id="header"></div>
 
   <h1>Relatórios de Expedição</h1>
@@ -101,6 +71,7 @@
       Lote:
       <select id="selectLote"></select>
     </label>
+
     <button onclick="gerarRelatorio()">Gerar Relatório</button>
     <button onclick="exportarExcel()">Exportar Excel</button>
     <button onclick="exportarPDF()">Exportar PDF</button>
@@ -124,8 +95,12 @@
     <tbody></tbody>
   </table>
 
-  <!-- JS -->
+  <!-- STATE / DADOS -->
+  <script src="js/state.js"></script>
+  <script src="js/utils.js"></script>
 
+  <!-- SCRIPT DO RELATÓRIO -->
+  <script src="js/relatorios.js"></script>
 
 </body>
 </html>
