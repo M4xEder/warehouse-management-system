@@ -8,6 +8,7 @@ console.log('relatorios.js carregado');
 // INICIALIZAÇÃO
 // ===============================
 document.addEventListener('DOMContentLoaded', () => {
+  checarSessao();
   loadState();
   montarHeader();
   popularSelectLotes();
@@ -37,6 +38,10 @@ function montarHeader() {
     </div>
   `;
 }
+
+// ===============================
+// VOLTAR PARA O SISTEMA
+// ===============================
 window.voltarSistema = function () {
   window.location.href = 'index.html';
 };
@@ -56,12 +61,14 @@ function popularSelectLotes() {
     lotes.add(item.lote);
   });
 
-  Array.from(lotes).sort().forEach(lote => {
-    const opt = document.createElement('option');
-    opt.value = lote;
-    opt.textContent = lote;
-    select.appendChild(opt);
-  });
+  Array.from(lotes)
+    .sort()
+    .forEach(lote => {
+      const opt = document.createElement('option');
+      opt.value = lote;
+      opt.textContent = lote;
+      select.appendChild(opt);
+    });
 }
 
 // ===============================
@@ -75,13 +82,19 @@ window.gerarRelatorio = function () {
   tbody.innerHTML = '';
   resumo.style.display = 'none';
 
-  if (!loteSelecionado) return;
+  if (!loteSelecionado) {
+    alert('Selecione um lote');
+    return;
+  }
 
   const dados = state.historicoExpedidos.filter(
     item => item.lote === loteSelecionado
   );
 
-  if (dados.length === 0) return;
+  if (dados.length === 0) {
+    alert('Nenhum registro encontrado para este lote');
+    return;
+  }
 
   let totalVolume = 0;
 
@@ -115,7 +128,11 @@ window.gerarRelatorio = function () {
 // ===============================
 window.exportarExcel = function () {
   const loteSelecionado = document.getElementById('selectLote').value;
-  if (!loteSelecionado) return alert('Selecione um lote');
+
+  if (!loteSelecionado) {
+    alert('Selecione um lote');
+    return;
+  }
 
   const dados = state.historicoExpedidos.filter(
     item => item.lote === loteSelecionado
@@ -136,7 +153,11 @@ window.exportarExcel = function () {
 // ===============================
 window.exportarPDF = function () {
   const loteSelecionado = document.getElementById('selectLote').value;
-  if (!loteSelecionado) return alert('Selecione um lote');
+
+  if (!loteSelecionado) {
+    alert('Selecione um lote');
+    return;
+  }
 
   const dados = state.historicoExpedidos.filter(
     item => item.lote === loteSelecionado
