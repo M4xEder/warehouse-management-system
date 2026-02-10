@@ -23,11 +23,16 @@ function montarHeader() {
   const usuario = JSON.parse(localStorage.getItem('usuarioLogado') || '{}');
 
   header.innerHTML = `
-    <div id="header">
+    <div id="header" style="display:flex; justify-content:space-between; align-items:center;">
       <h2>Sistema de Armazenagem</h2>
-      <div>
-        <span>Usuário: <strong>${usuario.usuario || ''}</strong></span>
-        <button onclick="logout()">Sair</button>
+
+      <div style="display:flex; gap:10px; align-items:center;">
+        <span>
+          Usuário: <strong>${usuario.usuario || ''}</strong>
+        </span>
+
+        <button onclick="voltarSistema()">Voltar ao Sistema</button>
+        <button class="danger" onclick="logout()">Sair</button>
       </div>
     </div>
   `;
