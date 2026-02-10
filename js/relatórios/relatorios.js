@@ -37,6 +37,9 @@ function montarHeader() {
     </div>
   `;
 }
+window.voltarSistema = function () {
+  window.location.href = 'index.html';
+};
 
 // ===============================
 // POPULAR SELECT DE LOTES
