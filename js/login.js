@@ -7,15 +7,15 @@ console.log('login.js carregado');
 // ===============================
 // LOGIN
 // ===============================
-window.fazerLogin = function() {
-  const usuario = document.getElementById('usuario').value.trim();
-  const senha = document.getElementById('senha').value.trim();
+window.fazerLogin = function () {
+  const usuario = document.getElementById('usuario')?.value.trim();
+  const senha = document.getElementById('senha')?.value.trim();
   const erro = document.getElementById('errorLogin');
 
-  erro.textContent = '';
+  if (erro) erro.textContent = '';
 
   if (!usuario || !senha) {
-    erro.textContent = 'Informe usuário e senha';
+    if (erro) erro.textContent = 'Informe usuário e senha';
     return;
   }
 
@@ -25,44 +25,39 @@ window.fazerLogin = function() {
     { usuario: 'meli', senha: 'meli+02' }
   ];
 
-  const valido = usuariosValidos.find(u => u.usuario === usuario && u.senha === senha);
+  const valido = usuariosValidos.find(
+    u => u.usuario === usuario && u.senha === senha
+  );
 
   if (!valido) {
-    erro.textContent = 'Usuário ou senha inválidos';
+    if (erro) erro.textContent = 'Usuário ou senha inválidos';
     return;
   }
 
   // Login bem-sucedido → salva sessão
-  localStorage.setItem('usuarioLogado', JSON.stringify({ usuario }));
+  localStorage.setItem(
+    'usuarioLogado',
+    JSON.stringify({ usuario, data: Date.now() })
+  );
 
   // Redireciona para o sistema
-  window.location.href = 'index.html';
+  window.location.replace('index.html');
 };
 
 // ===============================
-// CHECAR SESSÃO (para páginas protegidas)
-// ===============================
-window.checarSessao = function() {
-  const usuario = localStorage.getItem('usuarioLogado');
-  if (!usuario) {
-    // Se não estiver logado, volta para login
-    window.location.href = 'login.html';
-  }
-};
-
-// ===============================
-// LOGOUT
-// ===============================
-window.logout = function() {
-  localStorage.removeItem('usuarioLogado');
-  window.location.href = 'login.html';
-};
-// ===============================
-// CHECAR SESSÃO (SAFE)
+// CHECAR SESSÃO (PÁGINAS PROTEGIDAS)
 // ===============================
 window.checarSessao = function () {
   const usuario = localStorage.getItem('usuarioLogado');
   if (!usuario) {
     window.location.replace('login.html');
   }
+};
+
+// ===============================
+// LOGOUT
+// ===============================
+window.logout = function () {
+  localStorage.removeItem('usuarioLogado');
+  window.location.replace('login.html');
 };
