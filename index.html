@@ -15,10 +15,14 @@
 <script>checarSessao();</script>
 
 <!-- HEADER -->
-<div class="painel-acoes">
-  <div class="card" onclick="irRelatorios()">
-    <h3>Relatórios</h3>
-    <p>Visualizar expedições e exportar dados</p>
+<div id="header">
+  <h2>Sistema de Armazenagem</h2>
+
+  <div class="acoes">
+    <span id="usuarioHeader"></span>
+
+    <button onclick="irRelatorios()">Relatórios</button>
+    <button class="danger" onclick="logout()">Sair</button>
   </div>
 </div>
 <script src="js/header.js"></script>
