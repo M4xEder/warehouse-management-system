@@ -1,16 +1,19 @@
-document.addEventListener('DOMContentLoaded', () => {
-  const header = document.getElementById('header');
-  if (!header) return;
+<div id="header">
+  <h2>Sistema de Armazenagem</h2>
 
-  header.innerHTML = `
-    <header class="app-header">
-      <strong>Sistema Gaylords</strong>
-      <nav>
-        <a href="index.html">Sistema</a>
-        <a href="relatorios.html">Relatórios</a>
-        <button onclick="logout()" style="float:right;">Sair</button>
-      
-      </nav>
-    </header>
-  `;
-});
+  <div class="acoes">
+    <span id="usuarioHeader"></span>
+
+    <button id="btnRelatorios" onclick="irRelatorios()">
+      Relatórios
+    </button>
+
+    <button id="btnVoltar" onclick="voltarSistema()" style="display:none">
+      Voltar ao Sistema
+    </button>
+
+    <button class="danger" onclick="logout()">
+      Sair
+    </button>
+  </div>
+</div>
