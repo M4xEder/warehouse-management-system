@@ -33,7 +33,7 @@ window.totalExpedidoDoLote = function (nomeLote) {
 };
 /* ===============================
    HEADER PADRÃO DO SISTEMA
-=============================== */
+=============================== 
 
 #header {
   display: flex;
@@ -51,7 +51,7 @@ window.totalExpedidoDoLote = function (nomeLote) {
   color: #000;
 }
 
-/* Ações */
+/* Ações 
 #header .acoes {
   display: flex;
   align-items: center;
@@ -64,7 +64,7 @@ window.totalExpedidoDoLote = function (nomeLote) {
   color: #000;
 }
 
-/* Botões */
+/* Botões 
 #header button {
   padding: 6px 12px;
   font-size: 13px;
@@ -83,7 +83,7 @@ window.totalExpedidoDoLote = function (nomeLote) {
   background: #dc2626;
 }
 
-/* RESPONSIVO */
+/* RESPONSIVO 
 @media (max-width: 768px) {
   #header {
     flex-direction: column;
@@ -96,3 +96,5 @@ window.totalExpedidoDoLote = function (nomeLote) {
     justify-content: space-between;
   }
 }
+
+*/
