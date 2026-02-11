@@ -283,7 +283,6 @@ input, select {
 /* ===============================
    HEADER PADRÃO DO SISTEMA
 =============================== */
-
 #header {
   display: flex;
   justify-content: space-between;
@@ -296,32 +295,24 @@ input, select {
 #header h2 {
   margin: 0;
   font-size: 20px;
-  font-weight: bold;
   color: #000;
 }
 
-/* Ações */
 #header .acoes {
   display: flex;
-  align-items: center;
   gap: 10px;
+  align-items: center;
   flex-wrap: wrap;
 }
 
-#header .acoes span {
-  font-size: 14px;
-  color: #000;
-}
-
-/* Botões */
 #header button {
   padding: 6px 12px;
-  font-size: 13px;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
-  border: none;
   background: #16a34a;
-  color: #fff;
+  color: white;
+  font-size: 13px;
 }
 
 #header button:hover {
@@ -332,7 +323,6 @@ input, select {
   background: #dc2626;
 }
 
-/* RESPONSIVO */
 @media (max-width: 768px) {
   #header {
     flex-direction: column;
