@@ -31,70 +31,39 @@ window.totalExpedidoDoLote = function (nomeLote) {
     .filter(h => h.lote === nomeLote)
     .reduce((soma, h) => soma + h.detalhes.length, 0);
 };
-/* ===============================
-   HEADER PADRÃO DO SISTEMA
-=============================== 
 
-#header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: #f4c430;
-  padding: 12px 20px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-}
+// -------------------------------
+// cabecalho HEADER
+// -------------------------------
 
-#header h2 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: bold;
-  color: #000;
-}
+function configurarHeader(tipoTela) {
+  const usuario = JSON.parse(localStorage.getItem('usuarioLogado') || '{}');
 
-/* Ações 
-#header .acoes {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
+  const usuarioSpan = document.getElementById('usuarioHeader');
+  const btnRelatorios = document.getElementById('btnRelatorios');
+  const btnVoltar = document.getElementById('btnVoltar');
 
-#header .acoes span {
-  font-size: 14px;
-  color: #000;
-}
-
-/* Botões 
-#header button {
-  padding: 6px 12px;
-  font-size: 13px;
-  border-radius: 4px;
-  cursor: pointer;
-  border: none;
-  background: #16a34a;
-  color: #fff;
-}
-
-#header button:hover {
-  opacity: 0.9;
-}
-
-#header button.danger {
-  background: #dc2626;
-}
-
-/* RESPONSIVO 
-@media (max-width: 768px) {
-  #header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
+  if (usuarioSpan && usuario.usuario) {
+    usuarioSpan.textContent = `Usuário: ${usuario.usuario}`;
   }
 
-  #header .acoes {
-    width: 100%;
-    justify-content: space-between;
+  // Tela principal do sistema
+  if (tipoTela === 'sistema') {
+    if (btnRelatorios) btnRelatorios.style.display = 'inline-block';
+    if (btnVoltar) btnVoltar.style.display = 'none';
+  }
+
+  // Tela de relatórios
+  if (tipoTela === 'relatorios') {
+    if (btnRelatorios) btnRelatorios.style.display = 'none';
+    if (btnVoltar) btnVoltar.style.display = 'inline-block';
   }
 }
 
-*/
+function irRelatorios() {
+  window.location.href = 'relatorios.html';
+}
+
+function voltarSistema() {
+  window.location.href = 'index.html';
+}
