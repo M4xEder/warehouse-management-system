@@ -1,18 +1,22 @@
 <div id="header">
-  <h2>Sistema de Armazenagem</h2>
+  <div class="header-left">
+    <h2>Sistema de Armazenagem</h2>
+  </div>
 
   <div class="acoes">
     <span id="usuarioHeader"></span>
 
+    <!-- Botão para ir para Relatórios -->
     <button id="btnRelatorios" onclick="irRelatorios()">
       Relatórios
     </button>
 
-    <button id="btnVoltar" onclick="voltarSistema()" style="display:none">
+    <!-- Botão para voltar ao Sistema -->
+    <button id="btnVoltar" onclick="voltarSistema()">
       Voltar ao Sistema
     </button>
 
-    <button class="danger" onclick="logout()">
+    <button id="btnLogout" onclick="logout()" class="danger">
       Sair
     </button>
   </div>
