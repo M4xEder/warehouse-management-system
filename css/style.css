@@ -265,37 +265,102 @@ input, select {
   border-bottom: 1px solid #ddd;
   font-size: 14px;
 }
-/* ===============================
-   HEADER PADRÃO DO SISTEMA
+ /* ===============================
+   HEADER MODERNO - SISTEMA
 =============================== */
-   
-    #header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #f4c430;
-      padding: 12px 20px;
-    }
 
-    #header h2 {
-      margin: 0;
-    }
+#header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(90deg, #f4c430, #f7d24f);
+  padding: 14px 24px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
 
-    #header .acoes {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
+/* Título */
+#header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1f2937;
+  letter-spacing: 0.5px;
+}
 
-    #header button {
-      padding: 6px 10px;
-      cursor: pointer;
-    } 
+/* Área direita */
+#header .acoes {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Nome do usuário */
+#usuarioHeader {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  background: rgba(255,255,255,0.5);
+  padding: 6px 10px;
+  border-radius: 20px;
+}
+
+/* Botões */
+#header button {
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: none;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* Botão padrão */
+#header button:not(.danger) {
+  background: #111827;
+  color: #fff;
+}
+
+#header button:not(.danger):hover {
+  background: #1f2937;
+  transform: translateY(-2px);
+}
+
+/* Botão sair */
+#header button.danger {
+  background: #dc2626;
+  color: #fff;
+}
+
+#header button.danger:hover {
+  background: #b91c1c;
+  transform: translateY(-2px);
+}
+
 /* ===============================
    RESPONSIVO
 ================================ */
 @media (max-width: 768px) {
+   
+  #header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  #header .acoes {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  #usuarioHeader {
+    width: 100%;
+    text-align: center;
+  }
 
          h1 {
         font-size: 20px;
