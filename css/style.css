@@ -9,8 +9,8 @@
 }
 
 body {
-  background: #f2f2f2;
-  color: #333;
+  background: #f3f4f6;
+  color: #1f2937;
 }
 
 /* ===============================
@@ -18,10 +18,11 @@ body {
 ================================ */
 h1, h2 {
   margin: 20px;
+  font-weight: 600;
 }
 
 /* ===============================
-   BOTÕES
+   BOTÕES PADRÃO
 ================================ */
 button {
   padding: 8px 14px;
@@ -31,7 +32,7 @@ button {
   color: #000;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 }
 
 button:hover {
@@ -40,12 +41,12 @@ button:hover {
 }
 
 button.danger {
-  background: #e53935;
+  background: #dc2626;
   color: #fff;
 }
 
 button.danger:hover {
-  background: #c62828;
+  background: #b91c1c;
 }
 
 /* ===============================
@@ -54,8 +55,9 @@ button.danger:hover {
 input, select {
   padding: 8px;
   border-radius: 6px;
-  border: 1px solid #ccc;
+  border: 1px solid #d1d5db;
   margin: 6px 0;
+  font-size: 14px;
 }
 
 /* ===============================
@@ -74,38 +76,43 @@ input, select {
 .cadastros {
   background: #fff;
   margin: 20px;
-  padding: 16px;
-  border-radius: 12px;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+  padding: 18px;
+  border-radius: 16px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.08);
 }
 
 /* ===============================
-   MAPA — FOCO VISUAL
+   MAPA — FOCO PRINCIPAL
 ================================ */
 #mapa {
   margin: 20px;
-  padding: 20px;
-  background: #fff;
-  border-radius: 20px;
+  padding: 24px;
+  background: #ffffff;
+  border-radius: 22px;
   border: 4px solid #f4c430;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+  box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+  transition: 0.3s;
+}
+
+#mapa:hover {
+  box-shadow: 0 20px 45px rgba(0,0,0,0.2);
 }
 
 /* ===============================
    ÁREA
 ================================ */
 .area {
-  background: linear-gradient(180deg, #ffffff, #fff8dc);
-  border-radius: 16px;
-  padding: 14px;
-  margin-bottom: 25px;
+  background: linear-gradient(180deg, #ffffff, #fff9e6);
+  border-radius: 18px;
+  padding: 16px;
+  margin-bottom: 30px;
   border: 2px solid #f4c430;
 }
 
 .area-header {
   background: #f4c430;
-  padding: 10px 14px;
-  border-radius: 12px;
+  padding: 10px 16px;
+  border-radius: 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -118,14 +125,14 @@ input, select {
 ================================ */
 .rua {
   background: #fafafa;
-  padding: 10px;
-  border-radius: 10px;
-  margin-bottom: 16px;
-  border: 1px dashed #ccc;
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 18px;
+  border: 1px dashed #cbd5e1;
 }
 
 .rua-header {
-  font-weight: 700;
+  font-weight: 600;
   display: flex;
   justify-content: space-between;
   margin-bottom: 8px;
@@ -143,19 +150,18 @@ input, select {
 .posicao {
   width: 34px;
   height: 34px;
-  background: #e0e0e0;
-  border-radius: 6px;
-  border: 2px dashed #bbb;
+  background: #e5e7eb;
+  border-radius: 8px;
+  border: 2px dashed #cbd5e1;
   cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition: all 0.15s ease;
 }
 
 .posicao:hover {
-  transform: scale(1.08);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  transform: scale(1.1);
+  box-shadow: 0 5px 12px rgba(0,0,0,0.2);
 }
 
-/* OCUPADA */
 .posicao.ocupada {
   border: 2px solid #000;
 }
@@ -183,14 +189,19 @@ input, select {
   margin: 20px;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 16px;
+  gap: 18px;
 }
 
 .lote-card {
   background: #fff;
-  border-radius: 14px;
-  padding: 14px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+  transition: 0.2s;
+}
+
+.lote-card:hover {
+  transform: translateY(-3px);
 }
 
 .lote-card.expedido {
@@ -220,11 +231,11 @@ input, select {
 .modal {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.55);
+  background: rgba(0,0,0,0.6);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 2000;
 }
 
 .modal.hidden {
@@ -233,11 +244,11 @@ input, select {
 
 .modal-content {
   background: #fff;
-  padding: 20px;
-  border-radius: 16px;
+  padding: 22px;
+  border-radius: 18px;
   width: 380px;
   max-width: 95%;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  box-shadow: 0 15px 35px rgba(0,0,0,0.3);
 }
 
 .modal-content h3 {
@@ -257,95 +268,49 @@ input, select {
 }
 
 /* ===============================
-   EXPEDIÇÃO
+   HEADER PREMIUM
 ================================ */
-.linha-expedicao {
-  display: block;
-  padding: 8px;
-  border-bottom: 1px solid #ddd;
-  font-size: 14px;
-}
- /* ===============================
-   HEADER MODERNO - SISTEMA
-=============================== */
-
 #header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   background: linear-gradient(90deg, #f4c430, #f7d24f);
   padding: 14px 24px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   position: sticky;
   top: 0;
   z-index: 1000;
 }
 
-/* Título */
 #header h2 {
   margin: 0;
   font-size: 20px;
-  font-weight: 600;
-  color: #1f2937;
-  letter-spacing: 0.5px;
+  font-weight: 700;
 }
 
-/* Área direita */
 #header .acoes {
   display: flex;
-  align-items: center;
   gap: 12px;
+  align-items: center;
   flex-wrap: wrap;
 }
 
-/* Nome do usuário */
 #usuarioHeader {
   font-size: 14px;
-  font-weight: 500;
-  color: #374151;
   background: rgba(255,255,255,0.5);
-  padding: 6px 10px;
+  padding: 6px 12px;
   border-radius: 20px;
-}
-
-/* Botões */
-#header button {
-  padding: 8px 14px;
-  border-radius: 6px;
-  border: none;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-/* Botão padrão */
-#header button:not(.danger) {
-  background: #111827;
-  color: #fff;
-}
-
-#header button:not(.danger):hover {
-  background: #1f2937;
-  transform: translateY(-2px);
-}
-
-/* Botão sair */
-#header button.danger {
-  background: #dc2626;
-  color: #fff;
-}
-
-#header button.danger:hover {
-  background: #b91c1c;
-  transform: translateY(-2px);
 }
 
 /* ===============================
    RESPONSIVO
 ================================ */
 @media (max-width: 768px) {
-   
+
+  h1 {
+    font-size: 20px;
+  }
+
   #header {
     flex-direction: column;
     align-items: flex-start;
@@ -357,29 +322,9 @@ input, select {
     justify-content: space-between;
   }
 
-  #usuarioHeader {
-    width: 100%;
-    text-align: center;
-  }
-
-         h1 {
-        font-size: 20px;
-      }
-
-      #header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-      }
-
-      .acoes {
-        width: 100%;
-        justify-content: space-between;
-      }
-
   #mapa {
     margin: 10px;
-    padding: 15px;
+    padding: 18px;
   }
 
   .posicao {
@@ -391,4 +336,3 @@ input, select {
     width: 95%;
   }
 }
-
