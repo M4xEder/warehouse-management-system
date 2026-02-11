@@ -14,21 +14,6 @@ body {
 }
 
 /* ===============================
-   HEADER
-================================ */
-#header {
-  background: linear-gradient(135deg, #f4c430, #ffd84d);
-  padding: 16px 24px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  margin-bottom: 20px;
-}
-
-#header h1,
-#header h2 {
-  color: #000;
-}
-
-/* ===============================
    TÍTULOS
 ================================ */
 h1, h2 {
@@ -340,6 +325,22 @@ input, select {
    RESPONSIVO
 ================================ */
 @media (max-width: 768px) {
+
+         h1 {
+        font-size: 20px;
+      }
+
+      #header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .acoes {
+        width: 100%;
+        justify-content: space-between;
+      }
+
   #mapa {
     margin: 10px;
     padding: 15px;
@@ -354,3 +355,4 @@ input, select {
     width: 95%;
   }
 }
+
