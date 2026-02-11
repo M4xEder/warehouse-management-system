@@ -159,14 +159,16 @@
   <script src="js/login.js"></script>
 
   <!-- HEADER -->
-  <div id="header">
-    <h2>Sistema de Armazenagem</h2>
-    <div class="acoes">
-      <span id="usuarioHeader"></span>
-      <button onclick="voltarSistema()">Voltar ao Sistema</button>
-      <button onclick="logout()">Sair</button>
-    </div>
-  </div>
+<div id="header-container"></div>
+
+<script>
+  fetch('components/header.html')
+    .then(r => r.text())
+    .then(html => {
+      document.getElementById('header-container').innerHTML = html;
+      configurarHeader('relatorios');
+    });
+</script>
 
   <h1>Relatórios de Expedição</h1>
 
