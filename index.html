@@ -15,17 +15,16 @@
 <script>checarSessao();</script>
 
 <!-- HEADER -->
-<div id="header">
-  <h2>Sistema de Armazenagem</h2>
+<div id="header-container"></div>
 
-  <div class="acoes">
-    <span id="usuarioHeader"></span>
-
-    <button id="btnRelatorios" onclick="irRelatorios()">Relatórios</button>
-    <button class="danger" onclick="logout()">Sair</button>
-  </div>
-</div> 
-<!-- <script src="js/header.js"></script> -->
+<script>
+  fetch('components/header.html')
+    .then(r => r.text())
+    .then(html => {
+      document.getElementById('header-container').innerHTML = html;
+      configurarHeader('sistema');
+    });
+</script>
 
 <h1>Gerenciamento de Gaylords</h1>
 
