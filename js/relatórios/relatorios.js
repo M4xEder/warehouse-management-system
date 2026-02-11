@@ -1,5 +1,5 @@
 // =======================================
-// RELATORIOS.JS — EXPEDIÇÃO
+// RELATORIOS.JS — RELATÓRIO GERAL
 // =======================================
 
 console.log('relatorios.js carregado');
@@ -10,34 +10,8 @@ console.log('relatorios.js carregado');
 document.addEventListener('DOMContentLoaded', () => {
   checarSessao();
   loadState();
-  montarHeader();
   popularSelectLotes();
 });
-
-// ===============================
-// HEADER PADRÃO DO SISTEMA
-// ===============================
- function montarHeader() {
-  const header = document.getElementById('header');
-  if (!header) return;
-
-  const usuario = JSON.parse(localStorage.getItem('usuarioLogado') || '{}');
-
-  header.innerHTML = `
-    <div id="header" style="display:flex; justify-content:space-between; align-items:center;">
-      <h2>Sistema de Armazenagem</h2>
-
-      <div style="display:flex; gap:10px; align-items:center;">
-        <span>
-          Usuário: <strong>${usuario.usuario || ''}</strong>
-        </span>
-
-        <button onclick="voltarSistema()">Voltar ao Sistema</button>
-        <button class="danger" onclick="logout()">Sair</button>
-      </div>
-    </div>
-  `;
-}; 
 
 // ===============================
 // VOLTAR PARA O SISTEMA
@@ -47,7 +21,7 @@ window.voltarSistema = function () {
 };
 
 // ===============================
-// POPULAR SELECT DE LOTES
+// POPULAR SELECT DE LOTES (ATIVOS + EXPEDIDOS)
 // ===============================
 function popularSelectLotes() {
   const select = document.getElementById('selectLote');
@@ -57,6 +31,12 @@ function popularSelectLotes() {
 
   const lotes = new Set();
 
+  // Lotes ativos
+  state.lotes.forEach(item => {
+    lotes.add(item.lote);
+  });
+
+  // Lotes expedidos
   state.historicoExpedidos.forEach(item => {
     lotes.add(item.lote);
   });
@@ -72,7 +52,7 @@ function popularSelectLotes() {
 }
 
 // ===============================
-// GERAR RELATÓRIO
+// GERAR RELATÓRIO (ATIVOS + EXPEDIDOS)
 // ===============================
 window.gerarRelatorio = function () {
   const loteSelecionado = document.getElementById('selectLote').value;
@@ -87,9 +67,17 @@ window.gerarRelatorio = function () {
     return;
   }
 
-  const dados = state.historicoExpedidos.filter(
+  // Buscar ativos
+  const ativos = state.lotes.filter(
     item => item.lote === loteSelecionado
   );
+
+  // Buscar expedidos
+  const expedidos = state.historicoExpedidos.filter(
+    item => item.lote === loteSelecionado
+  );
+
+  const dados = [...ativos, ...expedidos];
 
   if (dados.length === 0) {
     alert('Nenhum registro encontrado para este lote');
@@ -103,14 +91,14 @@ window.gerarRelatorio = function () {
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${item.lote}</td>
-      <td>${item.rz}</td>
-      <td>${item.volume}</td>
-      <td>${item.status}</td>
-      <td>${item.area}</td>
-      <td>${item.rua}</td>
-      <td>${item.data}</td>
-      <td>${item.hora}</td>
+      <td>${item.lote || ''}</td>
+      <td>${item.rz || ''}</td>
+      <td>${item.volume || ''}</td>
+      <td>${item.status || (ativos.includes(item) ? 'ATIVO' : 'EXPEDIDO')}</td>
+      <td>${item.area || ''}</td>
+      <td>${item.rua || ''}</td>
+      <td>${item.data || '-'}</td>
+      <td>${item.hora || '-'}</td>
     `;
     tbody.appendChild(tr);
   });
@@ -128,16 +116,15 @@ window.gerarRelatorio = function () {
 // ===============================
 window.exportarExcel = function () {
   const loteSelecionado = document.getElementById('selectLote').value;
-
   if (!loteSelecionado) {
     alert('Selecione um lote');
     return;
   }
 
-  const dados = state.historicoExpedidos.filter(
-    item => item.lote === loteSelecionado
-  );
+  const ativos = state.lotes.filter(item => item.lote === loteSelecionado);
+  const expedidos = state.historicoExpedidos.filter(item => item.lote === loteSelecionado);
 
+  const dados = [...ativos, ...expedidos];
   if (dados.length === 0) return;
 
   const ws = XLSX.utils.json_to_sheet(dados);
@@ -153,32 +140,31 @@ window.exportarExcel = function () {
 // ===============================
 window.exportarPDF = function () {
   const loteSelecionado = document.getElementById('selectLote').value;
-
   if (!loteSelecionado) {
     alert('Selecione um lote');
     return;
   }
 
-  const dados = state.historicoExpedidos.filter(
-    item => item.lote === loteSelecionado
-  );
+  const ativos = state.lotes.filter(item => item.lote === loteSelecionado);
+  const expedidos = state.historicoExpedidos.filter(item => item.lote === loteSelecionado);
 
+  const dados = [...ativos, ...expedidos];
   if (dados.length === 0) return;
 
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
 
-  doc.text(`Relatório de Expedição - Lote ${loteSelecionado}`, 14, 15);
+  doc.text(`Relatório Geral - Lote ${loteSelecionado}`, 14, 15);
 
   const rows = dados.map(item => [
     item.lote,
     item.rz,
     item.volume,
-    item.status,
+    item.status || (ativos.includes(item) ? 'ATIVO' : 'EXPEDIDO'),
     item.area,
     item.rua,
-    item.data,
-    item.hora
+    item.data || '-',
+    item.hora || '-'
   ]);
 
   doc.autoTable({
