@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // ===============================
 // HEADER PADRÃO DO SISTEMA
 // ===============================
-function montarHeader() {
+/* function montarHeader() {
   const header = document.getElementById('header');
   if (!header) return;
 
@@ -37,7 +37,7 @@ function montarHeader() {
       </div>
     </div>
   `;
-}
+}; */
 
 // ===============================
 // VOLTAR PARA O SISTEMA
