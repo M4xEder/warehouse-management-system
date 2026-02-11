@@ -268,59 +268,30 @@ input, select {
 /* ===============================
    HEADER PADRÃO DO SISTEMA
 =============================== */
-#header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: #f4c430;
-  padding: 12px 20px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-}
+   
+    #header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f4c430;
+      padding: 12px 20px;
+    }
 
-#header h2 {
-  margin: 0;
-  font-size: 20px;
-  color: #000;
-}
+    #header h2 {
+      margin: 0;
+    }
 
-#header .acoes {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  flex-wrap: wrap;
-}
+    #header .acoes {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
 
-#header button {
-  padding: 6px 12px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  background: #16a34a;
-  color: white;
-  font-size: 13px;
-}
-
-#header button:hover {
-  opacity: 0.9;
-}
-
-#header button.danger {
-  background: #dc2626;
-}
-
-@media (max-width: 768px) {
-  #header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
-
-  #header .acoes {
-    width: 100%;
-    justify-content: space-between;
-  }
-}
-
+    #header button {
+      padding: 6px 10px;
+      cursor: pointer;
+    } 
 /* ===============================
    RESPONSIVO
 ================================ */
