@@ -1,5 +1,5 @@
 // ===============================
-// DASHBOARD.JS — ATUALIZADO (NOVO PADRÃO)
+// DASHBOARD.JS — PADRÃO PROFISSIONAL
 // ===============================
 
 window.renderDashboard = function () {
@@ -7,8 +7,10 @@ window.renderDashboard = function () {
   renderLotesExpedidos();
 };
 
+
+
 // ===============================
-// LOTES ATIVOS
+// LOTES ATIVOS (SALDO > 0)
 // ===============================
 function renderLotesAtivos() {
 
@@ -38,12 +40,16 @@ function renderLotesAtivos() {
         ? totalExpedidoDoLote(lote.nome)
         : 0;
 
-    const naoAlocados = Math.max(total - alocados - expedidos, 0);
     const saldo = Math.max(total - expedidos, 0);
+    const naoAlocados = Math.max(total - alocados - expedidos, 0);
 
+    // 🔥 Só aparece aqui se ainda houver saldo
     if (saldo <= 0) return;
 
     exibiu = true;
+
+    let statusTexto = expedidos > 0 ? 'Parcial' : 'Ativo';
+    let classeStatus = expedidos > 0 ? 'status-parcial' : 'status-ativo';
 
     div.innerHTML += `
       <div class="lote-card">
@@ -54,6 +60,13 @@ function renderLotesAtivos() {
         <p><strong>Não alocados:</strong> ${naoAlocados}</p>
         <p><strong>Expedidos:</strong> ${expedidos}</p>
         <p><strong>Saldo:</strong> ${saldo}</p>
+
+        <p>
+          <strong>Status:</strong>
+          <span class="${classeStatus}">
+            ${statusTexto}
+          </span>
+        </p>
 
         <div class="acoes">
           <button onclick="expedirLote('${lote.nome}')">
@@ -78,8 +91,10 @@ function renderLotesAtivos() {
   }
 }
 
+
+
 // ===============================
-// LOTES EXPEDIDOS (NOVO FORMATO)
+// LOTES EXPEDIDOS (PARCIAL + TOTAL)
 // ===============================
 function renderLotesExpedidos() {
 
@@ -94,7 +109,7 @@ function renderLotesExpedidos() {
     return;
   }
 
-  // 🔥 AGRUPAR POR NOME
+  // 🔥 AGRUPAR POR LOTE
   const porLote = {};
 
   state.historicoExpedidos.forEach(reg => {
@@ -111,15 +126,24 @@ function renderLotesExpedidos() {
     if (!lote) return;
 
     const total = Number(lote.total) || 0;
-
     const totalExpedido = registros.length;
 
-    // 🔴 Só mostra aqui se estiver totalmente expedido
-    if (totalExpedido < total) return;
+    if (totalExpedido <= 0) return;
 
     exibiu = true;
 
     const ultima = registros.at(-1);
+
+    let statusTexto = '';
+    let classeStatus = '';
+
+    if (totalExpedido < total) {
+      statusTexto = 'Parcial';
+      classeStatus = 'status-parcial';
+    } else {
+      statusTexto = 'Expedido Total';
+      classeStatus = 'status-total';
+    }
 
     div.innerHTML += `
       <div class="lote-card expedido">
@@ -127,7 +151,14 @@ function renderLotesExpedidos() {
 
         <p><strong>Total:</strong> ${total}</p>
         <p><strong>Expedidos:</strong> ${totalExpedido}</p>
-        <p><strong>Status:</strong> Completa</p>
+
+        <p>
+          <strong>Status:</strong>
+          <span class="${classeStatus}">
+            ${statusTexto}
+          </span>
+        </p>
+
         <p><strong>Última expedição:</strong> 
           ${ultima?.data || '-'} ${ultima?.hora || ''}
         </p>
@@ -147,12 +178,14 @@ function renderLotesExpedidos() {
   });
 
   if (!exibiu) {
-    div.innerHTML = '<p>Nenhum lote totalmente expedido.</p>';
+    div.innerHTML = '<p>Nenhum lote expedido.</p>';
   }
 }
 
+
+
 // ===============================
-// DETALHES (NOVO FORMATO)
+// DETALHES
 // ===============================
 window.mostrarDetalhes = function (nomeLote) {
 
@@ -180,6 +213,8 @@ window.mostrarDetalhes = function (nomeLote) {
 
   alert(msg);
 };
+
+
 
 // ===============================
 // EXCLUIR HISTÓRICO
