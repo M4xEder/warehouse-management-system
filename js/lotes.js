@@ -155,3 +155,75 @@ window.cadastrarLote = function () {
   saveState();
   renderDashboard();
 };
+// ===============================
+// ALTERAR QUANTIDADE DO LOTE
+// ===============================
+window.alterarQuantidadeLote = function (nomeLote) {
+
+  const lote = state.lotes.find(l => l.nome === nomeLote);
+
+  if (!lote) {
+    alert('Lote não encontrado');
+    return;
+  }
+
+  const alocados = contarGaylordsDoLote(nomeLote);
+  const expedidos = totalExpedidoDoLote(nomeLote);
+
+  const novoTotal = Number(
+    prompt('Nova quantidade total do lote:', lote.total)
+  );
+
+  if (!novoTotal || novoTotal <= 0) {
+    alert('Quantidade inválida');
+    return;
+  }
+
+  if (novoTotal < alocados + expedidos) {
+    alert(
+      `Quantidade menor que o necessário.\n` +
+      `Alocados: ${alocados}\n` +
+      `Expedidos: ${expedidos}`
+    );
+    return;
+  }
+
+  lote.total = novoTotal;
+
+  saveState();
+  renderDashboard();
+};
+
+
+// ===============================
+// EXCLUIR LOTE
+// ===============================
+window.excluirLote = function (nomeLote) {
+
+  const lote = state.lotes.find(l => l.nome === nomeLote);
+
+  if (!lote) {
+    alert('Lote não encontrado');
+    return;
+  }
+
+  const alocados = contarGaylordsDoLote(nomeLote);
+  const expedidos = totalExpedidoDoLote(nomeLote);
+
+  if (alocados > 0) {
+    alert(`Existem ${alocados} gaylord(s) alocadas.`);
+    return;
+  }
+
+  if (expedidos > 0) {
+    alert(`Lote possui histórico de expedição.`);
+    return;
+  }
+
+  if (!confirm(`Excluir lote "${nomeLote}"?`)) return;
+
+  state.lotes = state.lotes.filter(l => l.nome !== nomeLote);
+
+  saveState();
+  renderDashboard();
+};
