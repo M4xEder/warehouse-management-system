@@ -275,3 +275,26 @@ window.totalExpedidoDoLote = function (nomeLote) {
     r => r.nome === nomeLote
   ).length;
 };
+
+window.statusDoLote = function (nomeLote) {
+
+  const lote = state.lotes.find(l => l.nome === nomeLote);
+  if (!lote) return '—';
+
+  const total = lote.total;
+  const expedidos = totalExpedidoDoLote(nomeLote);
+
+  if (expedidos === 0) {
+    return 'Ativo';
+  }
+
+  if (expedidos > 0 && expedidos < total) {
+    return 'Parcial';
+  }
+
+  if (expedidos >= total) {
+    return 'Expedidо Total';
+  }
+
+  return 'Ativo';
+};
