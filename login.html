@@ -2,52 +2,129 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Login - Sistema Gaylords</title>
+  <title>Gerenciamento de Gaylords</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <link rel="stylesheet" href="css/style.css">
-  <style>
-    body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      font-family: Arial, sans-serif;
-      background: #f5f5f5;
-    }
-
-    .login-container {
-      background: #fff;
-      padding: 30px;
-      border-radius: 8px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      width: 100%;
-      max-width: 400px;
-    }
-
-    h2 { text-align: center; margin-bottom: 20px; }
-    input { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 4px; border: 1px solid #ccc; font-size: 16px; }
-    button { width: 100%; padding: 10px; background: #16a34a; border: none; color: #fff; font-size: 16px; border-radius: 4px; cursor: pointer; }
-    button:hover { background: #13803d; }
-    .error { color: red; margin-bottom: 10px; text-align: center; }
-  </style>
 </head>
-<body>
 
-  <div class="login-container">
-    <h2>Login</h2>
+<body onload="checarSessao()">
 
-    <div id="errorLogin" class="error"></div>
+<!-- ================= LOGIN ================= -->
+<script src="js/login.js"></script>
 
-    <input type="text" id="usuario" placeholder="Usuário">
-    <input type="password" id="senha" placeholder="Senha">
+<!-- ================= HEADER ================= -->
+<div id="header-container"></div>
 
-    <button onclick="fazerLogin()">Entrar</button>
+<script>
+  fetch('components/header.html')
+    .then(r => r.text())
+    .then(html => {
+      document.getElementById('header-container').innerHTML = html;
+      if (typeof configurarHeader === 'function') {
+        configurarHeader('sistema');
+      }
+    });
+</script>
+
+<h1>Gerenciamento de Gaylords</h1>
+
+<!-- ================= BUSCA ================= -->
+<div class="busca">
+  <input id="buscaInput" placeholder="Buscar por lote ou RZ">
+  <button onclick="buscar()">Buscar</button>
+  <button onclick="limparBusca()">Limpar Destaque</button>
+</div>
+
+<!-- ================= CADASTROS ================= -->
+<section class="cadastros">
+  <h2>Cadastrar Área</h2>
+  <input id="areaNome" placeholder="Nome da área">
+  <button onclick="cadastrarArea()">Cadastrar Área</button>
+</section>
+
+<section class="cadastros">
+  <h2>Cadastrar Lote</h2>
+  <input id="loteNome" placeholder="Nome do lote">
+  <input id="loteTotal" type="number" min="1" placeholder="Quantidade total">
+  <button onclick="cadastrarLote()">Cadastrar Lote</button>
+</section>
+
+<!-- ================= MAPA ================= -->
+<section id="mapa"></section>
+
+<!-- ================= DASHBOARD ================= -->
+<h2>Lotes Ativos</h2>
+<div id="lotesAtivos"></div>
+
+<h2>Lotes Expedidos</h2>
+<div id="lotesExpedidos"></div>
+
+<!-- ================= MODAL ENDEREÇAMENTO ================= -->
+<div id="modal" class="modal hidden">
+  <div class="modal-content">
+    <h3>Endereçar Gaylord</h3>
+
+    <label>Lote:
+      <select id="modalLote"></select>
+    </label>
+
+    <label>Volume:
+      <input id="modalVolume">
+    </label>
+
+    <label>RZ:
+      <input id="modalRz">
+    </label>
+
+    <div class="acoes">
+      <button onclick="confirmarEndereco()">Salvar</button>
+      <button onclick="removerGaylord()">Remover</button>
+      <button onclick="fecharModal()">Cancelar</button>
+    </div>
   </div>
-  
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase.js"></script>
+</div>
 
-  <script src="js/login.js"></script>
+<!-- ================= MODAL EXPEDIÇÃO ================= -->
+<div id="modalExpedicao" class="modal hidden">
+  <div class="modal-content" style="width:500px; max-height:80vh; overflow:auto">
+    <h3>Expedir Gaylords</h3>
+
+    <button onclick="selecionarTodosGaylords()">Selecionar todos</button>
+    <button onclick="desmarcarTodosGaylords()">Desmarcar todos</button>
+
+    <div id="listaExpedicao"></div>
+
+    <div class="acoes">
+      <button onclick="confirmarExpedicao()">Confirmar</button>
+      <button onclick="fecharModalExpedicao()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= SCRIPTS (ORDEM CORRETA) ================= -->
+
+<!-- ESTADO GLOBAL -->
+<script src="js/state.js"></script>
+
+<!-- UTILITÁRIOS -->
+<script src="js/utils.js"></script>
+
+<!-- REGRAS DE NEGÓCIO -->
+<script src="js/lotes.js"></script>
+<script src="js/modal.js"></script>
+<script src="js/busca.js"></script>
+
+<!-- MAPA -->
+<script src="js/mapa.js"></script>
+
+<!-- EXPEDIÇÃO (ANTES DO DASHBOARD) -->
+<script src="js/expedicao.js"></script>
+
+<!-- DASHBOARD (USA FUNÇÕES DA EXPEDIÇÃO) -->
+<script src="js/dashboard.js"></script>
+
+<!-- INICIALIZAÇÃO FINAL -->
+<script src="js/main.js"></script>
+
 </body>
 </html>
