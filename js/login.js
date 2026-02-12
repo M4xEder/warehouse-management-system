@@ -1,16 +1,23 @@
 // =======================================
-// LOGIN.JS — CONTROLE DE SESSÃO
+// LOGIN.JS — CONTROLE COMPLETO DE SESSÃO
 // =======================================
 
 console.log('login.js carregado');
+
+// Tempo máximo de sessão (8 horas)
+const TEMPO_MAXIMO_SESSAO = 8 * 60 * 60 * 1000;
 
 // ===============================
 // LOGIN
 // ===============================
 window.fazerLogin = function () {
-  const usuario = document.getElementById('usuario')?.value.trim();
-  const senha = document.getElementById('senha')?.value.trim();
+
+  const usuarioInput = document.getElementById('usuario');
+  const senhaInput = document.getElementById('senha');
   const erro = document.getElementById('errorLogin');
+
+  const usuario = usuarioInput?.value.trim();
+  const senha = senhaInput?.value.trim();
 
   if (erro) erro.textContent = '';
 
@@ -19,7 +26,7 @@ window.fazerLogin = function () {
     return;
   }
 
-  // Usuários válidos (exemplo)
+  // Usuários válidos
   const usuariosValidos = [
     { usuario: 'admin', senha: '1234' },
     { usuario: 'meli', senha: 'meli+02' }
@@ -34,37 +41,96 @@ window.fazerLogin = function () {
     return;
   }
 
-  // Login bem-sucedido → salva sessão
-  localStorage.setItem(
-    'usuarioLogado',
-    JSON.stringify({ usuario, data: Date.now() })
-  );
+  // Salva sessão
+  localStorage.setItem('usuarioLogado', JSON.stringify({
+    usuario,
+    dataLogin: Date.now()
+  }));
 
-  // Redireciona para o sistema
+  // Redireciona
   window.location.replace('index.html');
 };
 
+
 // ===============================
-// CHECAR SESSÃO (PÁGINAS PROTEGIDAS)
+// CHECAR SESSÃO
 // ===============================
 window.checarSessao = function () {
-  const usuario = localStorage.getItem('usuarioLogado');
-  if (!usuario) {
-    window.location.replace('login.html');
+
+  const dadosSalvos = localStorage.getItem('usuarioLogado');
+
+  if (!dadosSalvos) {
+    redirecionarParaLogin();
+    return;
+  }
+
+  try {
+    const dados = JSON.parse(dadosSalvos);
+
+    if (!dados.usuario || !dados.dataLogin) {
+      redirecionarParaLogin();
+      return;
+    }
+
+    const agora = Date.now();
+
+    // Verifica expiração
+    if (agora - dados.dataLogin > TEMPO_MAXIMO_SESSAO) {
+      localStorage.removeItem('usuarioLogado');
+      redirecionarParaLogin();
+    }
+
+  } catch (e) {
+    localStorage.removeItem('usuarioLogado');
+    redirecionarParaLogin();
   }
 };
+
 
 // ===============================
 // LOGOUT
 // ===============================
 window.logout = function () {
   localStorage.removeItem('usuarioLogado');
-  window.location.replace('login.html');
-  
+  redirecionarParaLogin();
 };
+
+
 // ===============================
-// AUTO CHECAR SESSÃO
+// MOSTRAR USUÁRIO LOGADO (opcional)
 // ===============================
-if (!window.location.pathname.includes('login.html')) {
-  window.checarSessao();
+window.mostrarUsuarioLogado = function () {
+  const dadosSalvos = localStorage.getItem('usuarioLogado');
+  if (!dadosSalvos) return;
+
+  const dados = JSON.parse(dadosSalvos);
+  const elemento = document.getElementById('usuarioLogado');
+
+  if (elemento && dados.usuario) {
+    elemento.textContent = `Usuário: ${dados.usuario}`;
+  }
+};
+
+
+// ===============================
+// REDIRECIONAMENTO
+// ===============================
+function redirecionarParaLogin() {
+  if (!window.location.pathname.includes('login.html')) {
+    window.location.replace('login.html');
+  }
 }
+
+
+// ===============================
+// PROTEÇÃO AUTOMÁTICA
+// ===============================
+document.addEventListener('DOMContentLoaded', function () {
+
+  // Se NÃO estiver na tela de login → exige sessão
+  if (!window.location.pathname.includes('login.html')) {
+    window.checarSessao();
+    window.mostrarUsuarioLogado();
+  }
+
+});
