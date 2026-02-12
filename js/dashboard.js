@@ -1,5 +1,5 @@
 // ===============================
-// DASHBOARD.JS — FINAL, ESTÁVEL E BLINDADO
+// DASHBOARD.JS — ATUALIZADO (NOVO PADRÃO)
 // ===============================
 
 window.renderDashboard = function () {
@@ -11,6 +11,7 @@ window.renderDashboard = function () {
 // LOTES ATIVOS
 // ===============================
 function renderLotesAtivos() {
+
   const div = document.getElementById('lotesAtivos');
   if (!div) return;
 
@@ -24,6 +25,7 @@ function renderLotesAtivos() {
   let exibiu = false;
 
   state.lotes.forEach(lote => {
+
     const total = Number(lote.total) || 0;
 
     const alocados =
@@ -39,7 +41,6 @@ function renderLotesAtivos() {
     const naoAlocados = Math.max(total - alocados - expedidos, 0);
     const saldo = Math.max(total - expedidos, 0);
 
-    // 🔴 Totalmente expedido → não é mais ativo
     if (saldo <= 0) return;
 
     exibiu = true;
@@ -78,58 +79,58 @@ function renderLotesAtivos() {
 }
 
 // ===============================
-// LOTES EXPEDIDOS
+// LOTES EXPEDIDOS (NOVO FORMATO)
 // ===============================
 function renderLotesExpedidos() {
+
   const div = document.getElementById('lotesExpedidos');
   if (!div) return;
 
   div.innerHTML = '';
 
-  if (
-    !Array.isArray(state.historicoExpedidos) ||
-    state.historicoExpedidos.length === 0
-  ) {
+  if (!Array.isArray(state.historicoExpedidos) ||
+      state.historicoExpedidos.length === 0) {
     div.innerHTML = '<p>Nenhum lote expedido.</p>';
     return;
   }
 
+  // 🔥 AGRUPAR POR NOME
   const porLote = {};
 
-  state.historicoExpedidos.forEach(h => {
-    if (!h || !h.lote || !Array.isArray(h.detalhes)) return;
-    porLote[h.lote] ??= [];
-    porLote[h.lote].push(h);
+  state.historicoExpedidos.forEach(reg => {
+    if (!reg.nome) return;
+    porLote[reg.nome] ??= [];
+    porLote[reg.nome].push(reg);
   });
 
   let exibiu = false;
 
-  Object.entries(porLote).forEach(([nomeLote, historico]) => {
+  Object.entries(porLote).forEach(([nomeLote, registros]) => {
+
     const lote = state.lotes.find(l => l.nome === nomeLote);
     if (!lote) return;
 
     const total = Number(lote.total) || 0;
 
-    const expedidos = historico.reduce(
-      (s, h) => s + (Array.isArray(h.detalhes) ? h.detalhes.length : 0),
-      0
-    );
+    const totalExpedido = registros.length;
 
-    // 🔴 Só aparece aqui se estiver 100% expedido
-    if (expedidos < total) return;
+    // 🔴 Só mostra aqui se estiver totalmente expedido
+    if (totalExpedido < total) return;
 
     exibiu = true;
 
-    const ultima = historico.at(-1);
+    const ultima = registros.at(-1);
 
     div.innerHTML += `
       <div class="lote-card expedido">
         <h3>${nomeLote}</h3>
 
         <p><strong>Total:</strong> ${total}</p>
-        <p><strong>Expedidos:</strong> ${expedidos}</p>
+        <p><strong>Expedidos:</strong> ${totalExpedido}</p>
         <p><strong>Status:</strong> Completa</p>
-        <p><strong>Data:</strong> ${ultima?.data || '-'}</p>
+        <p><strong>Última expedição:</strong> 
+          ${ultima?.data || '-'} ${ultima?.hora || ''}
+        </p>
 
         <div class="acoes">
           <button onclick="mostrarDetalhes('${nomeLote}')">
@@ -151,14 +152,15 @@ function renderLotesExpedidos() {
 }
 
 // ===============================
-// DETALHES DO HISTÓRICO
+// DETALHES (NOVO FORMATO)
 // ===============================
 window.mostrarDetalhes = function (nomeLote) {
-  const historico = state.historicoExpedidos.filter(
-    h => h.lote === nomeLote
+
+  const registros = state.historicoExpedidos.filter(
+    r => r.nome === nomeLote
   );
 
-  if (!historico.length) {
+  if (!registros.length) {
     alert('Nenhum histórico encontrado.');
     return;
   }
@@ -166,38 +168,28 @@ window.mostrarDetalhes = function (nomeLote) {
   const lote = state.lotes.find(l => l.nome === nomeLote);
   const total = Number(lote?.total) || 0;
 
-  const totalExpedido = historico.reduce(
-    (s, h) => s + (Array.isArray(h.detalhes) ? h.detalhes.length : 0),
-    0
-  );
-
   let msg = `Lote ${nomeLote}\n\n`;
 
-  if (totalExpedido >= total) {
-    msg += `Expedido por completo em ${historico.at(-1).data}\n\n`;
-  } else {
-    msg += `Expedição parcial\n`;
-    msg += `Primeira: ${historico[0].data}\n`;
-    msg += `Última: ${historico.at(-1).data}\n\n`;
-  }
-
-  historico.forEach(e => {
-    e.detalhes.forEach(d => {
-      msg += `RZ: ${d.rz} | Volume: ${d.volume || '-'} | Data: ${e.data}\n`;
-    });
+  registros.forEach(r => {
+    msg += `RZ: ${r.rz} | Volume: ${r.volume || '-'} | `;
+    msg += `Área: ${r.area} | Rua: ${r.rua} | `;
+    msg += `Data: ${r.data} ${r.hora}\n`;
   });
+
+  msg += `\nTotal expedido: ${registros.length} / ${total}`;
 
   alert(msg);
 };
 
 // ===============================
-// EXCLUIR HISTÓRICO (SEM AFETAR MAPA)
+// EXCLUIR HISTÓRICO
 // ===============================
 window.excluirHistoricoLote = function (nomeLote) {
+
   if (!confirm('Excluir apenas o histórico deste lote?')) return;
 
   state.historicoExpedidos =
-    state.historicoExpedidos.filter(h => h.lote !== nomeLote);
+    state.historicoExpedidos.filter(r => r.nome !== nomeLote);
 
   saveState();
   renderDashboard();
