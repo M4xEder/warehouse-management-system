@@ -1,4 +1,4 @@
-// ===============================
+/* // ===============================
 // LOTES.JS — CONTROLE DE LOTES
 // ===============================
 
@@ -111,6 +111,46 @@ window.excluirLote = function (nomeLote) {
   if (!confirm(`Excluir definitivamente o lote "${nomeLote}"?`)) return;
 
   state.lotes = state.lotes.filter(l => l.nome !== nomeLote);
+
+  saveState();
+  renderDashboard();
+
+
+};
+
+*/
+
+// ===============================
+// LOTES.JS — CONTROLE DE LOTES
+// ===============================
+
+// GERAR COR ALEATÓRIA
+function gerarCor() {
+  return `hsl(${Math.random() * 360},70%,60%)`;
+}
+
+// CADASTRAR LOTE
+window.cadastrarLote = function () {
+  const nome = document.getElementById('loteNome')?.value.trim();
+  const total = Number(document.getElementById('loteTotal')?.value);
+
+  if (!nome || total <= 0) {
+    alert('Informe nome e quantidade válida');
+    return;
+  }
+
+  if (state.lotes.some(l => l.nome === nome)) {
+    alert('Lote já existe');
+    return;
+  }
+
+  state.lotes.push({
+    id: crypto.randomUUID(),
+    nome,
+    total,
+    cor: gerarCor(),
+    ativo: true
+  });
 
   saveState();
   renderDashboard();
