@@ -201,12 +201,17 @@ window.mostrarDetalhes = function (nomeLote) {
   const lote = state.lotes.find(l => l.nome === nomeLote);
   const total = Number(lote?.total) || 0;
 
-  let msg = `Lote ${nomeLote}\n\n`;
+  let msg = `📦 LOTE: ${nomeLote}\n`;
+  msg += `--------------------------------------\n\n`;
 
-  registros.forEach(r => {
-    msg += `RZ: ${r.rz} | Volume: ${r.volume || '-'} | `;
-    msg += `Área: ${r.area} | Rua: ${r.rua} | `;
+  registros.forEach((r, i) => {
+    msg += `#${i + 1}\n`;
+    msg += `RZ: ${r.rz}\n`;
+    msg += `Volume: ${r.volume || '-'}\n`;
+    msg += `Área: ${r.area}\n`;
+    msg += `Rua: ${r.rua}\n`;
     msg += `Data: ${r.data} ${r.hora}\n`;
+    msg += `--------------------------------------\n`;
   });
 
   msg += `\nTotal expedido: ${registros.length} / ${total}`;
