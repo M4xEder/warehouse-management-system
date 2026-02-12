@@ -13,15 +13,6 @@
 <!-- HEADER -->
 <div id="header-container"></div>
   
-<script>
-  fetch('components/header.html')
-    .then(r => r.text())
-    .then(html => {
-      document.getElementById('header-container').innerHTML = html;
-      configurarHeader('sistema');
-    });
-</script>
-
 <h1>Gerenciamento de Gaylords</h1>
 
 <!-- BUSCA -->
