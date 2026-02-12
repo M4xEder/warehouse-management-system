@@ -121,67 +121,82 @@ window.excluirLote = function (nomeLote) {
 */
 
 // ===============================
-// LOTES.JS — CONTROLE DE LOTES
+// LOTES.JS — GERENCIAMENTO DE LOTES
 // ===============================
 
-// GERAR COR ALEATÓRIA
-function gerarCor() {
-  return `hsl(${Math.random() * 360},70%,60%)`;
-}
 
+// ===============================
 // CADASTRAR LOTE
+// ===============================
 window.cadastrarLote = function () {
-  const nome = document.getElementById('loteNome')?.value.trim();
-  const total = Number(document.getElementById('loteTotal')?.value);
+
+  const nomeInput = document.getElementById('loteNome');
+  const totalInput = document.getElementById('loteTotal');
+
+  if (!nomeInput || !totalInput) return;
+
+  const nome = nomeInput.value.trim();
+  const total = Number(totalInput.value);
 
   if (!nome || total <= 0) {
-    alert('Informe nome e quantidade válida');
+    alert('Informe nome e quantidade válida.');
     return;
   }
 
   if (state.lotes.some(l => l.nome === nome)) {
-    alert('Lote já existe');
+    alert('Já existe um lote com esse nome.');
     return;
   }
 
   state.lotes.push({
-    id: crypto.randomUUID(),
     nome,
-    total,
-    cor: gerarCor(),
-    ativo: true
+    total
   });
 
   saveState();
-  renderDashboard();
+
+  nomeInput.value = '';
+  totalInput.value = '';
+
+  if (typeof renderDashboard === 'function') {
+    renderDashboard();
+  }
 };
+
+
+
 // ===============================
-// ALTERAR QUANTIDADE DO LOTE
+// ALTERAR QUANTIDADE
 // ===============================
 window.alterarQuantidadeLote = function (nomeLote) {
 
   const lote = state.lotes.find(l => l.nome === nomeLote);
 
   if (!lote) {
-    alert('Lote não encontrado');
+    alert('Lote não encontrado.');
     return;
   }
 
-  const alocados = contarGaylordsDoLote(nomeLote);
-  const expedidos = totalExpedidoDoLote(nomeLote);
+  const alocados = typeof contarGaylordsDoLote === 'function'
+    ? contarGaylordsDoLote(nomeLote)
+    : 0;
+
+  const expedidos = typeof totalExpedidoDoLote === 'function'
+    ? totalExpedidoDoLote(nomeLote)
+    : 0;
 
   const novoTotal = Number(
     prompt('Nova quantidade total do lote:', lote.total)
   );
 
   if (!novoTotal || novoTotal <= 0) {
-    alert('Quantidade inválida');
+    alert('Quantidade inválida.');
     return;
   }
 
-  if (novoTotal < alocados + expedidos) {
+  if (novoTotal < (alocados + expedidos)) {
     alert(
-      `Quantidade menor que o necessário.\n` +
+      `Quantidade menor que necessário.\n\n` +
       `Alocados: ${alocados}\n` +
       `Expedidos: ${expedidos}`
     );
@@ -191,8 +206,14 @@ window.alterarQuantidadeLote = function (nomeLote) {
   lote.total = novoTotal;
 
   saveState();
-  renderDashboard();
+
+  if (typeof renderDashboard === 'function') {
+    renderDashboard();
+  }
+
+  alert('Quantidade atualizada com sucesso.');
 };
+
 
 
 // ===============================
@@ -203,27 +224,54 @@ window.excluirLote = function (nomeLote) {
   const lote = state.lotes.find(l => l.nome === nomeLote);
 
   if (!lote) {
-    alert('Lote não encontrado');
+    alert('Lote não encontrado.');
     return;
   }
 
-  const alocados = contarGaylordsDoLote(nomeLote);
-  const expedidos = totalExpedidoDoLote(nomeLote);
+  const alocados = typeof contarGaylordsDoLote === 'function'
+    ? contarGaylordsDoLote(nomeLote)
+    : 0;
+
+  const expedidos = typeof totalExpedidoDoLote === 'function'
+    ? totalExpedidoDoLote(nomeLote)
+    : 0;
 
   if (alocados > 0) {
-    alert(`Existem ${alocados} gaylord(s) alocadas.`);
+    alert(`Existem ${alocados} gaylord(s) alocadas neste lote.`);
     return;
   }
 
   if (expedidos > 0) {
-    alert(`Lote possui histórico de expedição.`);
+    alert('Este lote possui histórico de expedição.');
     return;
   }
 
-  if (!confirm(`Excluir lote "${nomeLote}"?`)) return;
+  if (!confirm(`Deseja realmente excluir o lote "${nomeLote}"?`)) {
+    return;
+  }
 
   state.lotes = state.lotes.filter(l => l.nome !== nomeLote);
 
   saveState();
-  renderDashboard();
+
+  if (typeof renderDashboard === 'function') {
+    renderDashboard();
+  }
+
+  alert('Lote excluído com sucesso.');
+};
+
+
+
+// ===============================
+// FUNÇÃO AUXILIAR - TOTAL EXPEDIDO
+// (Compatível com novo formato)
+// ===============================
+window.totalExpedidoDoLote = function (nomeLote) {
+
+  if (!Array.isArray(state.historicoExpedidos)) return 0;
+
+  return state.historicoExpedidos.filter(
+    r => r.nome === nomeLote
+  ).length;
 };
