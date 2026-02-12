@@ -60,4 +60,11 @@ window.checarSessao = function () {
 window.logout = function () {
   localStorage.removeItem('usuarioLogado');
   window.location.replace('login.html');
+  
 };
+// ===============================
+// AUTO CHECAR SESSÃO
+// ===============================
+if (!window.location.pathname.includes('login.html')) {
+  window.checarSessao();
+}
