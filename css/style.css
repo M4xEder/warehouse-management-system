@@ -225,6 +225,30 @@ input, select {
   flex-wrap: wrap;
 }
 
+
+.status-ativo {
+  background: #e6f7ec;
+  color: #1e7e34;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.status-parcial {
+  background: #fff3cd;
+  color: #856404;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.status-total {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+}
 /* ===============================
    MODAIS
 ================================ */
