@@ -229,9 +229,8 @@ function popularSelectLotes() {
     });
 }
 
-
 // ===============================
-// GERAR RELATÓRIO (CORRIGIDO)
+// GERAR RELATÓRIO COMPLETO
 // ===============================
 window.gerarRelatorio = function () {
 
@@ -247,79 +246,88 @@ window.gerarRelatorio = function () {
     return;
   }
 
-  let dados = [];
+  // ===============================
+  // DADOS DA TABELA
+  // ===============================
 
-  // 🔎 1️⃣ PEGAR ATIVOS (DO MAPA)
-  state.areas.forEach(area => {
-    area.ruas.forEach(rua => {
-      rua.posicoes.forEach(pos => {
+  const ativos = state.lotes.filter(
+    item => item.nome === loteSelecionado
+  );
 
-        if (pos.ocupada && pos.lote === loteSelecionado) {
-          dados.push({
-            nome: loteSelecionado,
-            rz: pos.rz,
-            volume: pos.volume,
-            status: 'ATIVO',
-            area: area.nome,
-            rua: rua.nome,
-            data: '-',
-            hora: '-'
-          });
-        }
-
-      });
-    });
-  });
-
-  // 🔎 2️⃣ PEGAR EXPEDIDOS (HISTÓRICO)
   const expedidos = state.historicoExpedidos.filter(
     item => item.nome === loteSelecionado
   );
 
-  expedidos.forEach(item => {
-    dados.push({
-      nome: item.nome,
-      rz: item.rz,
-      volume: item.volume,
-      status: item.status || 'EXPEDIDO',
-      area: item.area || '-',
-      rua: item.rua || '-',
-      data: item.data || '-',
-      hora: item.hora || '-'
-    });
-  });
+  const dados = [...ativos, ...expedidos];
 
   if (dados.length === 0) {
     alert('Nenhum registro encontrado');
     return;
   }
 
-  let totalVolume = 0;
-
   dados.forEach(item => {
-
-    totalVolume += Number(item.volume || 0);
 
     const tr = document.createElement('tr');
 
     tr.innerHTML = `
       <td>${item.nome}</td>
       <td>${item.rz || '-'}</td>
-      <td>${item.volume || '-'}</td>
-      <td>${item.status}</td>
-      <td>${item.area}</td>
-      <td>${item.rua}</td>
-      <td>${item.data}</td>
-      <td>${item.hora}</td>
+      <td>${item.volume || item.total || '-'}</td>
+      <td>${item.status || 'ATIVO'}</td>
+      <td>${item.area || '-'}</td>
+      <td>${item.rua || '-'}</td>
+      <td>${item.data || '-'}</td>
+      <td>${item.hora || '-'}</td>
     `;
 
     tbody.appendChild(tr);
   });
 
+  // ===============================
+  // RESUMO INTELIGENTE
+  // ===============================
+
+  // Total cadastrado do lote
+  const loteCadastro = state.lotes.find(l => l.nome === loteSelecionado);
+  const totalCadastrado = Number(loteCadastro?.total || 0);
+
+  // Total ativos (no mapa)
+  let totalAtivos = 0;
+
+  state.areas.forEach(area => {
+    area.ruas.forEach(rua => {
+      rua.posicoes.forEach(pos => {
+        if (pos.ocupada && pos.lote === loteSelecionado) {
+          totalAtivos++;
+        }
+      });
+    });
+  });
+
+  // Total expedidos
+  const totalExpedidos = state.historicoExpedidos.filter(
+    item => item.nome === loteSelecionado
+  ).length;
+
+  // Não alocados
+  const naoAlocados = totalCadastrado - (totalAtivos + totalExpedidos);
+
+  // % expedido
+  const percentualExpedido = totalCadastrado > 0
+    ? ((totalExpedidos / totalCadastrado) * 100).toFixed(1)
+    : 0;
+
+  // ===============================
+  // EXIBIR RESUMO
+  // ===============================
+
   resumo.innerHTML = `
     <strong>Lote:</strong> ${loteSelecionado} |
-    <strong>Registros:</strong> ${dados.length} |
-    <strong>Volume total:</strong> ${totalVolume}
+    <strong>Total cadastrado:</strong> ${totalCadastrado} |
+    <strong>Total de ativos:</strong> ${totalAtivos} |
+    <strong>Total expedidos:</strong> ${totalExpedidos} |
+    <strong>Não alocados:</strong> ${naoAlocados} |
+    <strong>% já expedido:</strong> ${percentualExpedido}%
   `;
 
   resumo.style.display = 'block';
