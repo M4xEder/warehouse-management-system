@@ -180,3 +180,38 @@ window.renderMapa = function () {
     renderDashboard();
   }
 };
+
+
+
+// ===============================
+// CORRIGIR LOTES ANTIGOS (ADD COR)
+// ===============================
+(function corrigirLotesSemCor() {
+
+  if (!Array.isArray(state.lotes)) return;
+
+  const cores = [
+    '#f59e0b',
+    '#3b82f6',
+    '#10b981',
+    '#ef4444',
+    '#8b5cf6',
+    '#ec4899',
+    '#14b8a6',
+    '#f97316'
+  ];
+
+  let alterado = false;
+
+  state.lotes.forEach(lote => {
+    if (!lote.cor) {
+      lote.cor = cores[Math.floor(Math.random() * cores.length)];
+      alterado = true;
+    }
+  });
+
+  if (alterado) {
+    saveState();
+  }
+
+})();
