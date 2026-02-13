@@ -4,8 +4,9 @@
 
 console.log('login.js carregado');
 
-// Tempo máximo de sessão (8 horas)
+// Tempo máximo da sessão (8 horas)
 const TEMPO_MAXIMO_SESSAO = 8 * 60 * 60 * 1000;
+
 
 // ===============================
 // LOGIN
@@ -26,17 +27,17 @@ window.fazerLogin = function () {
     return;
   }
 
-  // Usuários válidos
+  // Usuários permitidos
   const usuariosValidos = [
     { usuario: 'admin', senha: '1234' },
     { usuario: 'meli', senha: 'meli+02' }
   ];
 
-  const valido = usuariosValidos.find(
+  const usuarioValido = usuariosValidos.find(
     u => u.usuario === usuario && u.senha === senha
   );
 
-  if (!valido) {
+  if (!usuarioValido) {
     if (erro) erro.textContent = 'Usuário ou senha inválidos';
     return;
   }
@@ -47,7 +48,7 @@ window.fazerLogin = function () {
     dataLogin: Date.now()
   }));
 
-  // Redireciona
+  // Vai para o sistema
   window.location.replace('index.html');
 };
 
@@ -61,7 +62,7 @@ window.checarSessao = function () {
 
   if (!dadosSalvos) {
     redirecionarParaLogin();
-    return;
+    return false;
   }
 
   try {
@@ -69,7 +70,7 @@ window.checarSessao = function () {
 
     if (!dados.usuario || !dados.dataLogin) {
       redirecionarParaLogin();
-      return;
+      return false;
     }
 
     const agora = Date.now();
@@ -78,11 +79,15 @@ window.checarSessao = function () {
     if (agora - dados.dataLogin > TEMPO_MAXIMO_SESSAO) {
       localStorage.removeItem('usuarioLogado');
       redirecionarParaLogin();
+      return false;
     }
+
+    return true;
 
   } catch (e) {
     localStorage.removeItem('usuarioLogado');
     redirecionarParaLogin();
+    return false;
   }
 };
 
@@ -92,22 +97,27 @@ window.checarSessao = function () {
 // ===============================
 window.logout = function () {
   localStorage.removeItem('usuarioLogado');
-  redirecionarParaLogin();
+  window.location.replace('login.html');
 };
 
 
 // ===============================
-// MOSTRAR USUÁRIO LOGADO (opcional)
+// MOSTRAR USUÁRIO NO HEADER
 // ===============================
 window.mostrarUsuarioLogado = function () {
+
   const dadosSalvos = localStorage.getItem('usuarioLogado');
   if (!dadosSalvos) return;
 
-  const dados = JSON.parse(dadosSalvos);
-  const elemento = document.getElementById('usuarioLogado');
+  try {
+    const dados = JSON.parse(dadosSalvos);
+    const elemento = document.getElementById('usuarioHeader');
 
-  if (elemento && dados.usuario) {
-    elemento.textContent = `Usuário: ${dados.usuario}`;
+    if (elemento && dados.usuario) {
+      elemento.textContent = `Usuário: ${dados.usuario}`;
+    }
+  } catch (e) {
+    console.error('Erro ao mostrar usuário:', e);
   }
 };
 
@@ -116,20 +126,33 @@ window.mostrarUsuarioLogado = function () {
 // REDIRECIONAMENTO
 // ===============================
 function redirecionarParaLogin() {
-  if (!window.location.pathname.includes('login.html')) {
-    window.location.replace('login.html');
-  }
+  window.location.replace('login.html');
 }
 
 
 // ===============================
-// PROTEÇÃO AUTOMÁTICA
+// PROTEÇÃO AUTOMÁTICA DE PÁGINAS
 // ===============================
 document.addEventListener('DOMContentLoaded', function () {
 
-  // Se NÃO estiver na tela de login → exige sessão
-  if (!window.location.pathname.includes('login.html')) {
-    window.checarSessao();
+  const paginaAtual = window.location.pathname.split('/').pop();
+
+  // Se estiver na tela de login
+  if (paginaAtual === 'login.html') {
+
+    // Se já estiver logado, não deixa voltar para login
+    const dadosSalvos = localStorage.getItem('usuarioLogado');
+    if (dadosSalvos) {
+      window.location.replace('index.html');
+    }
+
+    return;
+  }
+
+  // Para qualquer outra página → exige sessão
+  const sessaoValida = window.checarSessao();
+
+  if (sessaoValida) {
     window.mostrarUsuarioLogado();
   }
 
