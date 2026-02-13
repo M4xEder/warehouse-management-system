@@ -1,12 +1,9 @@
-/* // =======================================
+// =======================================
 // RELATORIOS.JS — RELATÓRIO GERAL
 // =======================================
 
 console.log('relatorios.js carregado');
 
-// ===============================
-// INICIALIZAÇÃO
-// ===============================
 document.addEventListener('DOMContentLoaded', () => {
   checarSessao();
   loadState();
@@ -14,16 +11,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ===============================
-// VOLTAR PARA O SISTEMA
-// ===============================
-window.voltarSistema = function () {
-  window.location.href = 'index.html';
-};
-
-// ===============================
-// POPULAR SELECT DE LOTES (ATIVOS + EXPEDIDOS)
+// POPULAR SELECT (MAPA + EXPEDIDOS)
 // ===============================
 function popularSelectLotes() {
+
   const select = document.getElementById('selectLote');
   if (!select) return;
 
@@ -31,190 +22,18 @@ function popularSelectLotes() {
 
   const lotes = new Set();
 
-  // Lotes ativos
-  state.lotes.forEach(item => {
-    lotes.add(item.lote);
+  // Lotes ativos no mapa
+  state.areas.forEach(area => {
+    area.ruas.forEach(rua => {
+      rua.posicoes.forEach(pos => {
+        if (pos.ocupada && pos.lote) {
+          lotes.add(pos.lote);
+        }
+      });
+    });
   });
 
   // Lotes expedidos
-  state.historicoExpedidos.forEach(item => {
-    lotes.add(item.lote);
-  });
-
-  Array.from(lotes)
-    .sort()
-    .forEach(lote => {
-      const opt = document.createElement('option');
-      opt.value = lote;
-      opt.textContent = lote;
-      select.appendChild(opt);
-    });
-}
-
-// ===============================
-// GERAR RELATÓRIO (ATIVOS + EXPEDIDOS)
-// ===============================
-window.gerarRelatorio = function () {
-  const loteSelecionado = document.getElementById('selectLote').value;
-  const tbody = document.querySelector('#tabelaRelatorio tbody');
-  const resumo = document.getElementById('resumo');
-
-  tbody.innerHTML = '';
-  resumo.style.display = 'none';
-
-  if (!loteSelecionado) {
-    alert('Selecione um lote');
-    return;
-  }
-
-  // Buscar ativos
-  const ativos = state.lotes.filter(
-    item => item.lote === loteSelecionado
-  );
-
-  // Buscar expedidos
-  const expedidos = state.historicoExpedidos.filter(
-    item => item.lote === loteSelecionado
-  );
-
-  const dados = [...ativos, ...expedidos];
-
-  if (dados.length === 0) {
-    alert('Nenhum registro encontrado para este lote');
-    return;
-  }
-
-  let totalVolume = 0;
-
-  dados.forEach(item => {
-    totalVolume += Number(item.volume || 0);
-
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${item.lote || ''}</td>
-      <td>${item.rz || ''}</td>
-      <td>${item.volume || ''}</td>
-      <td>${item.status || (ativos.includes(item) ? 'ATIVO' : 'EXPEDIDO')}</td>
-      <td>${item.area || ''}</td>
-      <td>${item.rua || ''}</td>
-      <td>${item.data || '-'}</td>
-      <td>${item.hora || '-'}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-
-  resumo.innerHTML = `
-    <strong>Lote:</strong> ${loteSelecionado} |
-    <strong>Registros:</strong> ${dados.length} |
-    <strong>Volume total:</strong> ${totalVolume}
-  `;
-  resumo.style.display = 'block';
-};
-
-// ===============================
-// EXPORTAR EXCEL
-// ===============================
-window.exportarExcel = function () {
-  const loteSelecionado = document.getElementById('selectLote').value;
-  if (!loteSelecionado) {
-    alert('Selecione um lote');
-    return;
-  }
-
-  const ativos = state.lotes.filter(item => item.lote === loteSelecionado);
-  const expedidos = state.historicoExpedidos.filter(item => item.lote === loteSelecionado);
-
-  const dados = [...ativos, ...expedidos];
-  if (dados.length === 0) return;
-
-  const ws = XLSX.utils.json_to_sheet(dados);
-  const wb = XLSX.utils.book_new();
-
-  XLSX.utils.book_append_sheet(wb, ws, 'Relatório');
-
-  XLSX.writeFile(wb, `relatorio_${loteSelecionado}.xlsx`);
-};
-
-// ===============================
-// EXPORTAR PDF
-// ===============================
-window.exportarPDF = function () {
-  const loteSelecionado = document.getElementById('selectLote').value;
-  if (!loteSelecionado) {
-    alert('Selecione um lote');
-    return;
-  }
-
-  const ativos = state.lotes.filter(item => item.lote === loteSelecionado);
-  const expedidos = state.historicoExpedidos.filter(item => item.lote === loteSelecionado);
-
-  const dados = [...ativos, ...expedidos];
-  if (dados.length === 0) return;
-
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-
-  doc.text(`Relatório Geral - Lote ${loteSelecionado}`, 14, 15);
-
-  const rows = dados.map(item => [
-    item.lote,
-    item.rz,
-    item.volume,
-    item.status || (ativos.includes(item) ? 'ATIVO' : 'EXPEDIDO'),
-    item.area,
-    item.rua,
-    item.data || '-',
-    item.hora || '-'
-  ]);
-
-  doc.autoTable({
-    startY: 22,
-    head: [[
-      'Lote',
-      'RZ',
-      'Volume',
-      'Status',
-      'Área',
-      'Rua',
-      'Data',
-      'Hora'
-    ]],
-    body: rows
-  });
-
-  doc.save(`relatorio_${loteSelecionado}.pdf`);
-  
-};
-
-*/
-
-// =======================================
-// RELATORIOS.JS — RELATÓRIO GERAL
-// =======================================
-
-console.log('relatorios.js carregado');
-
-document.addEventListener('DOMContentLoaded', () => {
-  checarSessao();
-  loadState();
-  popularSelectLotes();
-});
-
-// ===============================
-// POPULAR SELECT (ATIVOS + EXPEDIDOS)
-// ===============================
-function popularSelectLotes() {
-  const select = document.getElementById('selectLote');
-  if (!select) return;
-
-  select.innerHTML = '<option value="">-- Selecione --</option>';
-
-  const lotes = new Set();
-
-  state.lotes.forEach(item => {
-    lotes.add(item.nome);
-  });
-
   state.historicoExpedidos.forEach(item => {
     lotes.add(item.nome);
   });
@@ -230,7 +49,7 @@ function popularSelectLotes() {
 }
 
 // ===============================
-// GERAR RELATÓRIO COMPLETO
+// GERAR RELATÓRIO
 // ===============================
 window.gerarRelatorio = function () {
 
@@ -246,125 +65,173 @@ window.gerarRelatorio = function () {
     return;
   }
 
-  // ===============================
-  // DADOS DA TABELA
-  // ===============================
-
-  const ativos = state.lotes.filter(
-    item => item.nome === loteSelecionado
-  );
-
-  const expedidos = state.historicoExpedidos.filter(
-    item => item.nome === loteSelecionado
-  );
-
-  const dados = [...ativos, ...expedidos];
+  const { ativos, expedidos, dados } = montarDadosLote(loteSelecionado);
 
   if (dados.length === 0) {
     alert('Nenhum registro encontrado');
     return;
   }
 
+  // Montar tabela
   dados.forEach(item => {
 
     const tr = document.createElement('tr');
 
     tr.innerHTML = `
       <td>${item.nome}</td>
-      <td>${item.rz || '-'}</td>
-      <td>${item.volume || item.total || '-'}</td>
-      <td>${item.status || 'ATIVO'}</td>
-      <td>${item.area || '-'}</td>
-      <td>${item.rua || '-'}</td>
-      <td>${item.data || '-'}</td>
-      <td>${item.hora || '-'}</td>
+      <td>${item.rz}</td>
+      <td>${item.volume}</td>
+      <td>${item.status}</td>
+      <td>${item.area}</td>
+      <td>${item.rua}</td>
+      <td>${item.data}</td>
+      <td>${item.hora}</td>
     `;
 
     tbody.appendChild(tr);
   });
 
-  // ===============================
-  // RESUMO INTELIGENTE
-  // ===============================
-
-  // Total cadastrado do lote
-  const loteCadastro = state.lotes.find(l => l.nome === loteSelecionado);
-  const totalCadastrado = Number(loteCadastro?.total || 0);
-
-  // Total ativos (no mapa)
-  let totalAtivos = 0;
-
-  state.areas.forEach(area => {
-    area.ruas.forEach(rua => {
-      rua.posicoes.forEach(pos => {
-        if (pos.ocupada && pos.lote === loteSelecionado) {
-          totalAtivos++;
-        }
-      });
-    });
-  });
-
-  // Total expedidos
-  const totalExpedidos = state.historicoExpedidos.filter(
-    item => item.nome === loteSelecionado
-  ).length;
-
-  // Não alocados
-  const naoAlocados = totalCadastrado - (totalAtivos + totalExpedidos);
-
-  // % expedido
-  const percentualExpedido = totalCadastrado > 0
-    ? ((totalExpedidos / totalCadastrado) * 100).toFixed(1)
+  // Resumo
+  const totalGeral = dados.length;
+  const totalAtivos = ativos.length;
+  const totalExpedidos = expedidos.length;
+  const percentualExpedido = totalGeral > 0
+    ? ((totalExpedidos / totalGeral) * 100).toFixed(1)
     : 0;
-
-  // ===============================
-  // EXIBIR RESUMO
-  // ===============================
 
   resumo.innerHTML = `
     <strong>Lote:</strong> ${loteSelecionado} |
-    <strong>Total cadastrado:</strong> ${totalCadastrado} |
-    <strong>Total de ativos:</strong> ${totalAtivos} |
-    <strong>Total expedidos:</strong> ${totalExpedidos} |
-    <strong>Não alocados:</strong> ${naoAlocados} |
+    <strong>Total geral:</strong> ${totalGeral} |
+    <strong>Ativos:</strong> ${totalAtivos} |
+    <strong>Expedidos:</strong> ${totalExpedidos} |
     <strong>% já expedido:</strong> ${percentualExpedido}%
   `;
 
   resumo.style.display = 'block';
 };
+
 // ===============================
-// EXPORTAR EXCEL
+// FUNÇÃO CENTRAL DE DADOS
 // ===============================
-window.exportarExcel = function () {
+function montarDadosLote(loteNome) {
+
+  let ativos = [];
+  let expedidos = [];
+
+  // Ativos do mapa
+  state.areas.forEach(area => {
+    area.ruas.forEach(rua => {
+      rua.posicoes.forEach(pos => {
+        if (pos.ocupada && pos.lote === loteNome) {
+          ativos.push({
+            nome: pos.lote,
+            rz: pos.rz || '-',
+            volume: pos.volume || '-',
+            status: 'ATIVO',
+            area: area.nome,
+            rua: rua.nome,
+            data: pos.data || '-',
+            hora: pos.hora || '-'
+          });
+        }
+      });
+    });
+  });
+
+  // Expedidos
+  state.historicoExpedidos.forEach(item => {
+    if (item.nome === loteNome) {
+      expedidos.push({
+        nome: item.nome,
+        rz: item.rz || '-',
+        volume: item.volume || '-',
+        status: 'EXPEDIDO',
+        area: item.area || '-',
+        rua: item.rua || '-',
+        data: item.data || '-',
+        hora: item.hora || '-'
+      });
+    }
+  });
+
+  return {
+    ativos,
+    expedidos,
+    dados: [...ativos, ...expedidos]
+  };
+}
+
+// ===============================
+// EXPORTAR EXCEL (LOTE SELECIONADO)
+// ===============================
+window.exportarExcelLote = function () {
+
   const loteSelecionado = document.getElementById('selectLote').value;
   if (!loteSelecionado) return;
 
-  const dados = [
-    ...state.lotes.filter(l => l.nome === loteSelecionado),
-    ...state.historicoExpedidos.filter(l => l.nome === loteSelecionado)
-  ];
-
+  const { dados } = montarDadosLote(loteSelecionado);
   if (dados.length === 0) return;
 
   const ws = XLSX.utils.json_to_sheet(dados);
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Relatório');
+  XLSX.utils.book_append_sheet(wb, ws, loteSelecionado.substring(0, 31));
 
   XLSX.writeFile(wb, `relatorio_${loteSelecionado}.xlsx`);
+};
+
+// ===============================
+// EXPORTAR EXCEL (TODOS LOTES)
+// ===============================
+window.exportarExcelGeral = function () {
+
+  const wb = XLSX.utils.book_new();
+  const lotes = new Set();
+
+  state.areas.forEach(area => {
+    area.ruas.forEach(rua => {
+      rua.posicoes.forEach(pos => {
+        if (pos.ocupada && pos.lote) {
+          lotes.add(pos.lote);
+        }
+      });
+    });
+  });
+
+  state.historicoExpedidos.forEach(item => {
+    lotes.add(item.nome);
+  });
+
+  if (lotes.size === 0) {
+    alert("Nenhum lote encontrado.");
+    return;
+  }
+
+  Array.from(lotes).forEach(loteNome => {
+
+    const { dados } = montarDadosLote(loteNome);
+
+    if (dados.length > 0) {
+      const ws = XLSX.utils.json_to_sheet(dados);
+      XLSX.utils.book_append_sheet(
+        wb,
+        ws,
+        loteNome.substring(0, 31)
+      );
+    }
+  });
+
+  XLSX.writeFile(wb, `relatorio_geral_lotes.xlsx`);
 };
 
 // ===============================
 // EXPORTAR PDF
 // ===============================
 window.exportarPDF = function () {
+
   const loteSelecionado = document.getElementById('selectLote').value;
   if (!loteSelecionado) return;
 
-  const dados = [
-    ...state.lotes.filter(l => l.nome === loteSelecionado),
-    ...state.historicoExpedidos.filter(l => l.nome === loteSelecionado)
-  ];
-
+  const { dados } = montarDadosLote(loteSelecionado);
   if (dados.length === 0) return;
 
   const { jsPDF } = window.jspdf;
@@ -374,13 +241,13 @@ window.exportarPDF = function () {
 
   const rows = dados.map(item => [
     item.nome,
-    item.rz || '-',
-    item.volume || item.total || '-',
-    item.status || 'ATIVO',
-    item.area || '-',
-    item.rua || '-',
-    item.data || '-',
-    item.hora || '-'
+    item.rz,
+    item.volume,
+    item.status,
+    item.area,
+    item.rua,
+    item.data,
+    item.hora
   ]);
 
   doc.autoTable({
