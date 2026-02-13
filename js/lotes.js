@@ -125,6 +125,7 @@ window.excluirLote = function (nomeLote) {
 // ===============================
 
 
+
 // ===============================
 // CADASTRAR LOTE
 // ===============================
@@ -148,9 +149,25 @@ window.cadastrarLote = function () {
     return;
   }
 
+  // 🔥 GERAR COR AUTOMÁTICA
+  const cores = [
+    '#f59e0b',
+    '#3b82f6',
+    '#10b981',
+    '#ef4444',
+    '#8b5cf6',
+    '#ec4899',
+    '#14b8a6',
+    '#f97316'
+  ];
+
+  const cor = cores[Math.floor(Math.random() * cores.length)];
+
   state.lotes.push({
+    id: Date.now(),   // ID único
     nome,
-    total
+    total,
+    cor               // COR
   });
 
   saveState();
@@ -162,7 +179,6 @@ window.cadastrarLote = function () {
     renderDashboard();
   }
 };
-
 
 
 // ===============================
