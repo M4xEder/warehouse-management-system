@@ -229,10 +229,12 @@ function popularSelectLotes() {
     });
 }
 
+
 // ===============================
-// GERAR RELATÓRIO
+// GERAR RELATÓRIO (CORRIGIDO)
 // ===============================
 window.gerarRelatorio = function () {
+
   const loteSelecionado = document.getElementById('selectLote').value;
   const tbody = document.querySelector('#tabelaRelatorio tbody');
   const resumo = document.getElementById('resumo');
@@ -245,15 +247,47 @@ window.gerarRelatorio = function () {
     return;
   }
 
-  const ativos = state.lotes.filter(
-    item => item.nome === loteSelecionado
-  );
+  let dados = [];
 
+  // 🔎 1️⃣ PEGAR ATIVOS (DO MAPA)
+  state.areas.forEach(area => {
+    area.ruas.forEach(rua => {
+      rua.posicoes.forEach(pos => {
+
+        if (pos.ocupada && pos.lote === loteSelecionado) {
+          dados.push({
+            nome: loteSelecionado,
+            rz: pos.rz,
+            volume: pos.volume,
+            status: 'ATIVO',
+            area: area.nome,
+            rua: rua.nome,
+            data: '-',
+            hora: '-'
+          });
+        }
+
+      });
+    });
+  });
+
+  // 🔎 2️⃣ PEGAR EXPEDIDOS (HISTÓRICO)
   const expedidos = state.historicoExpedidos.filter(
     item => item.nome === loteSelecionado
   );
 
-  const dados = [...ativos, ...expedidos];
+  expedidos.forEach(item => {
+    dados.push({
+      nome: item.nome,
+      rz: item.rz,
+      volume: item.volume,
+      status: item.status || 'EXPEDIDO',
+      area: item.area || '-',
+      rua: item.rua || '-',
+      data: item.data || '-',
+      hora: item.hora || '-'
+    });
+  });
 
   if (dados.length === 0) {
     alert('Nenhum registro encontrado');
@@ -271,12 +305,12 @@ window.gerarRelatorio = function () {
     tr.innerHTML = `
       <td>${item.nome}</td>
       <td>${item.rz || '-'}</td>
-      <td>${item.volume || item.total || '-'}</td>
-      <td>${item.status || 'ATIVO'}</td>
-      <td>${item.area || '-'}</td>
-      <td>${item.rua || '-'}</td>
-      <td>${item.data || '-'}</td>
-      <td>${item.hora || '-'}</td>
+      <td>${item.volume || '-'}</td>
+      <td>${item.status}</td>
+      <td>${item.area}</td>
+      <td>${item.rua}</td>
+      <td>${item.data}</td>
+      <td>${item.hora}</td>
     `;
 
     tbody.appendChild(tr);
@@ -290,7 +324,6 @@ window.gerarRelatorio = function () {
 
   resumo.style.display = 'block';
 };
-
 // ===============================
 // EXPORTAR EXCEL
 // ===============================
