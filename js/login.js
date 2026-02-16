@@ -171,3 +171,17 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
 });
+
+// garantindo conexao depoid wie js carregar 
+
+document.addEventListener('DOMContentLoaded', function () {
+
+  const btn = document.getElementById('btnLogin');
+
+  if (btn) {
+    btn.addEventListener('click', function () {
+      window.fazerLogin();
+    });
+  }
+
+});
