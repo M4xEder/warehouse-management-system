@@ -1,15 +1,16 @@
 // =======================================
 // LOGIN.JS — CONTROLE COMPLETO DE SESSÃO
-// AGORA INTEGRADO AO SUPABASE
+// INTEGRADO AO SUPABASE 
 // =======================================
 
 console.log('login.js carregado');
 
 // 🔹 CONFIGURAÇÃO SUPABASE
-const SUPABASE_URL = 'COLE_AQUI_SUA_URL';
-const SUPABASE_KEY = 'COLE_AQUI_SUA_PUBLISHABLE_KEY';
+const SUPABASE_URL = 'SUA_URL_AQUI';
+const SUPABASE_KEY = 'SUA_PUBLISHABLE_KEY_AQUI';
 
-const supabase = window.supabase.createClient(
+// Criando cliente com nome diferente para evitar conflito
+const supabaseClient = window.supabase.createClient(
   SUPABASE_URL,
   SUPABASE_KEY
 );
@@ -39,7 +40,7 @@ window.fazerLogin = async function () {
 
   try {
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('usuarios')
       .select('*')
       .eq('usuario', usuario)
