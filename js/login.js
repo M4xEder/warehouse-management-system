@@ -1,8 +1,18 @@
 // =======================================
 // LOGIN.JS — CONTROLE COMPLETO DE SESSÃO
+// AGORA INTEGRADO AO SUPABASE
 // =======================================
 
 console.log('login.js carregado');
+
+// 🔹 CONFIGURAÇÃO SUPABASE
+const SUPABASE_URL = 'COLE_AQUI_SUA_URL';
+const SUPABASE_KEY = 'COLE_AQUI_SUA_PUBLISHABLE_KEY';
+
+const supabase = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
 
 // Tempo máximo da sessão (8 horas)
 const TEMPO_MAXIMO_SESSAO = 8 * 60 * 60 * 1000;
@@ -11,7 +21,7 @@ const TEMPO_MAXIMO_SESSAO = 8 * 60 * 60 * 1000;
 // ===============================
 // LOGIN
 // ===============================
-window.fazerLogin = function () {
+window.fazerLogin = async function () {
 
   const usuarioInput = document.getElementById('usuario');
   const senhaInput = document.getElementById('senha');
@@ -27,29 +37,33 @@ window.fazerLogin = function () {
     return;
   }
 
-  // Usuários permitidos
-  const usuariosValidos = [
-    { usuario: 'admin', senha: '1234' },
-    { usuario: 'meli', senha: 'meli+02' }
-  ];
+  try {
 
-  const usuarioValido = usuariosValidos.find(
-    u => u.usuario === usuario && u.senha === senha
-  );
+    const { data, error } = await supabase
+      .from('usuarios')
+      .select('*')
+      .eq('usuario', usuario)
+      .eq('senha', senha)
+      .single();
 
-  if (!usuarioValido) {
-    if (erro) erro.textContent = 'Usuário ou senha inválidos';
-    return;
+    if (error || !data) {
+      if (erro) erro.textContent = 'Usuário ou senha inválidos';
+      return;
+    }
+
+    // Salva sessão local
+    localStorage.setItem('usuarioLogado', JSON.stringify({
+      id: data.id,
+      usuario: data.usuario,
+      dataLogin: Date.now()
+    }));
+
+    window.location.replace('index.html');
+
+  } catch (e) {
+    console.error('Erro no login:', e);
+    if (erro) erro.textContent = 'Erro ao conectar com servidor';
   }
-
-  // Salva sessão
-  localStorage.setItem('usuarioLogado', JSON.stringify({
-    usuario,
-    dataLogin: Date.now()
-  }));
-
-  // Vai para o sistema
-  window.location.replace('index.html');
 };
 
 
@@ -140,7 +154,6 @@ document.addEventListener('DOMContentLoaded', function () {
   // Se estiver na tela de login
   if (paginaAtual === 'login.html') {
 
-    // Se já estiver logado, não deixa voltar para login
     const dadosSalvos = localStorage.getItem('usuarioLogado');
     if (dadosSalvos) {
       window.location.replace('index.html');
