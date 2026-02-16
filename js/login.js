@@ -1,15 +1,16 @@
 // =======================================
 // LOGIN.JS — CONTROLE COMPLETO DE SESSÃO
-// INTEGRADO AO SUPABASE 
+// INTEGRADO AO SUPABASE
 // =======================================
 
 console.log('login.js carregado');
 
 // 🔹 CONFIGURAÇÃO SUPABASE
-const SUPABASE_URL = 'SUA_URL_AQUI';
-const SUPABASE_KEY = 'SUA_PUBLISHABLE_KEY_AQUI';
+const SUPABASE_URL = 'https://zegbjftbyckttcdrfwgf.supabase.co';
 
-// Criando cliente com nome diferente para evitar conflito
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InplZ2JqZnRieWNrdHRjZHJmd2dmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEyNzAwNTAsImV4cCI6MjA4Njg0NjA1MH0.YdgrUkSnJ8ew2uMlU5Wdcd4k9iU4GSO0_vyNH1HT-lc';
+
+// Criando cliente
 const supabaseClient = window.supabase.createClient(
   SUPABASE_URL,
   SUPABASE_KEY
@@ -90,7 +91,6 @@ window.checarSessao = function () {
 
     const agora = Date.now();
 
-    // Verifica expiração
     if (agora - dados.dataLogin > TEMPO_MAXIMO_SESSAO) {
       localStorage.removeItem('usuarioLogado');
       redirecionarParaLogin();
@@ -160,22 +160,16 @@ document.addEventListener('DOMContentLoaded', function () {
       window.location.replace('index.html');
     }
 
-    return;
+  } else {
+
+    const sessaoValida = window.checarSessao();
+
+    if (sessaoValida) {
+      window.mostrarUsuarioLogado();
+    }
   }
 
-  // Para qualquer outra página → exige sessão
-  const sessaoValida = window.checarSessao();
-
-  if (sessaoValida) {
-    window.mostrarUsuarioLogado();
-  }
-
-});
-
-// garantindo conexao depoid wie js carregar 
-
-document.addEventListener('DOMContentLoaded', function () {
-
+  // 🔹 Conectar botão login
   const btn = document.getElementById('btnLogin');
 
   if (btn) {
