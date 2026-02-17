@@ -1,12 +1,10 @@
-/* document.addEventListener('DOMContentLoaded', () => {
-  renderMapa();
-  renderDashboard();
-  if (typeof renderLotesExpedidos === 'function') {
-    renderLotesExpedidos();
-  }
-}); */
+// ===============================
+// MAIN.JS — INICIALIZAÇÃO SISTEMA
+// ===============================
 
 document.addEventListener('DOMContentLoaded', async () => {
+
+  console.log('🚀 Inicializando sistema...');
 
   // ===============================
   // CARREGAR HEADER
@@ -16,30 +14,45 @@ document.addEventListener('DOMContentLoaded', async () => {
     const data = await response.text();
 
     const container = document.getElementById('header-container');
+
     if (container) {
       container.innerHTML = data;
 
-      // Depois que o header existe no DOM
       if (typeof configurarHeader === 'function') {
         configurarHeader('sistema');
       }
     }
+
   } catch (err) {
     console.error('Erro ao carregar header:', err);
   }
 
 
   // ===============================
-  // 🔥 CARREGAR LOTES DO BANCO
+  // 🔥 CARREGAR DADOS DO BANCO
   // ===============================
-  if (typeof carregarLotesDoBanco === 'function') {
-    await carregarLotesDoBanco();
+
+  try {
+
+    if (typeof carregarLotesDoBanco === 'function') {
+      await carregarLotesDoBanco();
+      console.log('✅ Lotes carregados');
+    }
+
+    if (typeof carregarAreasDoBanco === 'function') {
+      await carregarAreasDoBanco();
+      console.log('✅ Áreas carregadas');
+    }
+
+  } catch (err) {
+    console.error('Erro ao carregar dados do banco:', err);
   }
 
 
   // ===============================
-  // RENDERIZAÇÕES
+  // 🎨 RENDERIZAÇÕES
   // ===============================
+
   if (typeof renderMapa === 'function') {
     renderMapa();
   }
@@ -51,5 +64,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (typeof renderLotesExpedidos === 'function') {
     renderLotesExpedidos();
   }
+
+  console.log('🔥 Sistema pronto.');
 
 });
