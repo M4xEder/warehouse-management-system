@@ -85,7 +85,7 @@ window.criarArea = async function () {
     renderMapa();
   }
 };
-
+console.log('Áreas após salvar:', state.areas);
 
 
 // ===============================
