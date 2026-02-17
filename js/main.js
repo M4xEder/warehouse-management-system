@@ -6,23 +6,35 @@
   }
 }); */
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
 
   // ===============================
   // CARREGAR HEADER
   // ===============================
-  fetch('components/header.html')
-    .then(response => response.text())
-    .then(data => {
-      const container = document.getElementById('header-container');
-      if (container) {
-        container.innerHTML = data;
+  try {
+    const response = await fetch('components/header.html');
+    const data = await response.text();
 
-        // Depois que o header existe no DOM
+    const container = document.getElementById('header-container');
+    if (container) {
+      container.innerHTML = data;
+
+      // Depois que o header existe no DOM
+      if (typeof configurarHeader === 'function') {
         configurarHeader('sistema');
       }
-    })
-    .catch(err => console.error('Erro ao carregar header:', err));
+    }
+  } catch (err) {
+    console.error('Erro ao carregar header:', err);
+  }
+
+
+  // ===============================
+  // 🔥 CARREGAR LOTES DO BANCO
+  // ===============================
+  if (typeof carregarLotesDoBanco === 'function') {
+    await carregarLotesDoBanco();
+  }
 
 
   // ===============================
