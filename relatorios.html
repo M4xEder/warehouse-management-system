@@ -13,18 +13,26 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
+  <!-- ================= SUPABASE (OBRIGATÓRIO PRIMEIRO) ================= -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    if (typeof supabase === "undefined") {
+      console.error("Supabase SDK não carregado.");
+    } else {
+      window.supabase = supabase;
+      console.log("Supabase SDK carregado com sucesso.");
+    }
+  </script>
+
   <!-- CSS ESPECÍFICO DO RELATÓRIO -->
   <style>
-    body {
-      background: #f4f4f4;
-    }
+    body { background: #f4f4f4; }
 
     h1 {
       text-align: center;
       margin: 20px 0;
     }
 
-    /* FILTRO */
     .filtro {
       margin: 0 20px 20px 20px;
       display: flex;
@@ -49,7 +57,6 @@
       cursor: pointer;
     }
 
-    /* RESUMO */
     #resumo {
       display: none;
       margin: 0 20px 20px 20px;
@@ -59,7 +66,6 @@
       font-size: 14px;
     }
 
-    /* TABELA */
     .tabela-container {
       margin: 0 20px 20px 20px;
       overflow-x: auto;
@@ -93,14 +99,10 @@
       background: #f9f9f9;
     }
 
-    /* RESPONSIVO */
     @media (max-width: 768px) {
+      h1 { font-size: 20px; }
 
-      h1 {
-        font-size: 20px;
-      }
-}
-  .filtro {
+      .filtro {
         flex-direction: column;
         align-items: stretch;
       }
@@ -118,62 +120,64 @@
 </head>
 
 <body>
-  <!-- HEADER -->
+
+<!-- HEADER -->
 <div id="header-container"></div>
-  <script>
+
+<script>
   fetch('components/header.html')
     .then(r => r.text())
     .then(html => {
       document.getElementById('header-container').innerHTML = html;
 
-      // chama função para ajustar botões
       if (typeof configurarHeader === 'function') {
         configurarHeader('relatorios');
       }
     });
 </script>
 
-  <h1>Relatórios de Expedição</h1>
+<h1>Relatórios de Expedição</h1>
 
-  <!-- FILTRO -->
-  <div class="filtro">
-    <label>
-      Lote
-      <select id="selectLote"></select>
-    </label>
+<!-- FILTRO -->
+<div class="filtro">
+  <label>
+    Lote
+    <select id="selectLote"></select>
+  </label>
 
-    <button onclick="gerarRelatorio()">Gerar Relatório</button>
-    <button onclick="exportarExcel()">Exportar Excel</button>
-    <button onclick="exportarPDF()">Exportar PDF</button>
-  </div>
+  <button onclick="gerarRelatorio()">Gerar Relatório</button>
+  <button onclick="exportarExcel()">Exportar Excel</button>
+  <button onclick="exportarPDF()">Exportar PDF</button>
+</div>
 
-  <!-- RESUMO -->
-  <div id="resumo"></div>
+<!-- RESUMO -->
+<div id="resumo"></div>
 
-  <!-- TABELA -->
-  <div class="tabela-container">
-    <table id="tabelaRelatorio">
-      <thead>
-        <tr>
-          <th>Lote</th>
-          <th>RZ</th>
-          <th>Volume</th>
-          <th>Status</th>
-          <th>Área</th>
-          <th>Rua</th>
-          <th>Data</th>
-          <th>Hora</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
+<!-- TABELA -->
+<div class="tabela-container">
+  <table id="tabelaRelatorio">
+    <thead>
+      <tr>
+        <th>Lote</th>
+        <th>RZ</th>
+        <th>Volume</th>
+        <th>Status</th>
+        <th>Área</th>
+        <th>Rua</th>
+        <th>Data</th>
+        <th>Hora</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
 
-  <!-- JS -->
-  <script src="js/login.js"></script>
-  <script src="js/state.js"></script>
-  <script src="js/utils.js"></script>
-  <script src="js/relatórios/relatorios.js"></script>
+<!-- ================= SCRIPTS DO SISTEMA ================= -->
+
+<script src="js/login.js"></script>
+<script src="js/state.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/relatórios/relatorios.js"></script>
 
 </body>
 </html>
