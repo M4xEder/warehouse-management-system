@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
   } catch (err) {
-    console.error('Erro ao carregar header:', err);
+    console.error('❌ Erro ao carregar header:', err);
   }
 
 
@@ -44,8 +44,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.log('✅ Áreas carregadas');
     }
 
+    if (typeof carregarRuasDoBanco === 'function') {
+      await carregarRuasDoBanco();
+      console.log('✅ Ruas carregadas');
+    }
+
   } catch (err) {
-    console.error('Erro ao carregar dados do banco:', err);
+    console.error('❌ Erro ao carregar dados do banco:', err);
   }
 
 
