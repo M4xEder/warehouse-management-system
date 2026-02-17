@@ -17,7 +17,8 @@ if (!window.supabase) {
   console.error('Supabase SDK não carregado. Verifique o script no HTML.');
 }
 
-const supabaseClient = window.supabase.createClient(
+// 🔥 CLIENTE GLOBAL
+window.supabaseClient = window.supabase.createClient(
   SUPABASE_URL,
   SUPABASE_KEY
 );
@@ -45,7 +46,7 @@ window.fazerLogin = async function () {
 
   try {
 
-    const { data, error } = await supabaseClient.auth.signInWithPassword({
+    const { data, error } = await window.supabaseClient.auth.signInWithPassword({
       email: email,
       password: senha
     });
@@ -72,7 +73,7 @@ window.fazerLogin = async function () {
 
 window.checarSessao = async function () {
 
-  const { data } = await supabaseClient.auth.getSession();
+  const { data } = await window.supabaseClient.auth.getSession();
 
   if (!data.session) {
     window.location.replace('login.html');
@@ -89,7 +90,7 @@ window.checarSessao = async function () {
 
 window.mostrarUsuarioLogado = async function () {
 
-  const { data } = await supabaseClient.auth.getUser();
+  const { data } = await window.supabaseClient.auth.getUser();
 
   if (!data.user) return;
 
@@ -107,7 +108,7 @@ window.mostrarUsuarioLogado = async function () {
 
 window.logout = async function () {
 
-  await supabaseClient.auth.signOut();
+  await window.supabaseClient.auth.signOut();
   window.location.replace('login.html');
 
 };
@@ -121,10 +122,9 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   const paginaAtual = window.location.pathname.split('/').pop();
 
-  // Se estiver na página de login
   if (paginaAtual === 'login.html') {
 
-    const { data } = await supabaseClient.auth.getSession();
+    const { data } = await window.supabaseClient.auth.getSession();
 
     if (data.session) {
       window.location.replace('index.html');
@@ -133,7 +133,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     return;
   }
 
-  // Para qualquer outra página → exige sessão
   const sessaoValida = await window.checarSessao();
 
   if (sessaoValida) {
