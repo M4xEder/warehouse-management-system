@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Login - Sistema</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="css/login-style.css">
 </head>
 <body>
@@ -18,10 +19,20 @@
   <button id="btnLogin">Entrar</button>
 </div>
 
-<!--  SUPABASE SDK (OBRIGATÓRIO) -->
+<!-- SUPABASE SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<!--  SEU SCRIPT -->
+<!-- Torna o Supabase global -->
+<script>
+  if (typeof supabase === "undefined") {
+    console.error("Supabase SDK não carregado.");
+  } else {
+    window.supabase = supabase;
+    console.log("Supabase SDK carregado com sucesso.");
+  }
+</script>
+
+<!-- SEU SCRIPT -->
 <script src="js/login.js"></script>
 
 </body>
