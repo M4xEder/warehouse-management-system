@@ -1,4 +1,4 @@
-// ===============================
+/* // ===============================
 // MAPA.JS — CONTROLE DO MAPA (SEGURO)
 // ===============================
 
@@ -215,3 +215,74 @@ window.renderMapa = function () {
   }
 
 })();
+
+
+
+*/
+
+// ===============================
+// MAPA.JS — VERSÃO BANCO RELACIONAL
+// ===============================
+
+
+// ===============================
+// RENDER MAPA
+// ===============================
+window.renderMapa = function () {
+
+  const mapa = document.getElementById('mapa');
+  if (!mapa) return;
+
+  mapa.innerHTML = '';
+
+  // Loop nas áreas (vindas do banco)
+  state.areas.forEach(area => {
+
+    const areaDiv = document.createElement('div');
+    areaDiv.className = 'area';
+
+    areaDiv.innerHTML = `
+      <div class="area-header">
+        <strong>${area.nome}</strong>
+        <button class="danger" onclick="excluirArea('${area.id}')">
+          Excluir Área
+        </button>
+      </div>
+    `;
+
+    // 🔥 Buscar ruas relacionadas à área (relacional)
+    const ruasDaArea = state.ruas.filter(
+      r => r.area_id === area.id
+    );
+
+    ruasDaArea.forEach(rua => {
+
+      const ruaDiv = document.createElement('div');
+      ruaDiv.className = 'rua';
+
+      ruaDiv.innerHTML = `
+        <div class="rua-header">
+          Rua ${rua.nome}
+          <button class="danger"
+            onclick="excluirRua('${rua.id}')">
+            Excluir Rua
+          </button>
+        </div>
+      `;
+
+      areaDiv.appendChild(ruaDiv);
+    });
+
+    // Botão adicionar rua
+    const btnRua = document.createElement('button');
+    btnRua.textContent = 'Adicionar Rua';
+    btnRua.onclick = () => criarRua(area.id);
+
+    areaDiv.appendChild(btnRua);
+    mapa.appendChild(areaDiv);
+  });
+
+  if (typeof renderDashboard === 'function') {
+    renderDashboard();
+  }
+};
