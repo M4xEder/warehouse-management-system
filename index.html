@@ -86,9 +86,21 @@
   </div>
 </div>
 
-<!-- ================= SCRIPTS (ORDEM CORRETA) ================= -->
+<!-- ================= SUPABASE (OBRIGATÓRIO PRIMEIRO) ================= -->
 
-  <!-- LOGIN (PROTEÇÃO DE SESSÃO) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  if (typeof supabase === "undefined") {
+    console.error("Supabase SDK não carregado.");
+  } else {
+    window.supabase = supabase;
+    console.log("Supabase SDK carregado com sucesso.");
+  }
+</script>
+
+<!-- ================= SCRIPTS DO SISTEMA ================= -->
+
+<!-- LOGIN (PROTEÇÃO DE SESSÃO) -->
 <script src="js/login.js"></script>
   
 <!-- ESTADO -->
