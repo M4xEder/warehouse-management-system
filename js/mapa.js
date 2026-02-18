@@ -221,8 +221,114 @@ window.renderMapa = function () {
 */
 
 // ===============================
-// MAPA.JS — VERSÃO BANCO RELACIONAL
+// MAPA.JS — CONTROLE COMPLETO (SUPABASE)
 // ===============================
+
+
+// ===============================
+// CRIAR ÁREA
+// ===============================
+window.cadastrarArea = async function () {
+
+  const input = document.getElementById('areaNome');
+
+  if (!input || !input.value.trim()) {
+    alert('Informe o nome da área');
+    return;
+  }
+
+  const nome = input.value.trim();
+
+  const { data, error } = await supabase
+    .from('areas')
+    .insert([{ nome }])
+    .select();
+
+  if (error) {
+    console.error(error);
+    alert('Erro ao criar área');
+    return;
+  }
+
+  state.areas.push(data[0]);
+  input.value = '';
+  renderMapa();
+};
+
+
+// ===============================
+// EXCLUIR ÁREA
+// ===============================
+window.excluirArea = async function (id) {
+
+  if (!confirm('Excluir área?')) return;
+
+  const { error } = await supabase
+    .from('areas')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error(error);
+    alert('Erro ao excluir área');
+    return;
+  }
+
+  state.areas = state.areas.filter(a => a.id !== id);
+  state.ruas = state.ruas.filter(r => r.area_id !== id);
+
+  renderMapa();
+};
+
+
+// ===============================
+// CRIAR RUA
+// ===============================
+window.criarRua = async function (areaId) {
+
+  const nome = prompt('Nome da rua');
+  if (!nome) return;
+
+  const { data, error } = await supabase
+    .from('ruas')
+    .insert([{
+      nome,
+      area_id: areaId
+    }])
+    .select();
+
+  if (error) {
+    console.error(error);
+    alert('Erro ao criar rua');
+    return;
+  }
+
+  state.ruas.push(data[0]);
+  renderMapa();
+};
+
+
+// ===============================
+// EXCLUIR RUA
+// ===============================
+window.excluirRua = async function (ruaId) {
+
+  if (!confirm('Excluir rua?')) return;
+
+  const { error } = await supabase
+    .from('ruas')
+    .delete()
+    .eq('id', ruaId);
+
+  if (error) {
+    console.error(error);
+    alert('Erro ao excluir rua');
+    return;
+  }
+
+  state.ruas = state.ruas.filter(r => r.id !== ruaId);
+  renderMapa();
+};
 
 
 // ===============================
@@ -235,7 +341,8 @@ window.renderMapa = function () {
 
   mapa.innerHTML = '';
 
-  // Loop nas áreas (vindas do banco)
+  if (!Array.isArray(state.areas)) return;
+
   state.areas.forEach(area => {
 
     const areaDiv = document.createElement('div');
@@ -250,7 +357,7 @@ window.renderMapa = function () {
       </div>
     `;
 
-    // 🔥 Buscar ruas relacionadas à área (relacional)
+    // 🔥 FILTRA RUAS RELACIONADAS
     const ruasDaArea = state.ruas.filter(
       r => r.area_id === area.id
     );
@@ -273,7 +380,6 @@ window.renderMapa = function () {
       areaDiv.appendChild(ruaDiv);
     });
 
-    // Botão adicionar rua
     const btnRua = document.createElement('button');
     btnRua.textContent = 'Adicionar Rua';
     btnRua.onclick = () => criarRua(area.id);
