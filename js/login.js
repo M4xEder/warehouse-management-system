@@ -1,9 +1,10 @@
 // =======================================
 // LOGIN.JS — CONTROLE COMPLETO DE SESSÃO
-// AUTH NATIVO SUPABASE (PRODUÇÃO)
+// SUPABASE AUTH (PRODUÇÃO)
 // =======================================
 
 console.log('login.js carregado');
+
 
 // =======================================
 // CONFIGURAÇÃO SUPABASE
@@ -11,14 +12,14 @@ console.log('login.js carregado');
 
 const SUPABASE_URL = 'https://zegbjftbyckttcdrfwgf.supabase.co';
 
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InplZ2JqZnRieWNrdHRjZHJmd2dmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEyNzAwNTAsImV4cCI6MjA4Njg0NjA1MH0.YdgrUkSnJ8ew2uMlU5Wdcd4k9iU4GSO0_vyNH1HT-lc';
+const SUPABASE_KEY = 'SUA_PUBLIC_ANON_KEY_AQUI';
 
 if (!window.supabase) {
-  console.error('Supabase SDK não carregado. Verifique o script no HTML.');
+  console.error('Supabase SDK não carregado.');
 }
 
-// 🔥 CLIENTE GLOBAL
-window.supabaseClient = window.supabase.createClient(
+// 🔥 CLIENTE GLOBAL PADRONIZADO
+window.supabase = window.supabase.createClient(
   SUPABASE_URL,
   SUPABASE_KEY
 );
@@ -30,12 +31,9 @@ window.supabaseClient = window.supabase.createClient(
 
 window.fazerLogin = async function () {
 
-  const emailInput = document.getElementById('usuario');
-  const senhaInput = document.getElementById('senha');
+  const email = document.getElementById('usuario')?.value.trim();
+  const senha = document.getElementById('senha')?.value.trim();
   const erro = document.getElementById('errorLogin');
-
-  const email = emailInput?.value.trim();
-  const senha = senhaInput?.value.trim();
 
   if (erro) erro.textContent = '';
 
@@ -46,8 +44,8 @@ window.fazerLogin = async function () {
 
   try {
 
-    const { data, error } = await window.supabaseClient.auth.signInWithPassword({
-      email: email,
+    const { error } = await window.supabase.auth.signInWithPassword({
+      email,
       password: senha
     });
 
@@ -56,12 +54,10 @@ window.fazerLogin = async function () {
       return;
     }
 
-    console.log('Login realizado:', data.user.email);
-
     window.location.replace('index.html');
 
   } catch (err) {
-    console.error('Erro inesperado:', err);
+    console.error(err);
     if (erro) erro.textContent = 'Erro ao conectar com servidor';
   }
 };
@@ -73,7 +69,7 @@ window.fazerLogin = async function () {
 
 window.checarSessao = async function () {
 
-  const { data } = await window.supabaseClient.auth.getSession();
+  const { data } = await window.supabase.auth.getSession();
 
   if (!data.session) {
     window.location.replace('login.html');
@@ -85,12 +81,12 @@ window.checarSessao = async function () {
 
 
 // =======================================
-// MOSTRAR USUÁRIO NO HEADER
+// MOSTRAR USUÁRIO
 // =======================================
 
 window.mostrarUsuarioLogado = async function () {
 
-  const { data } = await window.supabaseClient.auth.getUser();
+  const { data } = await window.supabase.auth.getUser();
 
   if (!data.user) return;
 
@@ -108,23 +104,24 @@ window.mostrarUsuarioLogado = async function () {
 
 window.logout = async function () {
 
-  await window.supabaseClient.auth.signOut();
+  await window.supabase.auth.signOut();
   window.location.replace('login.html');
 
 };
 
 
 // =======================================
-// PROTEÇÃO AUTOMÁTICA DE PÁGINAS
+// PROTEÇÃO + INICIALIZAÇÃO
 // =======================================
 
 document.addEventListener('DOMContentLoaded', async function () {
 
   const paginaAtual = window.location.pathname.split('/').pop();
 
+  // 🔐 Se estiver na tela de login
   if (paginaAtual === 'login.html') {
 
-    const { data } = await window.supabaseClient.auth.getSession();
+    const { data } = await window.supabase.auth.getSession();
 
     if (data.session) {
       window.location.replace('index.html');
@@ -133,10 +130,17 @@ document.addEventListener('DOMContentLoaded', async function () {
     return;
   }
 
+  // 🔐 Proteger outras páginas
   const sessaoValida = await window.checarSessao();
 
-  if (sessaoValida) {
-    await window.mostrarUsuarioLogado();
+  if (!sessaoValida) return;
+
+  // 👤 Mostrar usuário
+  await window.mostrarUsuarioLogado();
+
+  // 🔥 CARREGAR DADOS DO SISTEMA
+  if (typeof loadFromDatabase === 'function') {
+    await loadFromDatabase();
   }
 
 });
@@ -151,9 +155,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const btn = document.getElementById('btnLogin');
 
   if (btn) {
-    btn.addEventListener('click', function () {
-      window.fazerLogin();
-    });
+    btn.addEventListener('click', window.fazerLogin);
   }
 
 });
