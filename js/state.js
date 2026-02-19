@@ -17,45 +17,31 @@ window.state = {
 // CARREGAR DADOS DO BANCO
 // ===============================
 window.loadFromDatabase = async function () {
-
-  if (typeof supabase === 'undefined') {
-    console.error('Supabase não carregado');
+window.loadFromDatabase = async function () {
+  if (!window.supabaseClient) {
+    console.error("❌ supabaseClient não inicializado");
     return;
   }
 
   try {
+    const { data: areas, error: errorAreas } =
+      await supabaseClient.from('areas').select('*');
 
-    const { data: areas, error: errAreas } =
-      await supabase.from('areas').select('*');
+    const { data: lotes, error: errorLotes } =
+      await supabaseClient.from('lotes').select('*');
 
-    if (errAreas) throw errAreas;
-
-    const { data: ruas, error: errRuas } =
-      await supabase.from('ruas').select('*');
-
-    if (errRuas) throw errRuas;
-
-    const { data: lotes, error: errLotes } =
-      await supabase.from('lotes').select('*');
-
-    if (errLotes) throw errLotes;
+    if (errorAreas || errorLotes) {
+      console.error("Erro Supabase:", errorAreas || errorLotes);
+      return;
+    }
 
     state.areas = areas || [];
-    state.ruas = ruas || [];
+    state.areas = ruas || [];
     state.lotes = lotes || [];
 
-    if (typeof renderMapa === 'function') {
-      renderMapa();
-    }
-
-    if (typeof renderDashboard === 'function') {
-      renderDashboard();
-    }
-
-    console.log('✅ Dados carregados do Supabase');
-
+    console.log("✅ Dados carregados do banco");
   } catch (err) {
-    console.error('Erro ao carregar dados:', err);
+    console.error("Erro ao carregar dados:", err);
   }
 };
 
