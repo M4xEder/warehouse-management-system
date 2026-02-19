@@ -11,6 +11,11 @@ console.log('login.js carregado');
 
 window.fazerLogin = async function () {
 
+  if (!window.supabaseClient) {
+    console.error("❌ Supabase não inicializado");
+    return;
+  }
+
   const email = document.getElementById('usuario')?.value.trim();
   const senha = document.getElementById('senha')?.value.trim();
   const erro = document.getElementById('errorLogin');
@@ -24,7 +29,7 @@ window.fazerLogin = async function () {
 
   try {
 
-    const { error } = await window.supabase.auth.signInWithPassword({
+    const { error } = await window.supabaseClient.auth.signInWithPassword({
       email,
       password: senha
     });
@@ -37,7 +42,7 @@ window.fazerLogin = async function () {
     window.location.replace('index.html');
 
   } catch (err) {
-    console.error(err);
+    console.error("Erro no login:", err);
     if (erro) erro.textContent = 'Erro ao conectar com servidor';
   }
 };
@@ -49,7 +54,17 @@ window.fazerLogin = async function () {
 
 window.checarSessao = async function () {
 
-  const { data } = await window.supabase.auth.getSession();
+  if (!window.supabaseClient) {
+    console.error("❌ Supabase não inicializado");
+    return false;
+  }
+
+  const { data, error } = await window.supabaseClient.auth.getSession();
+
+  if (error) {
+    console.error("Erro ao verificar sessão:", error);
+    return false;
+  }
 
   if (!data.session) {
     window.location.replace('login.html');
@@ -61,14 +76,16 @@ window.checarSessao = async function () {
 
 
 // =======================================
-// MOSTRAR USUÁRIO
+// MOSTRAR USUÁRIO LOGADO
 // =======================================
 
 window.mostrarUsuarioLogado = async function () {
 
-  const { data } = await window.supabase.auth.getUser();
+  if (!window.supabaseClient) return;
 
-  if (!data.user) return;
+  const { data } = await window.supabaseClient.auth.getUser();
+
+  if (!data?.user) return;
 
   const elemento = document.getElementById('usuarioHeader');
 
@@ -83,49 +100,56 @@ window.mostrarUsuarioLogado = async function () {
 // =======================================
 
 window.logout = async function () {
-  await window.supabase.auth.signOut();
+
+  if (!window.supabaseClient) return;
+
+  await window.supabaseClient.auth.signOut();
   window.location.replace('login.html');
 };
 
 
 // =======================================
-// INICIALIZAÇÃO
+// INICIALIZAÇÃO GLOBAL
 // =======================================
 
 document.addEventListener('DOMContentLoaded', async function () {
 
+  if (!window.supabaseClient) {
+    console.error("❌ Supabase não inicializado");
+    return;
+  }
+
   const paginaAtual = window.location.pathname.split('/').pop();
 
-  if (paginaAtual === 'login.html') {
+  // =============================
+  // SE ESTIVER NA TELA LOGIN
+  // =============================
+  if (paginaAtual === 'login.html' || paginaAtual === '') {
 
-    const { data } = await window.supabase.auth.getSession();
+    const { data } = await window.supabaseClient.auth.getSession();
 
-    if (data.session) {
+    if (data?.session) {
       window.location.replace('index.html');
+    }
+
+    const btn = document.getElementById('btnLogin');
+    if (btn) {
+      btn.addEventListener('click', window.fazerLogin);
     }
 
     return;
   }
 
+  // =============================
+  // QUALQUER OUTRA TELA
+  // =============================
   const sessaoValida = await window.checarSessao();
   if (!sessaoValida) return;
 
   await window.mostrarUsuarioLogado();
 
-  if (typeof loadFromDatabase === 'function') {
-    await loadFromDatabase();
-  }
-
-});
-
-
-// Evento botão login
-document.addEventListener('DOMContentLoaded', function () {
-
-  const btn = document.getElementById('btnLogin');
-
-  if (btn) {
-    btn.addEventListener('click', window.fazerLogin);
+  if (typeof window.loadFromDatabase === 'function') {
+    await window.loadFromDatabase();
   }
 
 });
