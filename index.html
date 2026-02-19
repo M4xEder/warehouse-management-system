@@ -93,43 +93,22 @@
   </div>
 </div>
 
-<!-- ========================= -->
-<!-- SUPABASE CDN (SEMPRE PRIMEIRO) -->
-<!-- ========================= -->
+<!-- SUPABASE CDN -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<!-- ========================= -->
-<!-- CLIENTE SUPABASE (CRIA 1 VEZ) -->
-<!-- ========================= -->
+<!-- CLIENTE -->
 <script src="js/supabase.js"></script>
 
-<!-- ========================= -->
-<!-- LOGIN / AUTH -->
-<!-- ========================= -->
-<script src="js/login.js"></script>
-
-<!-- ========================= -->
-<!-- CARREGAR HEADER.HTML -->
-<!-- ========================= -->
-<script>
-  fetch('header.html')
-    .then(res => res.text())
-    .then(data => {
-      document.getElementById('header-container').innerHTML = data;
-    });
-</script>
-
-<script src="js/header.js"></script>
-
-<!-- ========================= -->
-<!-- ESTADO E UTILITÁRIOS -->
-<!-- ========================= -->
+<!-- ESTADO PRIMEIRO -->
 <script src="js/state.js"></script>
+
+<!-- UTILS -->
 <script src="js/utils.js"></script>
 
-<!-- ========================= -->
-<!-- MÓDULOS DO SISTEMA -->
-<!-- ========================= -->
+<!-- HEADER -->
+<script src="js/header.js"></script>
+
+<!-- MÓDULOS -->
 <script src="js/lotes.js"></script>
 <script src="js/modal.js"></script>
 <script src="js/busca.js"></script>
@@ -137,9 +116,10 @@
 <script src="js/dashboard.js"></script>
 <script src="js/expedicao.js"></script>
 
-<!-- ========================= -->
-<!-- MAIN (SEMPRE POR ÚLTIMO) -->
-<!-- ========================= -->
+<!-- LOGIN DEPOIS DE TUDO -->
+<script src="js/login.js"></script>
+
+<!-- MAIN POR ÚLTIMO -->
 <script src="js/main.js"></script>
 
 </body>
