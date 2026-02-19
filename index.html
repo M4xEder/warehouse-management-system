@@ -10,7 +10,7 @@
 
 <!-- HEADER -->
 <div id="header-container"></div>
-  
+
 <h1>Gerenciamento de Gaylords</h1>
 
 <!-- BUSCA -->
@@ -20,13 +20,14 @@
   <button onclick="limparBusca()">Limpar Destaque</button>
 </div>
 
-<!-- CADASTROS -->
+<!-- CADASTRAR ÁREA -->
 <section class="cadastros">
   <h2>Cadastrar Área</h2>
   <input id="areaNome" placeholder="Nome da área">
   <button onclick="cadastrarArea()">Cadastrar Área</button>
 </section>
 
+<!-- CADASTRAR LOTE -->
 <section class="cadastros">
   <h2>Cadastrar Lote</h2>
   <input id="loteNome" placeholder="Nome do lote">
@@ -86,42 +87,24 @@
   </div>
 </div>
 
-<!-- ================= SUPABASE (OBRIGATÓRIO PRIMEIRO) ================= -->
-
+<!-- ================= SUPABASE SDK ================= -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-  if (typeof supabase === "undefined") {
-    console.error("Supabase SDK não carregado.");
-  } else {
-    window.supabase = supabase;
-    console.log("Supabase SDK carregado com sucesso.");
-  }
-</script>
+
+<!-- ================= CONEXÃO SUPABASE ================= -->
+<script src="js/supabase.js"></script>
 
 <!-- ================= SCRIPTS DO SISTEMA ================= -->
-
-<!-- LOGIN (PROTEÇÃO DE SESSÃO) -->
 <script src="js/login.js"></script>
-  
-<!-- ESTADO -->
 <script src="js/state.js"></script>
-
-<!-- HELPERS -->
 <script src="js/utils.js"></script>
-
-<!-- REGRAS -->
 <script src="js/lotes.js"></script>
 <script src="js/modal.js"></script>
 <script src="js/busca.js"></script>
-
-<!-- MAPA -->
 <script src="js/mapa.js"></script>
-
-<!-- DASHBOARD / EXPEDIÇÃO -->
 <script src="js/dashboard.js"></script>
 <script src="js/expedicao.js"></script>
 
-<!-- BOOTSTRAP FINAL -->
+<!-- MAIN SEMPRE POR ÚLTIMO -->
 <script src="js/main.js"></script>
 
 </body>
