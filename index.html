@@ -87,22 +87,43 @@
   </div>
 </div>
 
-<!-- ================= SUPABASE SDK ================= -->
+<!-- ========================= -->
+<!-- SUPABASE (SEMPRE PRIMEIRO) -->
+<!-- ========================= -->
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<!-- ================= CONEXÃO SUPABASE ================= -->
+<script>
+  const { createClient } = supabase;
+</script>
+
+<!-- ========================= -->
+<!-- CONEXÃO SUPABASE -->
+<!-- ========================= -->
 <script src="js/supabase.js"></script>
 
-<!-- ================= SCRIPTS DO SISTEMA ================= -->
-<script src="js/login.js"></script>
+<!-- ========================= -->
+<!-- ESTADO (DEPENDE DO SUPABASE) -->
+<!-- ========================= -->
 <script src="js/state.js"></script>
+
+<!-- ========================= -->
+<!-- UTILITÁRIOS -->
+<!-- ========================= -->
 <script src="js/utils.js"></script>
+
+<!-- ========================= -->
+<!-- MÓDULOS DO SISTEMA -->
+<!-- ========================= -->
 <script src="js/lotes.js"></script>
 <script src="js/modal.js"></script>
 <script src="js/busca.js"></script>
 <script src="js/mapa.js"></script>
 <script src="js/dashboard.js"></script>
 <script src="js/expedicao.js"></script>
+
+<!-- LOGIN (SE USA AUTH) -->
+<script src="js/login.js"></script>
 
 <!-- MAIN SEMPRE POR ÚLTIMO -->
 <script src="js/main.js"></script>
