@@ -1,33 +1,42 @@
 // =======================================
-// HEADER.JS — COMPONENTE GLOBAL DE CABEÇALHO
+// HEADER.JS — CONTROLE DO HEADER
 // =======================================
 
 document.addEventListener('DOMContentLoaded', async () => {
 
-  const header = document.getElementById('header');
-  if (!header) return;
-
-  header.innerHTML = `
-    <header class="app-header">
-      <div class="header-left">
-        <strong>Sistema Gaylords</strong>
-      </div>
-
-      <nav class="header-nav">
-        <a href="index.html">Sistema</a>
-        <a href="relatorios.html">Relatórios</a>
-      </nav>
-
-      <div class="header-right">
-        <span id="usuarioHeader"></span>
-        <button onclick="logout()">Sair</button>
-      </div>
-    </header>
-  `;
-
-  // Se existir função para mostrar usuário (do login.js), chama
+  // Mostrar usuário logado
   if (typeof window.mostrarUsuarioLogado === 'function') {
     await window.mostrarUsuarioLogado();
   }
 
+  const paginaAtual = window.location.pathname.split('/').pop();
+
+  const btnRelatorios = document.getElementById('btnRelatorios');
+  const btnVoltar = document.getElementById('btnVoltar');
+
+  // Se estiver na index (Sistema)
+  if (paginaAtual === 'index.html') {
+    if (btnRelatorios) btnRelatorios.style.display = 'inline-block';
+    if (btnVoltar) btnVoltar.style.display = 'none';
+  }
+
+  // Se estiver em relatórios
+  if (paginaAtual === 'relatorios.html') {
+    if (btnRelatorios) btnRelatorios.style.display = 'none';
+    if (btnVoltar) btnVoltar.style.display = 'inline-block';
+  }
+
 });
+
+
+// =======================================
+// NAVEGAÇÃO
+// =======================================
+
+function irRelatorios() {
+  window.location.href = 'relatorios.html';
+}
+
+function voltarSistema() {
+  window.location.href = 'index.html';
+}
