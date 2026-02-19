@@ -7,7 +7,7 @@
 
 window.state = {
   areas: [],
-  ruas: [],
+//  ruas: [],
   lotes: [],
   historicoExpedidos: []
 };
@@ -26,6 +26,9 @@ window.loadFromDatabase = async function () {
   try {
     const { data: areas, error: errorAreas } =
       await supabaseClient.from('areas').select('*');
+    
+    //const { data: ruas, error: errorRuas } =
+   //   await supabaseClient.from('ruas').select('*'):
 
     const { data: lotes, error: errorLotes } =
       await supabaseClient.from('lotes').select('*');
@@ -36,7 +39,7 @@ window.loadFromDatabase = async function () {
     }
 
     state.areas = areas || [];
-    state.areas = ruas || [];
+  //  state.areas = ruas || [];
     state.lotes = lotes || [];
 
     console.log("✅ Dados carregados do banco");
