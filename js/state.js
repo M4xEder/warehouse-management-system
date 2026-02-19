@@ -3,7 +3,7 @@
 // ===============================
 
 // Fonte de verdade: Supabase
-// State apenas espelho em memória
+// State é apenas espelho em memória
 
 window.state = {
   areas: [],
@@ -17,34 +17,45 @@ window.state = {
 // CARREGAR DADOS DO BANCO
 // ===============================
 window.loadFromDatabase = async function () {
-window.loadFromDatabase = async function () {
+
   if (!window.supabaseClient) {
     console.error("❌ supabaseClient não inicializado");
     return;
   }
 
   try {
+
+    console.log("🔄 Carregando dados do banco...");
+
     const { data: areas, error: errorAreas } =
       await supabaseClient.from('areas').select('*');
-    
-    //const { data: ruas, error: errorRuas } =
-   //   await supabaseClient.from('ruas').select('*'):
+
+    const { data: ruas, error: errorRuas } =
+      await supabaseClient.from('ruas').select('*');
 
     const { data: lotes, error: errorLotes } =
       await supabaseClient.from('lotes').select('*');
 
-    if (errorAreas || errorLotes) {
-      console.error("Erro Supabase:", errorAreas || errorLotes);
+    const { data: historico, error: errorHistorico } =
+      await supabaseClient.from('historico_expedidos').select('*');
+
+    if (errorAreas || errorRuas || errorLotes || errorHistorico) {
+      console.error("❌ Erro Supabase:",
+        errorAreas || errorRuas || errorLotes || errorHistorico
+      );
       return;
     }
 
-    state.areas = areas || [];
-  //  state.areas = ruas || [];
-    state.lotes = lotes || [];
+    // Segurança contra undefined
+    state.areas = Array.isArray(areas) ? areas : [];
+    state.ruas = Array.isArray(ruas) ? ruas : [];
+    state.lotes = Array.isArray(lotes) ? lotes : [];
+    state.historicoExpedidos = Array.isArray(historico) ? historico : [];
 
-    console.log("✅ Dados carregados do banco");
+    console.log("✅ Dados carregados do banco com sucesso");
+
   } catch (err) {
-    console.error("Erro ao carregar dados:", err);
+    console.error("❌ Erro ao carregar dados:", err);
   }
 };
 
@@ -53,7 +64,7 @@ window.loadFromDatabase = async function () {
 // RECARREGAR DADOS
 // ===============================
 window.reloadData = async function () {
-  await loadFromDatabase();
+  await window.loadFromDatabase();
 };
 
 
@@ -75,7 +86,7 @@ window.resetState = function () {
 // LOGAR ESTADO (DEBUG)
 // ===============================
 window.logState = function () {
-  console.log('STATE ATUAL:',
+  console.log('📦 STATE ATUAL:',
     JSON.parse(JSON.stringify(state))
   );
 };
