@@ -7,7 +7,7 @@
 
 window.state = {
   areas: [],
-//  ruas: [],
+  ruas: [],
   lotes: [],
   historicoExpedidos: []
 };
