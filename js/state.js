@@ -2,14 +2,10 @@
 // STATE.JS — ESTADO GLOBAL (SUPABASE)
 // ===============================
 
-// Fonte de verdade: Supabase
-// State é apenas espelho em memória
-
 window.state = {
   areas: [],
   ruas: [],
-  lotes: [],
-  historicoExpedidos: []
+  lotes: []
 };
 
 
@@ -36,57 +32,20 @@ window.loadFromDatabase = async function () {
     const { data: lotes, error: errorLotes } =
       await supabaseClient.from('lotes').select('*');
 
-    const { data: historico, error: errorHistorico } =
-      await supabaseClient.from('historico_expedidos').select('*');
-
-    if (errorAreas || errorRuas || errorLotes || errorHistorico) {
+    if (errorAreas || errorRuas || errorLotes) {
       console.error("❌ Erro Supabase:",
-        errorAreas || errorRuas || errorLotes || errorHistorico
+        errorAreas || errorRuas || errorLotes
       );
       return;
     }
 
-    // Segurança contra undefined
-    state.areas = Array.isArray(areas) ? areas : [];
-    state.ruas = Array.isArray(ruas) ? ruas : [];
-    state.lotes = Array.isArray(lotes) ? lotes : [];
-    state.historicoExpedidos = Array.isArray(historico) ? historico : [];
+    state.areas = areas || [];
+    state.ruas = ruas || [];
+    state.lotes = lotes || [];
 
-    console.log("✅ Dados carregados do banco com sucesso");
+    console.log("✅ Dados carregados do banco");
 
   } catch (err) {
     console.error("❌ Erro ao carregar dados:", err);
   }
-};
-
-
-// ===============================
-// RECARREGAR DADOS
-// ===============================
-window.reloadData = async function () {
-  await window.loadFromDatabase();
-};
-
-
-// ===============================
-// RESETAR ESTADO (DEBUG)
-// ===============================
-window.resetState = function () {
-
-  state.areas = [];
-  state.ruas = [];
-  state.lotes = [];
-  state.historicoExpedidos = [];
-
-  console.warn('⚠ Estado resetado (memória apenas)');
-};
-
-
-// ===============================
-// LOGAR ESTADO (DEBUG)
-// ===============================
-window.logState = function () {
-  console.log('📦 STATE ATUAL:',
-    JSON.parse(JSON.stringify(state))
-  );
 };
