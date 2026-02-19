@@ -1,16 +1,23 @@
 //l// =======================================
 // SUPABASE.JS — CONEXÃO
 // =======================================
+// SUPABASE.JS — CONEXÃO GLOBAL
+// =======================================
 
 const SUPABASE_URL = 'https://fctxvszjqhkfstzqgvat.supabase.co';
 const SUPABASE_ANON_KEY =
   'sb_publishable_MGb2JD0gYRYvihRdAbSEiQ_eeyu8tie';
 
-// Cria cliente Supabase
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// 🔥 CRIA CLIENTE GLOBAL
+window.supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
 
-console.log('Supabase conectado:', supabase);
+console.log('✅ Supabase conectado:', window.supabaseClient);
 
+
+/*
 // ===============================
 // BUSCAR LOTES DO BANCO
 // ===============================
@@ -59,3 +66,6 @@ window.criarLoteNoBanco = async function (nome, total) {
     return null;
   }
 };
+
+*/ 
+
