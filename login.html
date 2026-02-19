@@ -1,39 +1,27 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Login - Sistema</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="css/login-style.css">
+  <title>Login</title>
 </head>
 <body>
 
-<div class="login-container">
-  <h2>Sistema de Armazenagem</h2>
+  <h2>Login</h2>
 
-  <input id="usuario" placeholder="Usuário">
-  <input id="senha" type="password" placeholder="Senha">
-
-  <div id="errorLogin"></div>
-
+  <input type="email" id="usuario" placeholder="Email">
+  <input type="password" id="senha" placeholder="Senha">
   <button id="btnLogin">Entrar</button>
-</div>
 
-<!-- SUPABASE SDK -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <p id="errorLogin" style="color:red;"></p>
 
-<!-- Torna o Supabase global -->
-<script>
-  if (typeof supabase === "undefined") {
-    console.error("Supabase SDK não carregado.");
-  } else {
-    window.supabase = supabase;
-    console.log("Supabase SDK carregado com sucesso.");
-  }
-</script>
+  <!-- SDK Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<!-- SEU SCRIPT -->
-<script src="js/login.js"></script>
+  <!-- Cliente -->
+  <script src="supabase.js"></script>
+
+  <!-- Login -->
+  <script src="login.js"></script>
 
 </body>
 </html>
