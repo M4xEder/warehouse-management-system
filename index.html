@@ -8,7 +8,9 @@
 </head>
 <body>
 
-<!-- HEADER -->
+<!-- ========================= -->
+<!-- HEADER DINÂMICO -->
+<!-- ========================= -->
 <div id="header-container"></div>
 
 <h1>Gerenciamento de Gaylords</h1>
@@ -45,7 +47,9 @@
 <h2>Lotes Expedidos</h2>
 <div id="lotesExpedidos"></div>
 
+<!-- ========================= -->
 <!-- MODAL ENDEREÇAMENTO -->
+<!-- ========================= -->
 <div id="modal" class="modal hidden">
   <div class="modal-content">
     <h3>Endereçar Gaylord</h3>
@@ -70,7 +74,9 @@
   </div>
 </div>
 
+<!-- ========================= -->
 <!-- MODAL EXPEDIÇÃO -->
+<!-- ========================= -->
 <div id="modalExpedicao" class="modal hidden">
   <div class="modal-content" style="width:500px; max-height:80vh; overflow:auto">
     <h3>Expedir Gaylords</h3>
@@ -88,28 +94,37 @@
 </div>
 
 <!-- ========================= -->
-<!-- SUPABASE (SEMPRE PRIMEIRO) -->
+<!-- SUPABASE CDN (SEMPRE PRIMEIRO) -->
 <!-- ========================= -->
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<script>
-  const { createClient } = supabase;
-</script>
-
 <!-- ========================= -->
-<!-- CONEXÃO SUPABASE -->
+<!-- CLIENTE SUPABASE (CRIA 1 VEZ) -->
 <!-- ========================= -->
 <script src="js/supabase.js"></script>
 
 <!-- ========================= -->
-<!-- ESTADO (DEPENDE DO SUPABASE) -->
+<!-- LOGIN / AUTH -->
 <!-- ========================= -->
-<script src="js/state.js"></script>
+<script src="js/login.js"></script>
 
 <!-- ========================= -->
-<!-- UTILITÁRIOS -->
+<!-- CARREGAR HEADER.HTML -->
 <!-- ========================= -->
+<script>
+  fetch('header.html')
+    .then(res => res.text())
+    .then(data => {
+      document.getElementById('header-container').innerHTML = data;
+    });
+</script>
+
+<script src="js/header.js"></script>
+
+<!-- ========================= -->
+<!-- ESTADO E UTILITÁRIOS -->
+<!-- ========================= -->
+<script src="js/state.js"></script>
 <script src="js/utils.js"></script>
 
 <!-- ========================= -->
@@ -122,10 +137,9 @@
 <script src="js/dashboard.js"></script>
 <script src="js/expedicao.js"></script>
 
-<!-- LOGIN (SE USA AUTH) -->
-<script src="js/login.js"></script>
-
-<!-- MAIN SEMPRE POR ÚLTIMO -->
+<!-- ========================= -->
+<!-- MAIN (SEMPRE POR ÚLTIMO) -->
+<!-- ========================= -->
 <script src="js/main.js"></script>
 
 </body>
