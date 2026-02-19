@@ -1,28 +1,8 @@
 // =======================================
-// LOGIN.JS — CONTROLE COMPLETO DE SESSÃO
-// SUPABASE AUTH (PRODUÇÃO)
+// LOGIN.JS — CONTROLE DE SESSÃO
 // =======================================
 
 console.log('login.js carregado');
-
-
-// =======================================
-// CONFIGURAÇÃO SUPABASE
-// =======================================
-
-const SUPABASE_URL = 'https://zegbjftbyckttcdrfwgf.supabase.co';
-
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InplZ2JqZnRieWNrdHRjZHJmd2dmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEyNzAwNTAsImV4cCI6MjA4Njg0NjA1MH0.YdgrUkSnJ8ew2uMlU5Wdcd4k9iU4GSO0_vyNH1HT-lc';
-
-if (!window.supabase) {
-  console.error('Supabase SDK não carregado.');
-}
-
-// 🔥 CLIENTE GLOBAL PADRONIZADO
-window.supabase = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
-);
 
 
 // =======================================
@@ -103,22 +83,19 @@ window.mostrarUsuarioLogado = async function () {
 // =======================================
 
 window.logout = async function () {
-
   await window.supabase.auth.signOut();
   window.location.replace('login.html');
-
 };
 
 
 // =======================================
-// PROTEÇÃO + INICIALIZAÇÃO
+// INICIALIZAÇÃO
 // =======================================
 
 document.addEventListener('DOMContentLoaded', async function () {
 
   const paginaAtual = window.location.pathname.split('/').pop();
 
-  // 🔐 Se estiver na tela de login
   if (paginaAtual === 'login.html') {
 
     const { data } = await window.supabase.auth.getSession();
@@ -130,15 +107,11 @@ document.addEventListener('DOMContentLoaded', async function () {
     return;
   }
 
-  // 🔐 Proteger outras páginas
   const sessaoValida = await window.checarSessao();
-
   if (!sessaoValida) return;
 
-  // 👤 Mostrar usuário
   await window.mostrarUsuarioLogado();
 
-  // 🔥 CARREGAR DADOS DO SISTEMA
   if (typeof loadFromDatabase === 'function') {
     await loadFromDatabase();
   }
@@ -146,10 +119,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 });
 
 
-// =======================================
-// EVENTO BOTÃO LOGIN
-// =======================================
-
+// Evento botão login
 document.addEventListener('DOMContentLoaded', function () {
 
   const btn = document.getElementById('btnLogin');
