@@ -1,5 +1,5 @@
 // ===============================
-// MAIN.JS — INICIALIZAÇÃO SISTEMA
+// MAIN.JS — INICIALIZAÇÃO SISTEMA (VERSÃO FINAL)
 // ===============================
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -31,22 +31,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ===============================
   // 🔥 CARREGAR DADOS DO BANCO
   // ===============================
-
   try {
 
-    if (typeof carregarLotesDoBanco === 'function') {
-      await carregarLotesDoBanco();
-      console.log('✅ Lotes carregados');
-    }
-
-    if (typeof carregarAreasDoBanco === 'function') {
-      await carregarAreasDoBanco();
-      console.log('✅ Áreas carregadas');
-    }
-
-    if (typeof carregarRuasDoBanco === 'function') {
-      await carregarRuasDoBanco();
-      console.log('✅ Ruas carregadas');
+    if (typeof loadFromDatabase === 'function') {
+      await loadFromDatabase();
+      console.log('✅ Dados carregados do banco');
     }
 
   } catch (err) {
@@ -64,10 +53,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (typeof renderDashboard === 'function') {
     renderDashboard();
-  }
-
-  if (typeof renderLotesExpedidos === 'function') {
-    renderLotesExpedidos();
   }
 
   console.log('🔥 Sistema pronto.');
