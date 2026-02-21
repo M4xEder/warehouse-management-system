@@ -141,28 +141,54 @@ input, select {
 /* ===============================
    POSIÇÕES
 ================================ */
+
+/* 🔥 Agora funciona como corredor horizontal */
 .posicoes {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: row;     /* força horizontal */
+  flex-wrap: nowrap;       /* não quebra linha */
   gap: 8px;
+  overflow-x: auto;        /* cria rolagem lateral */
+  padding-bottom: 8px;
+  scroll-behavior: smooth;
+}
+
+/* Barra de rolagem mais discreta */
+.posicoes::-webkit-scrollbar {
+  height: 8px;
+}
+
+.posicoes::-webkit-scrollbar-thumb {
+  background: #f4c430;
+  border-radius: 10px;
 }
 
 .posicao {
-  width: 34px;
-  height: 34px;
+  min-width: 38px;         /* evita encolher */
+  height: 38px;
   background: #e5e7eb;
   border-radius: 8px;
   border: 2px dashed #cbd5e1;
   cursor: pointer;
   transition: all 0.15s ease;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
 }
 
+/* Hover */
 .posicao:hover {
   transform: scale(1.1);
   box-shadow: 0 5px 12px rgba(0,0,0,0.2);
 }
 
+/* Ocupada */
 .posicao.ocupada {
+  background: #ef4444;
+  color: #fff;
   border: 2px solid #000;
 }
 
