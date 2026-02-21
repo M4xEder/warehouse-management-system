@@ -1,11 +1,23 @@
 // ===============================
-// STATE.JS — ESTADO GLOBAL (SUPABASE)
+// STATE.JS — ESTADO GLOBAL (SUPABASE DEFINITIVO)
 // ===============================
 
 window.state = {
   areas: [],
   ruas: [],
-  lotes: []
+  lotes: [],
+  historicoExpedidos: [] // mantém compatibilidade com dashboard
+};
+
+
+// ===============================
+// RESETAR ESTADO
+// ===============================
+window.resetState = function () {
+  state.areas = [];
+  state.ruas = [];
+  state.lotes = [];
+  state.historicoExpedidos = [];
 };
 
 
@@ -23,17 +35,30 @@ window.loadFromDatabase = async function () {
 
     console.log("🔄 Carregando dados do banco...");
 
+    // 🔥 Limpa estado antes de carregar
+    resetState();
+
     const { data: areas, error: errorAreas } =
-      await supabaseClient.from('areas').select('*');
+      await window.supabaseClient
+        .from('areas')
+        .select('*')
+        .order('created_at', { ascending: true });
 
     const { data: ruas, error: errorRuas } =
-      await supabaseClient.from('ruas').select('*');
+      await window.supabaseClient
+        .from('ruas')
+        .select('*')
+        .order('created_at', { ascending: true });
 
     const { data: lotes, error: errorLotes } =
-      await supabaseClient.from('lotes').select('*');
+      await window.supabaseClient
+        .from('lotes')
+        .select('*')
+        .order('created_at', { ascending: true });
 
     if (errorAreas || errorRuas || errorLotes) {
-      console.error("❌ Erro Supabase:",
+      console.error(
+        "❌ Erro Supabase:",
         errorAreas || errorRuas || errorLotes
       );
       return;
@@ -43,9 +68,9 @@ window.loadFromDatabase = async function () {
     state.ruas = ruas || [];
     state.lotes = lotes || [];
 
-    console.log("✅ Dados carregados do banco");
+    console.log("✅ Dados carregados com sucesso");
 
   } catch (err) {
-    console.error("❌ Erro ao carregar dados:", err);
+    console.error("❌ Erro geral ao carregar dados:", err);
   }
 };
