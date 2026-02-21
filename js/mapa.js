@@ -221,7 +221,7 @@ window.renderMapa = function () {
 */
 
 // ===============================
-// MAPA.JS — CONTROLE COMPLETO (SUPABASE)
+// MAPA.JS — CONTROLE COMPLETO (SUPABASE CORRIGIDO)
 // ===============================
 
 
@@ -239,21 +239,28 @@ window.cadastrarArea = async function () {
 
   const nome = input.value.trim();
 
-  const { data, error } = await supabase
-    .from('areas')
-    .insert([{ nome }])
-    .select();
+  try {
 
-  if (error) {
-    console.error(error);
-    alert('Erro ao criar área');
-    return;
+    const { data, error } = await window.supabaseClient
+      .from('areas')
+      .insert([{ nome }])
+      .select();
+
+    if (error) {
+      console.error(error);
+      alert('Erro ao criar área');
+      return;
+    }
+
+    state.areas.push(data[0]);
+    input.value = '';
+    renderMapa();
+
+  } catch (err) {
+    console.error('Erro geral ao cadastrar área:', err);
   }
-
-  state.areas.push(data[0]);
-  input.value = '';
-  renderMapa();
 };
+
 
 
 // ===============================
@@ -263,22 +270,29 @@ window.excluirArea = async function (id) {
 
   if (!confirm('Excluir área?')) return;
 
-  const { error } = await supabase
-    .from('areas')
-    .delete()
-    .eq('id', id);
+  try {
 
-  if (error) {
-    console.error(error);
-    alert('Erro ao excluir área');
-    return;
+    const { error } = await window.supabaseClient
+      .from('areas')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error(error);
+      alert('Erro ao excluir área');
+      return;
+    }
+
+    state.areas = state.areas.filter(a => a.id !== id);
+    state.ruas = state.ruas.filter(r => r.area_id !== id);
+
+    renderMapa();
+
+  } catch (err) {
+    console.error('Erro geral ao excluir área:', err);
   }
-
-  state.areas = state.areas.filter(a => a.id !== id);
-  state.ruas = state.ruas.filter(r => r.area_id !== id);
-
-  renderMapa();
 };
+
 
 
 // ===============================
@@ -289,23 +303,30 @@ window.criarRua = async function (areaId) {
   const nome = prompt('Nome da rua');
   if (!nome) return;
 
-  const { data, error } = await supabase
-    .from('ruas')
-    .insert([{
-      nome,
-      area_id: areaId
-    }])
-    .select();
+  try {
 
-  if (error) {
-    console.error(error);
-    alert('Erro ao criar rua');
-    return;
+    const { data, error } = await window.supabaseClient
+      .from('ruas')
+      .insert([{
+        nome,
+        area_id: areaId
+      }])
+      .select();
+
+    if (error) {
+      console.error(error);
+      alert('Erro ao criar rua');
+      return;
+    }
+
+    state.ruas.push(data[0]);
+    renderMapa();
+
+  } catch (err) {
+    console.error('Erro geral ao criar rua:', err);
   }
-
-  state.ruas.push(data[0]);
-  renderMapa();
 };
+
 
 
 // ===============================
@@ -315,20 +336,27 @@ window.excluirRua = async function (ruaId) {
 
   if (!confirm('Excluir rua?')) return;
 
-  const { error } = await supabase
-    .from('ruas')
-    .delete()
-    .eq('id', ruaId);
+  try {
 
-  if (error) {
-    console.error(error);
-    alert('Erro ao excluir rua');
-    return;
+    const { error } = await window.supabaseClient
+      .from('ruas')
+      .delete()
+      .eq('id', ruaId);
+
+    if (error) {
+      console.error(error);
+      alert('Erro ao excluir rua');
+      return;
+    }
+
+    state.ruas = state.ruas.filter(r => r.id !== ruaId);
+    renderMapa();
+
+  } catch (err) {
+    console.error('Erro geral ao excluir rua:', err);
   }
-
-  state.ruas = state.ruas.filter(r => r.id !== ruaId);
-  renderMapa();
 };
+
 
 
 // ===============================
@@ -357,10 +385,10 @@ window.renderMapa = function () {
       </div>
     `;
 
-    // 🔥 FILTRA RUAS RELACIONADAS
-    const ruasDaArea = state.ruas.filter(
-      r => r.area_id === area.id
-    );
+    // 🔥 Filtra ruas relacionadas à área
+    const ruasDaArea = Array.isArray(state.ruas)
+      ? state.ruas.filter(r => r.area_id === area.id)
+      : [];
 
     ruasDaArea.forEach(rua => {
 
