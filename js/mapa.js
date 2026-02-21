@@ -210,7 +210,7 @@ window.renderMapa = function () {
         .sort((a, b) => a.numero - b.numero);
 
       const grid = document.createElement('div');
-      grid.className = 'posicoes-grid';
+      grid.className = 'posicoes';
 
       posicoesDaRua.forEach(pos => {
 
