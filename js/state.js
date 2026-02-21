@@ -1,10 +1,11 @@
 // ===============================
-// STATE.JS — ESTADO GLOBAL (SUPABASE DEFINITIVO)
+// STATE.JS — ESTADO GLOBAL (ENDEREÇAMENTO PROFISSIONAL)
 // ===============================
 
 window.state = {
   areas: [],
   ruas: [],
+  posicoes: [],   // 🔥 NOVO
   lotes: [],
   historicoExpedidos: [] // mantém compatibilidade com dashboard
 };
@@ -16,6 +17,7 @@ window.state = {
 window.resetState = function () {
   state.areas = [];
   state.ruas = [];
+  state.posicoes = [];   // 🔥 NOVO
   state.lotes = [];
   state.historicoExpedidos = [];
 };
@@ -38,34 +40,44 @@ window.loadFromDatabase = async function () {
     // 🔥 Limpa estado antes de carregar
     resetState();
 
-    const { data: areas, error: errorAreas } =
-      await window.supabaseClient
+    const [
+      { data: areas, error: errorAreas },
+      { data: ruas, error: errorRuas },
+      { data: posicoes, error: errorPosicoes },
+      { data: lotes, error: errorLotes }
+    ] = await Promise.all([
+      window.supabaseClient
         .from('areas')
         .select('*')
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: true }),
 
-    const { data: ruas, error: errorRuas } =
-      await window.supabaseClient
+      window.supabaseClient
         .from('ruas')
         .select('*')
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: true }),
 
-    const { data: lotes, error: errorLotes } =
-      await window.supabaseClient
+      window.supabaseClient
+        .from('posicoes')
+        .select('*')
+        .order('numero', { ascending: true }),
+
+      window.supabaseClient
         .from('lotes')
         .select('*')
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: true })
+    ]);
 
-    if (errorAreas || errorRuas || errorLotes) {
+    if (errorAreas || errorRuas || errorPosicoes || errorLotes) {
       console.error(
         "❌ Erro Supabase:",
-        errorAreas || errorRuas || errorLotes
+        errorAreas || errorRuas || errorPosicoes || errorLotes
       );
       return;
     }
 
     state.areas = areas || [];
     state.ruas = ruas || [];
+    state.posicoes = posicoes || [];  // 🔥 NOVO
     state.lotes = lotes || [];
 
     console.log("✅ Dados carregados com sucesso");
