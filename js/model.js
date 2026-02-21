@@ -1,5 +1,5 @@
 // ===============================
-// MODEL.JS — MODELO GLOBAL
+// MODEL.JS — ESTADO + REGRAS
 // ===============================
 
 const STORAGE_KEY = 'gaylords-system-state';
@@ -14,59 +14,21 @@ window.state = {
 };
 
 // -------------------------------
-// CARREGAR ESTADO
-// -------------------------------
-window.loadState = function () {
-  const data = localStorage.getItem(STORAGE_KEY);
-  if (!data) return;
-
-  try {
-    const parsed = JSON.parse(data);
-
-    state.areas = parsed.areas || [];
-    state.lotes = parsed.lotes || [];
-    state.historicoExpedidos = parsed.historicoExpedidos || [];
-
-    normalizarEstrutura();
-
-  } catch (err) {
-    console.error('Erro ao carregar estado:', err);
-  }
-};
-
-// -------------------------------
-// SALVAR ESTADO
+// PERSISTÊNCIA
 // -------------------------------
 window.saveState = function () {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 };
 
-// -------------------------------
-// NORMALIZAR E BLINDAR
-// -------------------------------
-function normalizarEstrutura() {
+window.loadState = function () {
+  const data = localStorage.getItem(STORAGE_KEY);
+  if (!data) return;
 
-  state.areas.forEach(area => {
-
-    if (!area.ruas) area.ruas = [];
-
-    area.ruas.forEach(rua => {
-
-      if (!rua.posicoes) rua.posicoes = [];
-
-      rua.posicoes.forEach(pos => {
-
-        pos.ocupada = pos.ocupada || false;
-        pos.lote = pos.lote || null;
-        pos.rz = pos.rz || null;
-        pos.volume = pos.volume || null;
-        pos.cor = pos.cor || null;
-        pos.data = pos.data || null;
-        pos.hora = pos.hora || null;
-      });
-    });
-  });
-}
+  const parsed = JSON.parse(data);
+  state.areas = parsed.areas || [];
+  state.lotes = parsed.lotes || [];
+  state.historicoExpedidos = parsed.historicoExpedidos || [];
+};
 
 // -------------------------------
 // CONTADORES
@@ -108,7 +70,7 @@ window.rzJaExiste = function (rz, ignorarContexto = null) {
 
         if (!pos.ocupada) return;
 
-        // Ignora a própria posição se estiver editando
+        // Ignora a própria posição (caso edição futura)
         if (
           ignorarContexto &&
           ignorarContexto.areaIndex === aIndex &&
