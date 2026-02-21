@@ -1,5 +1,5 @@
 // ===============================
-// DASHBOARD.JS — PADRÃO PROFISSIONAL
+// DASHBOARD.JS — PADRÃO PROFISSIONAL (ATUALIZADO)
 // ===============================
 
 window.renderDashboard = function () {
@@ -28,7 +28,7 @@ function renderLotesAtivos() {
 
   state.lotes.forEach(lote => {
 
-    const total = Number(lote.total) || 0;
+    const total = Number(lote.quantidade ?? 0);
 
     const alocados =
       typeof contarGaylordsDoLote === 'function'
@@ -109,7 +109,6 @@ function renderLotesExpedidos() {
     return;
   }
 
-  // 🔥 AGRUPAR POR LOTE
   const porLote = {};
 
   state.historicoExpedidos.forEach(reg => {
@@ -125,7 +124,7 @@ function renderLotesExpedidos() {
     const lote = state.lotes.find(l => l.nome === nomeLote);
     if (!lote) return;
 
-    const total = Number(lote.total) || 0;
+    const total = Number(lote.quantidade ?? 0);
     const totalExpedido = registros.length;
 
     if (totalExpedido <= 0) return;
@@ -199,7 +198,7 @@ window.mostrarDetalhes = function (nomeLote) {
   }
 
   const lote = state.lotes.find(l => l.nome === nomeLote);
-  const total = Number(lote?.total) || 0;
+  const total = Number(lote?.quantidade ?? 0);
 
   let msg = `📦 LOTE: ${nomeLote}\n`;
   msg += `--------------------------------------\n\n`;
@@ -231,6 +230,9 @@ window.excluirHistoricoLote = function (nomeLote) {
   state.historicoExpedidos =
     state.historicoExpedidos.filter(r => r.nome !== nomeLote);
 
-  saveState();
+  if (typeof saveState === 'function') {
+    saveState();
+  }
+
   renderDashboard();
 };
