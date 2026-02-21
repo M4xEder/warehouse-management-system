@@ -1,5 +1,5 @@
 // ===============================
-// MODAL.JS — ENDEREÇAMENTO BLINDADO
+// MODAL.JS — INTERFACE
 // ===============================
 
 let modalContext = {
@@ -8,8 +8,6 @@ let modalContext = {
   posicaoIndex: null
 };
 
-// -------------------------------
-// ABRIR MODAL
 // -------------------------------
 window.abrirModal = function (areaIndex, ruaIndex, posicaoIndex) {
 
@@ -74,8 +72,6 @@ window.abrirModal = function (areaIndex, ruaIndex, posicaoIndex) {
 };
 
 // -------------------------------
-// CONFIRMAR ENDEREÇO
-// -------------------------------
 window.confirmarEndereco = function () {
 
   const { areaIndex, ruaIndex, posicaoIndex } = modalContext;
@@ -139,8 +135,6 @@ window.confirmarEndereco = function () {
   renderDashboard();
 };
 
-// -------------------------------
-// REMOVER
 // -------------------------------
 window.removerGaylord = function () {
 
