@@ -8,6 +8,11 @@
 // ===============================
 window.carregarAreasDoBanco = async function () {
 
+  if (!window.supabaseClient) {
+    console.error('Supabase não inicializado');
+    return;
+  }
+
   const { data, error } = await window.supabaseClient
     .from('areas')
     .select('*')
@@ -19,7 +24,6 @@ window.carregarAreasDoBanco = async function () {
     return;
   }
 
-  // Mantém compatibilidade com sistema atual
   state.areas = data || [];
 };
 
@@ -39,6 +43,11 @@ window.buscarAreaPorId = function (areaId) {
 // ===============================
 window.criarArea = async function () {
 
+  if (!window.supabaseClient) {
+    console.error('Supabase não inicializado');
+    return;
+  }
+
   const nomeInput = document.getElementById('areaNome');
   if (!nomeInput) return;
 
@@ -49,19 +58,19 @@ window.criarArea = async function () {
     return;
   }
 
-  // 🔎 Verifica duplicidade (forma segura)
+  // 🔎 Verifica duplicidade
   const { data: existentes, error: erroBusca } = await window.supabaseClient
     .from('areas')
     .select('id')
     .eq('nome', nome);
 
   if (erroBusca) {
-    console.error(erroBusca);
+    console.error('Erro ao validar área:', erroBusca);
     alert('Erro ao validar área.');
     return;
   }
 
-  if (existentes && existentes.length > 0) {
+  if (existentes?.length > 0) {
     alert('Já existe uma área com esse nome.');
     return;
   }
@@ -72,20 +81,22 @@ window.criarArea = async function () {
     .insert([{ nome }]);
 
   if (error) {
-    console.error(error);
+    console.error('Erro ao inserir área:', error);
     alert('Erro ao criar área.');
     return;
   }
 
   nomeInput.value = '';
 
-  await carregarAreasDoBanco();
+  await window.carregarAreasDoBanco();
 
-  if (typeof renderMapa === 'function') {
-    renderMapa();
+  if (typeof window.renderMapa === 'function') {
+    window.renderMapa();
   }
+
+  console.log('Área criada com sucesso');
 };
-console.log('Áreas após salvar:', state.areas);
+
 
 
 // ===============================
@@ -93,9 +104,14 @@ console.log('Áreas após salvar:', state.areas);
 // ===============================
 window.excluirArea = async function (areaId) {
 
+  if (!window.supabaseClient) {
+    console.error('Supabase não inicializado');
+    return;
+  }
+
   if (!areaId) return;
 
-  const area = buscarAreaPorId(areaId);
+  const area = window.buscarAreaPorId(areaId);
 
   if (!area) {
     alert('Área não encontrada.');
@@ -112,15 +128,15 @@ window.excluirArea = async function (areaId) {
     .eq('id', areaId);
 
   if (error) {
-    console.error(error);
+    console.error('Erro ao excluir área:', error);
     alert('Erro ao excluir área.');
     return;
   }
 
-  await carregarAreasDoBanco();
+  await window.carregarAreasDoBanco();
 
-  if (typeof renderMapa === 'function') {
-    renderMapa();
+  if (typeof window.renderMapa === 'function') {
+    window.renderMapa();
   }
 
   alert('Área excluída com sucesso.');
@@ -129,11 +145,16 @@ window.excluirArea = async function (areaId) {
 
 
 // ===============================
-// ATUALIZAR NOME DA ÁREA
+// EDITAR ÁREA
 // ===============================
 window.editarArea = async function (areaId) {
 
-  const area = buscarAreaPorId(areaId);
+  if (!window.supabaseClient) {
+    console.error('Supabase não inicializado');
+    return;
+  }
+
+  const area = window.buscarAreaPorId(areaId);
   if (!area) return;
 
   const novoNome = prompt('Novo nome da área:', area.nome);
@@ -146,14 +167,16 @@ window.editarArea = async function (areaId) {
     .eq('id', areaId);
 
   if (error) {
-    console.error(error);
+    console.error('Erro ao atualizar área:', error);
     alert('Erro ao atualizar área.');
     return;
   }
 
-  await carregarAreasDoBanco();
+  await window.carregarAreasDoBanco();
 
-  if (typeof renderMapa === 'function') {
-    renderMapa();
+  if (typeof window.renderMapa === 'function') {
+    window.renderMapa();
   }
+
+  console.log('Área atualizada com sucesso');
 };
