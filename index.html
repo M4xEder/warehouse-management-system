@@ -93,33 +93,40 @@
   </div>
 </div>
 
-<!-- SUPABASE CDN -->
+<!-- ========================= -->
+<!-- DEPENDÊNCIAS EXTERNAS -->
+<!-- ========================= -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<!-- CLIENTE -->
+<!-- ========================= -->
+<!-- INFRA / BASE -->
+<!-- ========================= -->
 <script src="js/supabase.js"></script>
+<script src="js/model.js"></script> <!-- ESTADO + REGRAS -->
 
-<!-- ESTADO PRIMEIRO -->
-<script src="js/state.js"></script>
-
-<!-- UTILS -->
-<script src="js/utils.js"></script>
-
-<!-- HEADER -->
-<script src="js/header.js"></script>
-
-<!-- MÓDULOS -->
+<!-- ========================= -->
+<!-- MÓDULOS FUNCIONAIS -->
+<!-- ========================= -->
 <script src="js/lotes.js"></script>
-<script src="js/modal.js"></script>
-<script src="js/busca.js"></script>
 <script src="js/mapa.js"></script>
 <script src="js/dashboard.js"></script>
+<script src="js/busca.js"></script>
 <script src="js/expedicao.js"></script>
+<script src="js/modal.js"></script> <!-- depende do model -->
 
-<!-- LOGIN DEPOIS DE TUDO -->
+<!-- ========================= -->
+<!-- INTERFACE GLOBAL -->
+<!-- ========================= -->
+<script src="js/header.js"></script>
+
+<!-- ========================= -->
+<!-- AUTENTICAÇÃO -->
+<!-- ========================= -->
 <script src="js/login.js"></script>
 
-<!-- MAIN POR ÚLTIMO -->
+<!-- ========================= -->
+<!-- INICIALIZAÇÃO FINAL -->
+<!-- ========================= -->
 <script src="js/main.js"></script>
 
 </body>
