@@ -1,92 +1,204 @@
 // ===============================
-// MODEL.JS — ESTADO + REGRAS
+// MODEL.JS — CAMADA DE DADOS SUPABASE
+// ===============================
+//
+// Regras:
+// - NÃO define window.state
+// - NÃO usa localStorage
+// - Apenas CRUD no banco
+// - Sempre retorna { data, error }
+//
 // ===============================
 
-const STORAGE_KEY = 'gaylords-system-state';
 
-// -------------------------------
-// ESTADO GLOBAL
-// -------------------------------
-window.state = {
-  areas: [],
-  lotes: [],
-  historicoExpedidos: []
+// ======================================
+// ÁREAS
+// ======================================
+
+// Buscar todas áreas
+window.dbBuscarAreas = async function () {
+  const { data, error } = await supabase
+    .from('areas')
+    .select('*')
+    .order('created_at', { ascending: true });
+
+  return { data, error };
 };
 
-// -------------------------------
-// PERSISTÊNCIA
-// -------------------------------
-window.saveState = function () {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+
+// Criar área
+window.dbCriarArea = async function (nome) {
+  const { data, error } = await supabase
+    .from('areas')
+    .insert([{ nome }])
+    .select()
+    .single();
+
+  return { data, error };
 };
 
-window.loadState = function () {
-  const data = localStorage.getItem(STORAGE_KEY);
-  if (!data) return;
 
-  const parsed = JSON.parse(data);
-  state.areas = parsed.areas || [];
-  state.lotes = parsed.lotes || [];
-  state.historicoExpedidos = parsed.historicoExpedidos || [];
+// Deletar área
+window.dbDeletarArea = async function (id) {
+  const { error } = await supabase
+    .from('areas')
+    .delete()
+    .eq('id', id);
+
+  return { error };
 };
 
-// -------------------------------
-// CONTADORES
-// -------------------------------
-window.contarGaylordsDoLote = function (loteNome) {
 
-  let total = 0;
 
-  state.areas.forEach(area => {
-    area.ruas.forEach(rua => {
-      rua.posicoes.forEach(pos => {
-        if (pos.ocupada && pos.lote === loteNome) {
-          total++;
-        }
-      });
-    });
-  });
+// ======================================
+// RUAS
+// ======================================
 
-  return total;
+window.dbBuscarRuas = async function () {
+  const { data, error } = await supabase
+    .from('ruas')
+    .select('*')
+    .order('created_at', { ascending: true });
+
+  return { data, error };
 };
 
-window.totalExpedidoDoLote = function (loteNome) {
+window.dbCriarRua = async function (area_id, nome) {
+  const { data, error } = await supabase
+    .from('ruas')
+    .insert([{ area_id, nome }])
+    .select()
+    .single();
 
-  return state.historicoExpedidos
-    .filter(item => item.lote === loteNome)
-    .reduce((acc, item) => acc + (item.quantidade || 1), 0);
+  return { data, error };
 };
 
-// -------------------------------
-// VALIDAÇÃO RZ DUPLICADO
-// -------------------------------
-window.rzJaExiste = function (rz, ignorarContexto = null) {
+window.dbDeletarRua = async function (id) {
+  const { error } = await supabase
+    .from('ruas')
+    .delete()
+    .eq('id', id);
 
-  let existe = false;
+  return { error };
+};
 
-  state.areas.forEach((area, aIndex) => {
-    area.ruas.forEach((rua, rIndex) => {
-      rua.posicoes.forEach((pos, pIndex) => {
 
-        if (!pos.ocupada) return;
 
-        // Ignora a própria posição (caso edição futura)
-        if (
-          ignorarContexto &&
-          ignorarContexto.areaIndex === aIndex &&
-          ignorarContexto.ruaIndex === rIndex &&
-          ignorarContexto.posicaoIndex === pIndex
-        ) {
-          return;
-        }
+// ======================================
+// POSIÇÕES
+// ======================================
 
-        if (pos.rz === rz) {
-          existe = true;
-        }
+window.dbBuscarPosicoes = async function () {
+  const { data, error } = await supabase
+    .from('posicoes')
+    .select('*')
+    .order('created_at', { ascending: true });
 
-      });
-    });
-  });
+  return { data, error };
+};
 
-  return existe;
+
+// Criar posição
+window.dbCriarPosicao = async function (rua_id, numero) {
+  const { data, error } = await supabase
+    .from('posicoes')
+    .insert([{
+      rua_id,
+      numero,
+      ocupada: false
+    }])
+    .select()
+    .single();
+
+  return { data, error };
+};
+
+
+// Atualizar posição (alocar lote)
+window.dbAtualizarPosicao = async function (id, payload) {
+  const { data, error } = await supabase
+    .from('posicoes')
+    .update(payload)
+    .eq('id', id)
+    .select()
+    .single();
+
+  return { data, error };
+};
+
+
+// Liberar posição
+window.dbLiberarPosicao = async function (id) {
+  const { data, error } = await supabase
+    .from('posicoes')
+    .update({
+      ocupada: false,
+      lote: null,
+      volume: null,
+      rz: null
+    })
+    .eq('id', id)
+    .select()
+    .single();
+
+  return { data, error };
+};
+
+
+
+// ======================================
+// LOTES
+// ======================================
+
+window.dbBuscarLotes = async function () {
+  const { data, error } = await supabase
+    .from('lotes')
+    .select('*')
+    .order('created_at', { ascending: true });
+
+  return { data, error };
+};
+
+window.dbCriarLote = async function (nome) {
+  const { data, error } = await supabase
+    .from('lotes')
+    .insert([{ nome }])
+    .select()
+    .single();
+
+  return { data, error };
+};
+
+window.dbDeletarLote = async function (id) {
+  const { error } = await supabase
+    .from('lotes')
+    .delete()
+    .eq('id', id);
+
+  return { error };
+};
+
+
+
+// ======================================
+// HISTÓRICO DE EXPEDIÇÃO
+// ======================================
+
+window.dbBuscarHistorico = async function () {
+  const { data, error } = await supabase
+    .from('historico_expedidos')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  return { data, error };
+};
+
+window.dbRegistrarExpedicao = async function (payload) {
+  const { data, error } = await supabase
+    .from('historico_expedidos')
+    .insert([payload])
+    .select()
+    .single();
+
+  return { data, error };
 };
