@@ -15,32 +15,41 @@
 
 <h1>Gerenciamento de Gaylords</h1>
 
+<!-- ========================= -->
 <!-- BUSCA -->
+<!-- ========================= -->
 <div class="busca">
   <input id="buscaInput" placeholder="Buscar por lote ou RZ">
   <button onclick="buscar()">Buscar</button>
   <button onclick="limparBusca()">Limpar Destaque</button>
 </div>
 
+<!-- ========================= -->
 <!-- CADASTRAR ÁREA -->
+<!-- ========================= -->
 <section class="cadastros">
   <h2>Cadastrar Área</h2>
   <input id="areaNome" placeholder="Nome da área">
   <button onclick="cadastrarArea()">Cadastrar Área</button>
 </section>
 
+<!-- ========================= -->
 <!-- CADASTRAR LOTE -->
+<!-- ========================= -->
 <section class="cadastros">
   <h2>Cadastrar Lote</h2>
   <input id="loteNome" placeholder="Nome do lote">
-  <input id="loteTotal" type="number" min="1" placeholder="Quantidade total">
   <button onclick="cadastrarLote()">Cadastrar Lote</button>
 </section>
 
+<!-- ========================= -->
 <!-- MAPA -->
+<!-- ========================= -->
 <section id="mapa"></section>
 
+<!-- ========================= -->
 <!-- DASHBOARD -->
+<!-- ========================= -->
 <h2>Lotes Ativos</h2>
 <div id="lotesAtivos"></div>
 
@@ -52,7 +61,8 @@
 <!-- ========================= -->
 <div id="modal" class="modal hidden">
   <div class="modal-content">
-    <h3>Endereçar Gaylord</h3>
+
+    <h3 id="modalTitulo">Endereçar Gaylord</h3>
 
     <label>Lote:
       <select id="modalLote"></select>
@@ -71,6 +81,7 @@
       <button onclick="removerGaylord()">Remover</button>
       <button onclick="fecharModal()">Cancelar</button>
     </div>
+
   </div>
 </div>
 
@@ -79,6 +90,7 @@
 <!-- ========================= -->
 <div id="modalExpedicao" class="modal hidden">
   <div class="modal-content" style="width:500px; max-height:80vh; overflow:auto">
+
     <h3>Expedir Gaylords</h3>
 
     <button onclick="selecionarTodosGaylords()">Selecionar todos</button>
@@ -90,43 +102,44 @@
       <button onclick="confirmarExpedicao()">Confirmar</button>
       <button onclick="fecharModalExpedicao()">Cancelar</button>
     </div>
+
   </div>
 </div>
 
 <!-- ========================= -->
-<!-- DEPENDÊNCIAS EXTERNAS -->
+<!-- DEPENDÊNCIA SUPABASE -->
 <!-- ========================= -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <!-- ========================= -->
-<!-- INFRA / BASE -->
+<!-- ORDEM CORRETA DOS SCRIPTS -->
 <!-- ========================= -->
+
+<!-- 1️⃣ Conexão -->
 <script src="js/supabase.js"></script>
-<script src="js/state.js"></script> <!-- ESTADO + REGRAS -->
- <!-- <script src="js/model.js"></script> <!-- TESTE  -->
-<!-- ========================= -->
-<!-- MÓDULOS FUNCIONAIS -->
-<!-- ========================= -->
+
+<!-- 2️⃣ Model (CRUD banco) -->
+<script src="js/model.js"></script>
+
+<!-- 3️⃣ State (estado memória) -->
+<script src="js/state.js"></script>
+
+<!-- 4️⃣ Regras auxiliares -->
+<script src="js/utils.js"></script>
+
+<!-- 5️⃣ Funcionalidades -->
 <script src="js/lotes.js"></script>
 <script src="js/mapa.js"></script>
-<script src="js/dashboard.js"></script>
-<script src="js/busca.js"></script>
+<script src="js/modal.js"></script>
 <script src="js/expedicao.js"></script>
-<!-- <script src="js/modal.js"></script> <!-- depende do model -->
+<script src="js/busca.js"></script>
+<script src="js/dashboard.js"></script>
 
-<!-- ========================= -->
-<!-- INTERFACE GLOBAL -->
-<!-- ========================= -->
+<!-- 6️⃣ Interface -->
 <script src="js/header.js"></script>
-
-<!-- ========================= -->
-<!-- AUTENTICAÇÃO -->
-<!-- ========================= -->
 <script src="js/login.js"></script>
 
-<!-- ========================= -->
-<!-- INICIALIZAÇÃO FINAL -->
-<!-- ========================= -->
+<!-- 7️⃣ Bootstrap -->
 <script src="js/main.js"></script>
 
 </body>
