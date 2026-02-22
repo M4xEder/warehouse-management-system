@@ -4,8 +4,58 @@
   <meta charset="UTF-8">
   <title>Gerenciamento de Gaylords</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- CSS -->
   <link rel="stylesheet" href="css/style.css">
+
+  <!-- ========================= -->
+  <!-- SUPABASE (DEVE VIR PRIMEIRO) -->
+  <!-- ========================= -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+
+  <!-- ========================= -->
+  <!-- CONEXÃO BANCO -->
+  <!-- ========================= -->
+  <script src="js/supabase.js" defer></script>
+
+  <!-- ========================= -->
+  <!-- CAMADA DE DADOS -->
+  <!-- ========================= -->
+  <script src="js/model.js" defer></script>
+
+  <!-- ========================= -->
+  <!-- ESTADO GLOBAL -->
+  <!-- ========================= -->
+  <script src="js/state.js" defer></script>
+
+  <!-- ========================= -->
+  <!-- UTILITÁRIOS -->
+  <!-- ========================= -->
+  <script src="js/utils.js" defer></script>
+
+  <!-- ========================= -->
+  <!-- MÓDULOS DO SISTEMA -->
+  <!-- ========================= -->
+  <script src="js/lotes.js" defer></script>
+  <script src="js/mapa.js" defer></script>
+  <script src="js/modal.js" defer></script>
+  <script src="js/expedicao.js" defer></script>
+  <script src="js/busca.js" defer></script>
+  <script src="js/dashboard.js" defer></script>
+
+  <!-- ========================= -->
+  <!-- INTERFACE -->
+  <!-- ========================= -->
+  <script src="js/header.js" defer></script>
+  <script src="js/login.js" defer></script>
+
+  <!-- ========================= -->
+  <!-- INICIALIZAÇÃO FINAL -->
+  <!-- ========================= -->
+  <script src="js/main.js" defer></script>
+
 </head>
+
 <body>
 
 <!-- ========================= -->
@@ -105,42 +155,6 @@
 
   </div>
 </div>
-
-<!-- ========================= -->
-<!-- DEPENDÊNCIA SUPABASE -->
-<!-- ========================= -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<!-- ========================= -->
-<!-- ORDEM CORRETA DOS SCRIPTS -->
-<!-- ========================= -->
-
-<!-- 1️⃣ Conexão -->
-<script src="js/supabase.js"></script>
-
-<!-- 2️⃣ Model (CRUD banco) -->
-<script src="js/model.js"></script>
-
-<!-- 3️⃣ State (estado memória) -->
-<script src="js/state.js"></script>
-
-<!-- 4️⃣ Regras auxiliares -->
-<script src="js/utils.js"></script>
-
-<!-- 5️⃣ Funcionalidades -->
-<script src="js/lotes.js"></script>
-<script src="js/mapa.js"></script>
-<script src="js/modal.js"></script>
-<script src="js/expedicao.js"></script>
-<script src="js/busca.js"></script>
-<script src="js/dashboard.js"></script>
-
-<!-- 6️⃣ Interface -->
-<script src="js/header.js"></script>
-<script src="js/login.js"></script>
-
-<!-- 7️⃣ Bootstrap -->
-<script src="js/main.js"></script>
 
 </body>
 </html>
