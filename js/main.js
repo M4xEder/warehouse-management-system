@@ -9,12 +9,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
 
     if (typeof carregarSistema !== 'function') {
-      throw new Error('Função carregarSistema não encontrada');
+      throw new Error('carregarSistema não encontrada');
     }
 
     await carregarSistema();
 
-    console.log('✅ Sistema carregado com sucesso.');
+    console.log('✅ Sistema carregado.');
 
   } catch (err) {
     console.error('❌ Erro na inicialização:', err);
