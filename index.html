@@ -84,11 +84,23 @@
 </section>
 
 <!-- ========================= -->
-<!-- CADASTRAR LOTE -->
+<!-- CADASTRAR LOTE (CORRIGIDO) -->
 <!-- ========================= -->
 <section class="cadastros">
   <h2>Cadastrar Lote</h2>
-  <input id="loteNome" placeholder="Nome do lote">
+
+  <input 
+    id="loteNome" 
+    placeholder="Nome do lote"
+  >
+
+  <input 
+    id="loteTotal" 
+    type="number" 
+    min="1"
+    placeholder="Quantidade total"
+  >
+
   <button onclick="cadastrarLote()">Cadastrar Lote</button>
 </section>
 
