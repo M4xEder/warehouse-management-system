@@ -15,9 +15,8 @@
 // ÁREAS
 // ======================================
 
-// Buscar todas áreas
 window.dbBuscarAreas = async function () {
-  const { data, error } = await supabase
+  const { data, error } = await window.supabaseClient
     .from('areas')
     .select('*')
     .order('created_at', { ascending: true });
@@ -25,10 +24,8 @@ window.dbBuscarAreas = async function () {
   return { data, error };
 };
 
-
-// Criar área
 window.dbCriarArea = async function (nome) {
-  const { data, error } = await supabase
+  const { data, error } = await window.supabaseClient
     .from('areas')
     .insert([{ nome }])
     .select()
@@ -37,10 +34,8 @@ window.dbCriarArea = async function (nome) {
   return { data, error };
 };
 
-
-// Deletar área
 window.dbDeletarArea = async function (id) {
-  const { error } = await supabase
+  const { error } = await window.supabaseClient
     .from('areas')
     .delete()
     .eq('id', id);
@@ -49,13 +44,12 @@ window.dbDeletarArea = async function (id) {
 };
 
 
-
 // ======================================
 // RUAS
 // ======================================
 
 window.dbBuscarRuas = async function () {
-  const { data, error } = await supabase
+  const { data, error } = await window.supabaseClient
     .from('ruas')
     .select('*')
     .order('created_at', { ascending: true });
@@ -64,7 +58,7 @@ window.dbBuscarRuas = async function () {
 };
 
 window.dbCriarRua = async function (area_id, nome) {
-  const { data, error } = await supabase
+  const { data, error } = await window.supabaseClient
     .from('ruas')
     .insert([{ area_id, nome }])
     .select()
@@ -74,7 +68,7 @@ window.dbCriarRua = async function (area_id, nome) {
 };
 
 window.dbDeletarRua = async function (id) {
-  const { error } = await supabase
+  const { error } = await window.supabaseClient
     .from('ruas')
     .delete()
     .eq('id', id);
@@ -83,13 +77,12 @@ window.dbDeletarRua = async function (id) {
 };
 
 
-
 // ======================================
 // POSIÇÕES
 // ======================================
 
 window.dbBuscarPosicoes = async function () {
-  const { data, error } = await supabase
+  const { data, error } = await window.supabaseClient
     .from('posicoes')
     .select('*')
     .order('created_at', { ascending: true });
@@ -97,10 +90,8 @@ window.dbBuscarPosicoes = async function () {
   return { data, error };
 };
 
-
-// Criar posição
 window.dbCriarPosicao = async function (rua_id, numero) {
-  const { data, error } = await supabase
+  const { data, error } = await window.supabaseClient
     .from('posicoes')
     .insert([{
       rua_id,
@@ -113,10 +104,8 @@ window.dbCriarPosicao = async function (rua_id, numero) {
   return { data, error };
 };
 
-
-// Atualizar posição (alocar lote)
 window.dbAtualizarPosicao = async function (id, payload) {
-  const { data, error } = await supabase
+  const { data, error } = await window.supabaseClient
     .from('posicoes')
     .update(payload)
     .eq('id', id)
@@ -126,10 +115,8 @@ window.dbAtualizarPosicao = async function (id, payload) {
   return { data, error };
 };
 
-
-// Liberar posição
 window.dbLiberarPosicao = async function (id) {
-  const { data, error } = await supabase
+  const { data, error } = await window.supabaseClient
     .from('posicoes')
     .update({
       ocupada: false,
@@ -145,13 +132,12 @@ window.dbLiberarPosicao = async function (id) {
 };
 
 
-
 // ======================================
 // LOTES
 // ======================================
 
 window.dbBuscarLotes = async function () {
-  const { data, error } = await supabase
+  const { data, error } = await window.supabaseClient
     .from('lotes')
     .select('*')
     .order('created_at', { ascending: true });
@@ -160,7 +146,7 @@ window.dbBuscarLotes = async function () {
 };
 
 window.dbCriarLote = async function (nome) {
-  const { data, error } = await supabase
+  const { data, error } = await window.supabaseClient
     .from('lotes')
     .insert([{ nome }])
     .select()
@@ -170,7 +156,7 @@ window.dbCriarLote = async function (nome) {
 };
 
 window.dbDeletarLote = async function (id) {
-  const { error } = await supabase
+  const { error } = await window.supabaseClient
     .from('lotes')
     .delete()
     .eq('id', id);
@@ -179,13 +165,12 @@ window.dbDeletarLote = async function (id) {
 };
 
 
-
 // ======================================
 // HISTÓRICO DE EXPEDIÇÃO
 // ======================================
 
 window.dbBuscarHistorico = async function () {
-  const { data, error } = await supabase
+  const { data, error } = await window.supabaseClient
     .from('historico_expedidos')
     .select('*')
     .order('created_at', { ascending: false });
@@ -194,7 +179,7 @@ window.dbBuscarHistorico = async function () {
 };
 
 window.dbRegistrarExpedicao = async function (payload) {
-  const { data, error } = await supabase
+  const { data, error } = await window.supabaseClient
     .from('historico_expedidos')
     .insert([payload])
     .select()
