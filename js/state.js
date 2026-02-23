@@ -1,19 +1,6 @@
 // ===============================
-// STATE.JS — ESTADO GLOBAL DA APLICAÇÃO
+// STATE.JS — ESTADO GLOBAL PROFISSIONAL
 // ===============================
-//
-// Responsabilidade:
-// - Manter dados em memória
-// - Carregar dados do Supabase
-// - Atualizar estado após operações
-// - Nunca acessar banco direto (usa model.js)
-//
-// ===============================
-
-
-// ======================================
-// ESTADO GLOBAL
-// ======================================
 
 window.state = {
   areas: [],
@@ -27,9 +14,8 @@ window.state = {
 
 
 // ======================================
-// CARREGAR TODOS OS DADOS DO BANCO
+// CARREGAR TODOS OS DADOS
 // ======================================
-
 window.carregarSistema = async function () {
 
   try {
@@ -61,12 +47,9 @@ window.carregarSistema = async function () {
     state.lotes = lotesRes.data || [];
     state.historicoExpedidos = histRes.data || [];
 
-    console.log("Sistema carregado com sucesso");
+    console.log("✅ Sistema carregado com sucesso");
 
-    if (typeof renderMapa === "function") {
-      renderMapa();
-    }
-
+    renderMapa();
     if (typeof atualizarDashboard === "function") {
       atualizarDashboard();
     }
@@ -82,9 +65,8 @@ window.carregarSistema = async function () {
 
 
 // ======================================
-// RECARREGAR SOMENTE POSIÇÕES
+// RECARREGAR POSIÇÕES (COM RENDER AUTOMÁTICO)
 // ======================================
-
 window.recarregarPosicoes = async function () {
 
   const { data, error } = await dbBuscarPosicoes();
@@ -96,17 +78,14 @@ window.recarregarPosicoes = async function () {
 
   state.posicoes = data || [];
 
-  if (typeof renderMapa === "function") {
-    renderMapa();
-  }
+  renderMapa();
 };
 
 
 
 // ======================================
-// RECARREGAR SOMENTE LOTES
+// RECARREGAR LOTES
 // ======================================
-
 window.recarregarLotes = async function () {
 
   const { data, error } = await dbBuscarLotes();
@@ -126,39 +105,23 @@ window.recarregarLotes = async function () {
 
 
 // ======================================
-// RECARREGAR HISTÓRICO
+// ATUALIZAÇÃO LOCAL OTIMISTA (🔥 IMPORTANTE)
 // ======================================
+window.atualizarPosicaoLocal = function (posicaoId, novosDados) {
 
-window.recarregarHistorico = async function () {
+  const pos = state.posicoes.find(p => p.id === posicaoId);
+  if (!pos) return;
 
-  const { data, error } = await dbBuscarHistorico();
+  Object.assign(pos, novosDados);
 
-  if (error) {
-    console.error("Erro ao recarregar histórico:", error);
-    return;
-  }
-
-  state.historicoExpedidos = data || [];
-
-  if (typeof atualizarDashboard === "function") {
-    atualizarDashboard();
-  }
+  renderMapa();
 };
 
 
 
 // ======================================
-// BUSCAR ENTIDADES EM MEMÓRIA
+// UTILITÁRIOS
 // ======================================
-
-window.getAreaById = function (id) {
-  return state.areas.find(a => a.id === id);
-};
-
-window.getRuaById = function (id) {
-  return state.ruas.find(r => r.id === id);
-};
-
 window.getPosicaoById = function (id) {
   return state.posicoes.find(p => p.id === id);
 };
@@ -167,32 +130,10 @@ window.getLoteById = function (id) {
   return state.lotes.find(l => l.id === id);
 };
 
-
-
-// ======================================
-// VALIDAÇÕES DE EXCLUSÃO
-// ======================================
-
-// Não permitir excluir área se tiver ruas
 window.areaTemRuas = function (areaId) {
   return state.ruas.some(r => r.area_id === areaId);
 };
 
-// Não permitir excluir rua se tiver posições ocupadas
 window.ruaTemPosicoesOcupadas = function (ruaId) {
   return state.posicoes.some(p => p.rua_id === ruaId && p.ocupada);
-};
-
-
-
-// ======================================
-// UTILIDADES
-// ======================================
-
-window.resetState = function () {
-  state.areas = [];
-  state.ruas = [];
-  state.posicoes = [];
-  state.lotes = [];
-  state.historicoExpedidos = [];
 };
