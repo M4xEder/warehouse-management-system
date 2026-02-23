@@ -14,6 +14,7 @@ window.renderDashboard = window.atualizarDashboard;
 // ===============================
 // LOTES ATIVOS (SALDO REAL)
 // ===============================
+
 function renderLotesAtivos() {
 
   const div = document.getElementById('lotesAtivos');
@@ -21,7 +22,7 @@ function renderLotesAtivos() {
 
   div.innerHTML = '';
 
-  if (!Array.isArray(state.lotes) || state.lotes.length === 0) {
+  if (!state.lotes.length) {
     div.innerHTML = '<p>Nenhum lote cadastrado.</p>';
     return;
   }
@@ -32,33 +33,25 @@ function renderLotesAtivos() {
 
     const total = Number(lote.quantidade ?? 0);
 
-    const alocados =
-      typeof contarGaylordsDoLote === 'function'
-        ? contarGaylordsDoLote(lote.nome)
-        : 0;
+    const alocados = state.posicoes.filter(p =>
+      p.lote === lote.nome &&
+      p.ocupada &&
+      p.rz &&
+      p.volume
+    ).length;
 
-    const expedidos =
-      typeof totalExpedidoDoLote === 'function'
-        ? totalExpedidoDoLote(lote.nome)
-        : 0;
+    const expedidos = state.historicoExpedidos.filter(
+      r => r.nome === lote.nome
+    ).length;
 
-    // 🔥 SALDO REAL
-    const saldo = total - expedidos;
+    const saldo = Math.max(total - expedidos, 0);
 
-    // 🔥 Só considera ativo se ainda houver saldo
     if (saldo <= 0) return;
 
+    const naoAlocados =
+      Math.max(total - alocados - expedidos, 0);
+
     exibiu = true;
-
-    const naoAlocados = Math.max(saldo - alocados, 0);
-
-    let statusTexto = 'Ativo';
-    let classeStatus = 'status-ativo';
-
-    if (expedidos > 0 && saldo > 0) {
-      statusTexto = 'Parcial';
-      classeStatus = 'status-parcial';
-    }
 
     div.innerHTML += `
       <div class="lote-card">
@@ -72,23 +65,14 @@ function renderLotesAtivos() {
 
         <p>
           <strong>Status:</strong>
-          <span class="${classeStatus}">
-            ${statusTexto}
+          <span class="status-ativo">
+            Ativo
           </span>
         </p>
 
         <div class="acoes">
           <button onclick="expedirLote('${lote.nome}')">
             Expedir
-          </button>
-
-          <button onclick="alterarQuantidadeLote('${lote.nome}')">
-            Alterar Quantidade
-          </button>
-
-          <button class="danger"
-            onclick="excluirLote('${lote.nome}')">
-            Excluir
           </button>
         </div>
       </div>
@@ -99,8 +83,6 @@ function renderLotesAtivos() {
     div.innerHTML = '<p>Nenhum lote ativo.</p>';
   }
 }
-
-
 
 // ===============================
 // LOTES EXPEDIDOS
