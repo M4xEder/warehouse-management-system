@@ -162,8 +162,6 @@ window.excluirRua = async function (ruaId) {
   }
 };
 
-
-
 // ===============================
 // RENDER MAPA
 // ===============================
@@ -204,7 +202,6 @@ window.renderMapa = function () {
         </div>
       `;
 
-      // 🔥 Renderizar posições
       const posicoesDaRua = state.posicoes
         .filter(p => p.rua_id === rua.id)
         .sort((a, b) => a.numero - b.numero);
@@ -224,6 +221,11 @@ window.renderMapa = function () {
         }
 
         posDiv.textContent = pos.numero;
+
+        // 🔥 AQUI ESTAVA FALTANDO
+        posDiv.onclick = () => {
+          abrirModalPorId(pos.id);
+        };
 
         grid.appendChild(posDiv);
       });
