@@ -1,12 +1,11 @@
 // ===============================
-// MODEL.JS — CAMADA DE DADOS SUPABASE
+// MODEL.JS — CAMADA DE DADOS SUPABASE (PRO)
 // ===============================
 //
-// Regras:
-// - NÃO define window.state
-// - NÃO usa localStorage
-// - Apenas CRUD no banco
-// - Sempre retorna { data, error }
+// ✔ Apenas CRUD
+// ✔ Sempre retorna { data, error }
+// ✔ Compatível com Realtime
+// ✔ Padronização empresarial
 //
 // ===============================
 
@@ -44,6 +43,7 @@ window.dbDeletarArea = async function (id) {
 };
 
 
+
 // ======================================
 // RUAS
 // ======================================
@@ -77,6 +77,7 @@ window.dbDeletarRua = async function (id) {
 };
 
 
+
 // ======================================
 // POSIÇÕES
 // ======================================
@@ -96,7 +97,10 @@ window.dbCriarPosicao = async function (rua_id, numero) {
     .insert([{
       rua_id,
       numero,
-      ocupada: false
+      ocupada: false,
+      lote_id: null,
+      volume: null,
+      rz: null
     }])
     .select()
     .single();
@@ -104,23 +108,29 @@ window.dbCriarPosicao = async function (rua_id, numero) {
   return { data, error };
 };
 
+
+// 🔥 ATUALIZAÇÃO PRINCIPAL (SALVAR GAYLORD)
 window.dbAtualizarPosicao = async function (id, payload) {
+
   const { data, error } = await window.supabaseClient
     .from('posicoes')
     .update(payload)
     .eq('id', id)
     .select()
-    .single();
+    .single(); // ESSENCIAL para realtime sincronizar bem
 
   return { data, error };
 };
 
+
+// 🔓 LIBERAR POSIÇÃO
 window.dbLiberarPosicao = async function (id) {
+
   const { data, error } = await window.supabaseClient
     .from('posicoes')
     .update({
       ocupada: false,
-      lote: null,
+      lote_id: null,
       volume: null,
       rz: null
     })
@@ -130,6 +140,7 @@ window.dbLiberarPosicao = async function (id) {
 
   return { data, error };
 };
+
 
 
 // ======================================
@@ -145,15 +156,36 @@ window.dbBuscarLotes = async function () {
   return { data, error };
 };
 
+
+// 🔥 CRIAR LOTE PADRONIZADO
 window.dbCriarLote = async function (nome) {
+
   const { data, error } = await window.supabaseClient
     .from('lotes')
-    .insert([{ nome }])
+    .insert([{
+      nome,
+      status: 'ativo' // PADRONIZAÇÃO
+    }])
     .select()
     .single();
 
   return { data, error };
 };
+
+
+// 🔄 ATUALIZAR LOTE
+window.dbAtualizarLote = async function (id, payload) {
+
+  const { data, error } = await window.supabaseClient
+    .from('lotes')
+    .update(payload)
+    .eq('id', id)
+    .select()
+    .single();
+
+  return { data, error };
+};
+
 
 window.dbDeletarLote = async function (id) {
   const { error } = await window.supabaseClient
@@ -163,6 +195,7 @@ window.dbDeletarLote = async function (id) {
 
   return { error };
 };
+
 
 
 // ======================================
@@ -178,7 +211,9 @@ window.dbBuscarHistorico = async function () {
   return { data, error };
 };
 
+
 window.dbRegistrarExpedicao = async function (payload) {
+
   const { data, error } = await window.supabaseClient
     .from('historico_expedidos')
     .insert([payload])
