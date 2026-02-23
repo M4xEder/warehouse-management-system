@@ -1,6 +1,7 @@
 // ===============================
-// MAPA.JS — ENDEREÇAMENTO PROFISSIONAL
+// MAPA.JS — ENDEREÇAMENTO PROFISSIONAL (ATUALIZADO)
 // ===============================
+
 
 
 // ===============================
@@ -55,12 +56,9 @@ window.excluirArea = async function (id) {
 
     if (error) throw error;
 
-    // Atualiza estado local
     state.areas = state.areas.filter(a => a.id !== id);
     state.ruas = state.ruas.filter(r => r.area_id !== id);
-    state.posicoes = state.posicoes.filter(p =>
-      state.ruas.some(r => r.id === p.rua_id)
-    );
+    state.posicoes = state.posicoes.filter(p => p.rua_id !== id);
 
     renderMapa();
 
@@ -88,7 +86,6 @@ window.criarRua = async function (areaId) {
 
   try {
 
-    // 1️⃣ Criar rua
     const { data: novaRua, error: erroRua } =
       await window.supabaseClient
         .from('ruas')
@@ -104,7 +101,6 @@ window.criarRua = async function (areaId) {
 
     state.ruas.push(novaRua);
 
-    // 2️⃣ Criar posições
     const posicoesCriadas = [];
 
     for (let i = 1; i <= quantidade; i++) {
@@ -162,6 +158,8 @@ window.excluirRua = async function (ruaId) {
   }
 };
 
+
+
 // ===============================
 // RENDER MAPA
 // ===============================
@@ -213,16 +211,31 @@ window.renderMapa = function () {
 
         const posDiv = document.createElement('div');
         posDiv.className = 'posicao';
+        posDiv.textContent = pos.numero;
 
         if (pos.ocupada) {
+
+          const lote = state.lotes.find(l => l.id === pos.lote_id);
+
           posDiv.classList.add('ocupada');
+
+          if (lote?.cor) {
+            posDiv.style.backgroundColor = lote.cor;
+            posDiv.style.color = '#fff';
+          }
+
+          // Tooltip profissional
+          posDiv.title = `
+Lote: ${lote?.nome || '-'}
+RZ: ${pos.rz || '-'}
+Volume: ${pos.volume || '-'}
+          `;
+
         } else {
           posDiv.classList.add('livre');
         }
 
-        posDiv.textContent = pos.numero;
-
-        // 🔥 AQUI ESTAVA FALTANDO
+        // 🔥 Abre modal por ID
         posDiv.onclick = () => {
           abrirModalPorId(pos.id);
         };
