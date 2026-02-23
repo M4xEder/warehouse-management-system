@@ -1,16 +1,18 @@
 // ===============================
-// DASHBOARD.JS — PADRÃO PROFISSIONAL (ATUALIZADO)
+// DASHBOARD.JS — VERSÃO FINAL CORRIGIDA
 // ===============================
 
-window.renderDashboard = function () {
+window.atualizarDashboard = function () {
   renderLotesAtivos();
   renderLotesExpedidos();
 };
 
+window.renderDashboard = window.atualizarDashboard;
+
 
 
 // ===============================
-// LOTES ATIVOS (SALDO > 0)
+// LOTES ATIVOS (SALDO REAL)
 // ===============================
 function renderLotesAtivos() {
 
@@ -40,16 +42,23 @@ function renderLotesAtivos() {
         ? totalExpedidoDoLote(lote.nome)
         : 0;
 
-    const saldo = Math.max(total - expedidos, 0);
-    const naoAlocados = Math.max(total - alocados - expedidos, 0);
+    // 🔥 SALDO REAL
+    const saldo = total - expedidos;
 
-    // 🔥 Só aparece aqui se ainda houver saldo
+    // 🔥 Só considera ativo se ainda houver saldo
     if (saldo <= 0) return;
 
     exibiu = true;
 
-    let statusTexto = expedidos > 0 ? 'Parcial' : 'Ativo';
-    let classeStatus = expedidos > 0 ? 'status-parcial' : 'status-ativo';
+    const naoAlocados = Math.max(saldo - alocados, 0);
+
+    let statusTexto = 'Ativo';
+    let classeStatus = 'status-ativo';
+
+    if (expedidos > 0 && saldo > 0) {
+      statusTexto = 'Parcial';
+      classeStatus = 'status-parcial';
+    }
 
     div.innerHTML += `
       <div class="lote-card">
@@ -59,7 +68,7 @@ function renderLotesAtivos() {
         <p><strong>Alocados:</strong> ${alocados}</p>
         <p><strong>Não alocados:</strong> ${naoAlocados}</p>
         <p><strong>Expedidos:</strong> ${expedidos}</p>
-        <p><strong>Saldo:</strong> ${saldo}</p>
+        <p><strong>Saldo disponível:</strong> ${saldo}</p>
 
         <p>
           <strong>Status:</strong>
@@ -94,7 +103,7 @@ function renderLotesAtivos() {
 
 
 // ===============================
-// LOTES EXPEDIDOS (PARCIAL + TOTAL)
+// LOTES EXPEDIDOS
 // ===============================
 function renderLotesExpedidos() {
 
@@ -229,10 +238,6 @@ window.excluirHistoricoLote = function (nomeLote) {
 
   state.historicoExpedidos =
     state.historicoExpedidos.filter(r => r.nome !== nomeLote);
-
-  if (typeof saveState === 'function') {
-    saveState();
-  }
 
   renderDashboard();
 };
