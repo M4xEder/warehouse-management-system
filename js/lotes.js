@@ -1,36 +1,6 @@
 // ===============================
-// LOTES.JS — SUPABASE INTEGRADO
+// LOTES.JS — SUPABASE INTEGRADO (REATIVO)
 // ===============================
-
-
-// ===============================
-// CARREGAR LOTES DO BANCO
-// ===============================
-window.carregarLotesDoBanco = async function () {
-
-  try {
-
-    if (!window.supabaseClient) {
-      console.error('❌ supabaseClient não inicializado');
-      return;
-    }
-
-    const { data, error } = await window.supabaseClient
-      .from('lotes')
-      .select('*')
-      .order('created_at', { ascending: true });
-
-    if (error) {
-      console.error('❌ Erro ao buscar lotes:', error);
-      return;
-    }
-
-    state.lotes = data || [];
-
-  } catch (err) {
-    console.error('❌ Erro geral carregarLotesDoBanco:', err);
-  }
-};
 
 
 
@@ -85,16 +55,16 @@ window.cadastrarLote = async function () {
 
     const cor = cores[Math.floor(Math.random() * cores.length)];
 
-    const { error } = await window.supabaseClient
+    const { data, error } = await window.supabaseClient
       .from('lotes')
-      .insert([
-        {
-          nome,
-          quantidade,
-          cor,
-          status: 'ativo'
-        }
-      ]);
+      .insert([{
+        nome,
+        quantidade,
+        cor,
+        status: 'ativo'
+      }])
+      .select()
+      .single();
 
     if (error) {
       console.error(error);
@@ -102,14 +72,15 @@ window.cadastrarLote = async function () {
       return;
     }
 
+    // 🔥 Atualização local imediata
+    state.lotes.push(data);
+
+    if (typeof atualizarDashboard === 'function') {
+      atualizarDashboard();
+    }
+
     nomeInput.value = '';
     totalInput.value = '';
-
-    await carregarLotesDoBanco();
-
-    if (typeof renderDashboard === 'function') {
-      renderDashboard();
-    }
 
   } catch (err) {
     console.error('❌ Erro geral cadastrarLote:', err);
@@ -141,10 +112,12 @@ window.alterarQuantidadeLote = async function (nomeLote) {
 
   try {
 
-    const { error } = await window.supabaseClient
+    const { data, error } = await window.supabaseClient
       .from('lotes')
       .update({ quantidade: novoTotal })
-      .eq('id', lote.id);
+      .eq('id', lote.id)
+      .select()
+      .single();
 
     if (error) {
       console.error(error);
@@ -152,10 +125,11 @@ window.alterarQuantidadeLote = async function (nomeLote) {
       return;
     }
 
-    await carregarLotesDoBanco();
+    // 🔥 Atualiza local mantendo referência
+    Object.assign(lote, data);
 
-    if (typeof renderDashboard === 'function') {
-      renderDashboard();
+    if (typeof atualizarDashboard === 'function') {
+      atualizarDashboard();
     }
 
     alert('Quantidade atualizada com sucesso.');
@@ -196,10 +170,11 @@ window.excluirLote = async function (nomeLote) {
       return;
     }
 
-    await carregarLotesDoBanco();
+    // 🔥 Remove localmente
+    state.lotes = state.lotes.filter(l => l.id !== lote.id);
 
-    if (typeof renderDashboard === 'function') {
-      renderDashboard();
+    if (typeof atualizarDashboard === 'function') {
+      atualizarDashboard();
     }
 
     alert('Lote excluído com sucesso.');
