@@ -1,5 +1,5 @@
 // ===============================
-// DASHBOARD.JS — VERSÃO ESTÁVEL FINAL CORRIGIDA
+// DASHBOARD.JS — VERSÃO DEFINITIVA CORRIGIDA
 // ===============================
 
 window.atualizarDashboard = function () {
@@ -29,31 +29,33 @@ function renderLotesAtivos() {
 
   state.lotes.forEach(lote => {
 
-    const total = Number(lote.quantidade ?? 0);
+    const total = Number(lote.quantidade ?? 0); // 🔒 TOTAL NUNCA MUDA
 
-    // 🔥 CORREÇÃO REAL: usa lote.id
     const alocados = (state.posicoes || []).filter(p =>
       p.lote_id === lote.id &&
-      p.ocupada === true &&
-      p.rz &&
-      p.volume
+      p.ocupada === true
     ).length;
 
-    const expedidos = (state.historicoExpedidos || []).filter(
-      r => r.nome === lote.nome
+    const expedidos = (state.historicoExpedidos || []).filter(r =>
+      r.lote_id === lote.id
     ).length;
-
-    const saldo = Math.max(total - expedidos, 0);
-
-    // Oculta apenas se totalmente expedido
-    if (saldo <= 0) return;
 
     const naoAlocados = Math.max(total - alocados - expedidos, 0);
 
+    const saldo = Math.max(total - expedidos, 0);
+
+    // Se totalmente expedido, não mostra como ativo
+    if (saldo <= 0) return;
+
     exibiu = true;
 
-    let statusTexto = expedidos > 0 ? 'Parcial' : 'Ativo';
-    let classeStatus = expedidos > 0 ? 'status-parcial' : 'status-ativo';
+    let statusTexto = 'Ativo';
+    let classeStatus = 'status-ativo';
+
+    if (expedidos > 0 && saldo > 0) {
+      statusTexto = 'Parcial';
+      classeStatus = 'status-parcial';
+    }
 
     div.innerHTML += `
       <div class="lote-card">
@@ -73,7 +75,7 @@ function renderLotesAtivos() {
         </p>
 
         <div class="acoes">
-          <button onclick="expedirLote('${lote.nome}')">
+          <button onclick="expedirLote('${lote.id}')">
             Expedir
           </button>
 
@@ -116,16 +118,16 @@ function renderLotesExpedidos() {
   const porLote = {};
 
   state.historicoExpedidos.forEach(reg => {
-    if (!reg.nome) return;
-    porLote[reg.nome] ??= [];
-    porLote[reg.nome].push(reg);
+    if (!reg.lote_id) return;
+    porLote[reg.lote_id] ??= [];
+    porLote[reg.lote_id].push(reg);
   });
 
   let exibiu = false;
 
-  Object.entries(porLote).forEach(([nomeLote, registros]) => {
+  Object.entries(porLote).forEach(([loteId, registros]) => {
 
-    const lote = state.lotes.find(l => l.nome === nomeLote);
+    const lote = state.lotes.find(l => l.id === loteId);
     if (!lote) return;
 
     const total = Number(lote.quantidade ?? 0);
@@ -150,7 +152,7 @@ function renderLotesExpedidos() {
 
     div.innerHTML += `
       <div class="lote-card expedido">
-        <h3>${nomeLote}</h3>
+        <h3>${lote.nome}</h3>
 
         <p><strong>Total:</strong> ${total}</p>
         <p><strong>Expedidos:</strong> ${totalExpedido}</p>
@@ -167,12 +169,12 @@ function renderLotesExpedidos() {
         </p>
 
         <div class="acoes">
-          <button onclick="mostrarDetalhes('${nomeLote}')">
+          <button onclick="mostrarDetalhes('${lote.id}')">
             Detalhes
           </button>
 
           <button class="danger"
-            onclick="excluirHistoricoLote('${nomeLote}')">
+            onclick="excluirHistoricoLote('${lote.id}')">
             Excluir Histórico
           </button>
         </div>
@@ -183,4 +185,4 @@ function renderLotesExpedidos() {
   if (!exibiu) {
     div.innerHTML = '<p>Nenhum lote expedido.</p>';
   }
-  }
+}
