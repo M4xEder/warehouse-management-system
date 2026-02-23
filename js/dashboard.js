@@ -1,5 +1,5 @@
 // ===============================
-// DASHBOARD.JS — VERSÃO FINAL CORRIGIDA
+// DASHBOARD.JS — VERSÃO ESTÁVEL FINAL
 // ===============================
 
 window.atualizarDashboard = function () {
@@ -12,9 +12,8 @@ window.renderDashboard = window.atualizarDashboard;
 
 
 // ===============================
-// LOTES ATIVOS (SALDO REAL)
+// LOTES ATIVOS
 // ===============================
-
 function renderLotesAtivos() {
 
   const div = document.getElementById('lotesAtivos');
@@ -22,7 +21,7 @@ function renderLotesAtivos() {
 
   div.innerHTML = '';
 
-  if (!state.lotes.length) {
+  if (!Array.isArray(state.lotes) || state.lotes.length === 0) {
     div.innerHTML = '<p>Nenhum lote cadastrado.</p>';
     return;
   }
@@ -33,11 +32,9 @@ function renderLotesAtivos() {
 
     const total = Number(lote.quantidade ?? 0);
 
+    // 🔥 IMPORTANTE: ajuste aqui se o nome do campo for diferente
     const alocados = state.posicoes.filter(p =>
-      p.lote === lote.nome &&
-      p.ocupada &&
-      p.rz &&
-      p.volume
+      p.lote === lote.nome && p.ocupada
     ).length;
 
     const expedidos = state.historicoExpedidos.filter(
@@ -46,12 +43,16 @@ function renderLotesAtivos() {
 
     const saldo = Math.max(total - expedidos, 0);
 
+    // 🔥 Só oculta se totalmente expedido
     if (saldo <= 0) return;
 
     const naoAlocados =
       Math.max(total - alocados - expedidos, 0);
 
     exibiu = true;
+
+    let statusTexto = expedidos > 0 ? 'Parcial' : 'Ativo';
+    let classeStatus = expedidos > 0 ? 'status-parcial' : 'status-ativo';
 
     div.innerHTML += `
       <div class="lote-card">
@@ -65,14 +66,23 @@ function renderLotesAtivos() {
 
         <p>
           <strong>Status:</strong>
-          <span class="status-ativo">
-            Ativo
+          <span class="${classeStatus}">
+            ${statusTexto}
           </span>
         </p>
 
         <div class="acoes">
           <button onclick="expedirLote('${lote.nome}')">
             Expedir
+          </button>
+
+          <button onclick="alterarQuantidadeLote('${lote.nome}')">
+            Alterar Quantidade
+          </button>
+
+          <button class="danger"
+            onclick="excluirLote('${lote.nome}')">
+            Excluir
           </button>
         </div>
       </div>
@@ -83,6 +93,8 @@ function renderLotesAtivos() {
     div.innerHTML = '<p>Nenhum lote ativo.</p>';
   }
 }
+
+
 
 // ===============================
 // LOTES EXPEDIDOS
@@ -171,55 +183,3 @@ function renderLotesExpedidos() {
     div.innerHTML = '<p>Nenhum lote expedido.</p>';
   }
 }
-
-
-
-// ===============================
-// DETALHES
-// ===============================
-window.mostrarDetalhes = function (nomeLote) {
-
-  const registros = state.historicoExpedidos.filter(
-    r => r.nome === nomeLote
-  );
-
-  if (!registros.length) {
-    alert('Nenhum histórico encontrado.');
-    return;
-  }
-
-  const lote = state.lotes.find(l => l.nome === nomeLote);
-  const total = Number(lote?.quantidade ?? 0);
-
-  let msg = `📦 LOTE: ${nomeLote}\n`;
-  msg += `--------------------------------------\n\n`;
-
-  registros.forEach((r, i) => {
-    msg += `#${i + 1}\n`;
-    msg += `RZ: ${r.rz}\n`;
-    msg += `Volume: ${r.volume || '-'}\n`;
-    msg += `Área: ${r.area}\n`;
-    msg += `Rua: ${r.rua}\n`;
-    msg += `Data: ${r.data} ${r.hora}\n`;
-    msg += `--------------------------------------\n`;
-  });
-
-  msg += `\nTotal expedido: ${registros.length} / ${total}`;
-
-  alert(msg);
-};
-
-
-
-// ===============================
-// EXCLUIR HISTÓRICO
-// ===============================
-window.excluirHistoricoLote = function (nomeLote) {
-
-  if (!confirm('Excluir apenas o histórico deste lote?')) return;
-
-  state.historicoExpedidos =
-    state.historicoExpedidos.filter(r => r.nome !== nomeLote);
-
-  renderDashboard();
-};
