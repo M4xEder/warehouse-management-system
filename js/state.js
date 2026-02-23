@@ -1,5 +1,5 @@
 // ===============================
-// STATE.JS — ESTADO GLOBAL PROFISSIONAL
+// STATE.JS — ESTADO GLOBAL PROFISSIONAL + REALTIME
 // ===============================
 
 window.state = {
@@ -8,9 +8,11 @@ window.state = {
   posicoes: [],
   lotes: [],
   historicoExpedidos: [],
-  carregando: false
+  carregando: false,
+  realtimeAtivo: false
 };
 
+let realtimeChannel = null;
 
 
 // ======================================
@@ -49,9 +51,17 @@ window.carregarSistema = async function () {
 
     console.log("✅ Sistema carregado com sucesso");
 
-    renderMapa();
+    if (typeof renderMapa === "function") {
+      renderMapa();
+    }
+
     if (typeof atualizarDashboard === "function") {
       atualizarDashboard();
+    }
+
+    // 🔥 Inicia realtime apenas uma vez
+    if (!state.realtimeAtivo) {
+      iniciarRealtime();
     }
 
   } catch (err) {
@@ -65,7 +75,115 @@ window.carregarSistema = async function () {
 
 
 // ======================================
-// RECARREGAR POSIÇÕES (COM RENDER AUTOMÁTICO)
+// REALTIME SUPABASE — NÍVEL EMPRESA
+// ======================================
+window.iniciarRealtime = function () {
+
+  if (state.realtimeAtivo) return;
+
+  realtimeChannel = window.supabaseClient
+    .channel('sistema-realtime')
+
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'areas'
+    }, payload => handleRealtimeChange('areas', payload))
+
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'ruas'
+    }, payload => handleRealtimeChange('ruas', payload))
+
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'posicoes'
+    }, payload => handleRealtimeChange('posicoes', payload))
+
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'lotes'
+    }, payload => handleRealtimeChange('lotes', payload))
+
+    .subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        console.log("🔥 Realtime conectado");
+        state.realtimeAtivo = true;
+      }
+    });
+};
+
+
+
+// ======================================
+// PROCESSADOR DE EVENTOS REALTIME
+// ======================================
+window.handleRealtimeChange = function (table, payload) {
+
+  const evento = payload.eventType;
+  const novo = payload.new;
+  const antigo = payload.old;
+
+  if (!state[table]) return;
+
+  // INSERT
+  if (evento === 'INSERT') {
+
+    const jaExiste = state[table].some(item => item.id === novo.id);
+    if (!jaExiste) {
+      state[table].push(novo);
+    }
+  }
+
+  // UPDATE
+  if (evento === 'UPDATE') {
+
+    const index = state[table].findIndex(item => item.id === novo.id);
+    if (index !== -1) {
+      state[table][index] = novo;
+    }
+  }
+
+  // DELETE
+  if (evento === 'DELETE') {
+
+    state[table] = state[table].filter(item => item.id !== antigo.id);
+  }
+
+  // Renderizações inteligentes
+  if (typeof renderMapa === "function") {
+    renderMapa();
+  }
+
+  if (typeof atualizarDashboard === "function") {
+    atualizarDashboard();
+  }
+};
+
+
+
+// ======================================
+// ATUALIZAÇÃO LOCAL OTIMISTA
+// ======================================
+window.atualizarPosicaoLocal = function (posicaoId, novosDados) {
+
+  const pos = state.posicoes.find(p => p.id === posicaoId);
+  if (!pos) return;
+
+  Object.assign(pos, novosDados);
+
+  if (typeof renderMapa === "function") {
+    renderMapa();
+  }
+};
+
+
+
+// ======================================
+// RECARREGAMENTOS MANUAIS (fallback)
 // ======================================
 window.recarregarPosicoes = async function () {
 
@@ -78,14 +196,12 @@ window.recarregarPosicoes = async function () {
 
   state.posicoes = data || [];
 
-  renderMapa();
+  if (typeof renderMapa === "function") {
+    renderMapa();
+  }
 };
 
 
-
-// ======================================
-// RECARREGAR LOTES
-// ======================================
 window.recarregarLotes = async function () {
 
   const { data, error } = await dbBuscarLotes();
@@ -105,23 +221,16 @@ window.recarregarLotes = async function () {
 
 
 // ======================================
-// ATUALIZAÇÃO LOCAL OTIMISTA (🔥 IMPORTANTE)
-// ======================================
-window.atualizarPosicaoLocal = function (posicaoId, novosDados) {
-
-  const pos = state.posicoes.find(p => p.id === posicaoId);
-  if (!pos) return;
-
-  Object.assign(pos, novosDados);
-
-  renderMapa();
-};
-
-
-
-// ======================================
 // UTILITÁRIOS
 // ======================================
+window.getAreaById = function (id) {
+  return state.areas.find(a => a.id === id);
+};
+
+window.getRuaById = function (id) {
+  return state.ruas.find(r => r.id === id);
+};
+
 window.getPosicaoById = function (id) {
   return state.posicoes.find(p => p.id === id);
 };
@@ -136,4 +245,24 @@ window.areaTemRuas = function (areaId) {
 
 window.ruaTemPosicoesOcupadas = function (ruaId) {
   return state.posicoes.some(p => p.rua_id === ruaId && p.ocupada);
+};
+
+
+
+// ======================================
+// RESET CONTROLADO
+// ======================================
+window.resetState = function () {
+
+  state.areas = [];
+  state.ruas = [];
+  state.posicoes = [];
+  state.lotes = [];
+  state.historicoExpedidos = [];
+  state.realtimeAtivo = false;
+
+  if (realtimeChannel) {
+    window.supabaseClient.removeChannel(realtimeChannel);
+    realtimeChannel = null;
+  }
 };
