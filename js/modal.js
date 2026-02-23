@@ -1,12 +1,40 @@
 // ===============================
-// MODAL.JS — SUPABASE INTEGRADO PRO
+// MODAL.JS — SUPABASE INTEGRADO PRO (VERSÃO CORRIGIDA FINAL)
 // ===============================
 
 let modalContext = {
   posicaoId: null
 };
 
-// -------------------------------
+// --------------------------------------------------
+// FUNÇÃO AUXILIAR — CALCULAR SALDO REAL DO LOTE
+// --------------------------------------------------
+function calcularSaldoLote(loteId) {
+
+  const lote = state.lotes.find(l => l.id === loteId);
+  if (!lote) return 0;
+
+  const total = Number(lote.quantidade ?? 0);
+
+  const alocados = state.posicoes.filter(p =>
+    p.ocupada === true &&
+    p.lote_id === loteId
+  ).length;
+
+  const expedidos = state.historicoExpedidos
+    ? state.historicoExpedidos.filter(h =>
+        h.lote_id === loteId &&
+        h.status === 'EXPEDIDO'
+      ).length
+    : 0;
+
+  return total - alocados - expedidos;
+}
+
+
+// --------------------------------------------------
+// ABRIR MODAL
+// --------------------------------------------------
 window.abrirModalPorId = function (posicaoId) {
 
   const pos = state.posicoes.find(p => p.id === posicaoId);
@@ -25,16 +53,19 @@ window.abrirModalPorId = function (posicaoId) {
 
   selectLote.innerHTML = '<option value="">Selecione um lote</option>';
 
-  // 🔥 Apenas lotes ativos com saldo
+  // 🔥 Apenas lotes ativos com saldo calculado corretamente
   state.lotes
     .filter(l => l.status === 'ativo')
     .forEach(lote => {
 
-      if (lote.quantidade <= 0 && lote.id !== pos.lote_id) return;
+      const saldo = calcularSaldoLote(lote.id);
+
+      // Permite mostrar lote atual mesmo se saldo zerado
+      if (saldo <= 0 && lote.id !== pos.lote_id) return;
 
       const opt = document.createElement('option');
       opt.value = lote.id;
-      opt.textContent = `${lote.nome} (saldo: ${lote.quantidade})`;
+      opt.textContent = `${lote.nome} (Saldo: ${saldo})`;
       selectLote.appendChild(opt);
     });
 
@@ -56,7 +87,9 @@ window.abrirModalPorId = function (posicaoId) {
 };
 
 
-// -------------------------------
+// --------------------------------------------------
+// CONFIRMAR ENDEREÇAMENTO
+// --------------------------------------------------
 window.confirmarEndereco = async function () {
 
   const { posicaoId } = modalContext;
@@ -77,14 +110,14 @@ window.confirmarEndereco = async function () {
 
   try {
 
-    const lote = state.lotes.find(l => l.id === loteId);
+    const saldo = calcularSaldoLote(loteId);
 
-    if (!lote || lote.quantidade <= 0) {
+    if (saldo <= 0) {
       alert('Lote sem saldo disponível');
       return;
     }
 
-    // 🔥 1. Atualização otimista imediata (visual instantâneo)
+    // 🔥 Atualização local imediata
     atualizarPosicaoLocal(posicaoId, {
       lote_id: loteId,
       volume,
@@ -92,34 +125,17 @@ window.confirmarEndereco = async function () {
       ocupada: true
     });
 
-    // 🔥 2. Atualiza posição no banco
-    const { error: erroPos } = await dbAtualizarPosicao(posicaoId, {
+    // 🔥 Atualiza posição no banco
+    const { error } = await dbAtualizarPosicao(posicaoId, {
       lote_id: loteId,
       volume,
       rz,
       ocupada: true
     });
 
-    if (erroPos) {
+    if (error) {
       alert('Erro ao salvar posição');
       return;
-    }
-
-    // 🔥 3. Atualiza lote no banco
-    const { data: loteAtualizado, error: erroLote } =
-      await dbAtualizarLote(loteId, {
-        quantidade: lote.quantidade - 1
-      });
-
-    if (erroLote) {
-      alert('Erro ao atualizar lote');
-      return;
-    }
-
-    // 🔥 4. Atualização otimista do lote
-    const index = state.lotes.findIndex(l => l.id === loteId);
-    if (index !== -1) {
-      state.lotes[index] = loteAtualizado;
     }
 
     if (typeof atualizarDashboard === 'function') {
@@ -134,7 +150,9 @@ window.confirmarEndereco = async function () {
 };
 
 
-// -------------------------------
+// --------------------------------------------------
+// REMOVER GAYLORD
+// --------------------------------------------------
 window.removerGaylord = async function () {
 
   const { posicaoId } = modalContext;
@@ -144,12 +162,9 @@ window.removerGaylord = async function () {
   try {
 
     const pos = state.posicoes.find(p => p.id === posicaoId);
-    if (!pos || !pos.lote_id) return;
+    if (!pos) return;
 
-    const loteId = pos.lote_id;
-    const lote = state.lotes.find(l => l.id === loteId);
-
-    // 🔥 1. Atualização visual imediata
+    // 🔥 Atualização local
     atualizarPosicaoLocal(posicaoId, {
       lote_id: null,
       volume: null,
@@ -157,22 +172,8 @@ window.removerGaylord = async function () {
       ocupada: false
     });
 
-    // 🔥 2. Banco posição
+    // 🔥 Atualiza banco
     await dbLiberarPosicao(posicaoId);
-
-    // 🔥 3. Devolve saldo ao lote
-    if (lote) {
-
-      const { data: loteAtualizado } =
-        await dbAtualizarLote(loteId, {
-          quantidade: lote.quantidade + 1
-        });
-
-      const index = state.lotes.findIndex(l => l.id === loteId);
-      if (index !== -1) {
-        state.lotes[index] = loteAtualizado;
-      }
-    }
 
     if (typeof atualizarDashboard === 'function') {
       atualizarDashboard();
@@ -186,7 +187,9 @@ window.removerGaylord = async function () {
 };
 
 
-// -------------------------------
+// --------------------------------------------------
+// FECHAR MODAL
+// --------------------------------------------------
 window.fecharModal = function () {
   document.getElementById('modal').classList.add('hidden');
 };
