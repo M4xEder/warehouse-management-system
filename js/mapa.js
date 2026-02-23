@@ -184,15 +184,18 @@ window.excluirRua = async function (ruaId) {
   }
 };
 
-
-
 // ===============================
-// RENDER MAPA
+// RENDER MAPA (ATUALIZADO E BLINDADO)
 // ===============================
 window.renderMapa = function () {
 
   const mapa = document.getElementById('mapa');
   if (!mapa) return;
+
+  if (!state?.areas || !state?.ruas || !state?.posicoes) {
+    console.warn('Estado ainda não carregado');
+    return;
+  }
 
   mapa.innerHTML = '';
 
@@ -239,9 +242,14 @@ window.renderMapa = function () {
         posDiv.className = 'posicao';
         posDiv.textContent = pos.numero;
 
+        // 🔥 RESET VISUAL (EVITA BUG)
+        posDiv.style.backgroundColor = '';
+        posDiv.style.color = '';
+        posDiv.classList.remove('ocupada', 'livre', 'highlight');
+
         if (pos.ocupada) {
 
-          const lote = state.lotes.find(l => l.id === pos.lote_id);
+          const lote = state.lotes?.find(l => l.id === pos.lote_id);
 
           posDiv.classList.add('ocupada');
 
@@ -251,13 +259,18 @@ window.renderMapa = function () {
           }
 
           posDiv.title = `
-Lote: ${lote?.nome || '-'}
-RZ: ${pos.rz || '-'}
-Volume: ${pos.volume || '-'}
+          Lote: ${lote?.nome || '-'}
+          RZ: ${pos.rz || '-'}
+          Volume: ${pos.volume || '-'}
           `;
 
         } else {
           posDiv.classList.add('livre');
+        }
+
+        // 🔥 AQUI ESTÁ O DESTAQUE DA BUSCA
+        if (pos._highlight === true) {
+          posDiv.classList.add('highlight');
         }
 
         posDiv.onclick = () => {
