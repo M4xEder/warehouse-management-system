@@ -1,5 +1,5 @@
 // ===============================
-// DASHBOARD.JS — VERSÃO ESTÁVEL FINAL
+// DASHBOARD.JS — VERSÃO ESTÁVEL FINAL CORRIGIDA
 // ===============================
 
 window.atualizarDashboard = function () {
@@ -8,7 +8,6 @@ window.atualizarDashboard = function () {
 };
 
 window.renderDashboard = window.atualizarDashboard;
-
 
 
 // ===============================
@@ -32,22 +31,24 @@ function renderLotesAtivos() {
 
     const total = Number(lote.quantidade ?? 0);
 
-    // 🔥 IMPORTANTE: ajuste aqui se o nome do campo for diferente
-    const alocados = state.posicoes.filter(p =>
-      p.lote === lote.nome && p.ocupada
+    // 🔥 CORREÇÃO REAL: usa lote.id
+    const alocados = (state.posicoes || []).filter(p =>
+      p.lote_id === lote.id &&
+      p.ocupada === true &&
+      p.rz &&
+      p.volume
     ).length;
 
-    const expedidos = state.historicoExpedidos.filter(
+    const expedidos = (state.historicoExpedidos || []).filter(
       r => r.nome === lote.nome
     ).length;
 
     const saldo = Math.max(total - expedidos, 0);
 
-    // 🔥 Só oculta se totalmente expedido
+    // Oculta apenas se totalmente expedido
     if (saldo <= 0) return;
 
-    const naoAlocados =
-      Math.max(total - alocados - expedidos, 0);
+    const naoAlocados = Math.max(total - alocados - expedidos, 0);
 
     exibiu = true;
 
@@ -182,4 +183,4 @@ function renderLotesExpedidos() {
   if (!exibiu) {
     div.innerHTML = '<p>Nenhum lote expedido.</p>';
   }
-}
+  }
