@@ -190,3 +190,51 @@ window.removerGaylord = async function () {
 window.fecharModal = function () {
   document.getElementById('modal').classList.add('hidden');
 };
+
+window.abrirModalPorId = function (posicaoId) {
+
+  const pos = state.posicoes.find(p => p.id === posicaoId);
+
+  if (!pos) {
+    alert('Posição não encontrada');
+    return;
+  }
+
+  modalContext = { posicaoId };
+
+  const modal = document.getElementById('modal');
+  const selectLote = document.getElementById('modalLote');
+  const inputRz = document.getElementById('modalRz');
+  const inputVolume = document.getElementById('modalVolume');
+
+  selectLote.innerHTML = '<option value="">Selecione um lote</option>';
+
+  state.lotes.forEach(lote => {
+
+    if (lote.quantidade <= 0 && lote.id !== pos.lote_id) return;
+
+    const opt = document.createElement('option');
+    opt.value = lote.id;
+    opt.textContent = `${lote.nome} (saldo: ${lote.quantidade})`;
+    selectLote.appendChild(opt);
+  });
+
+  if (pos.ocupada) {
+    selectLote.value = pos.lote_id || '';
+    inputRz.value = pos.rz || '';
+    inputVolume.value = pos.volume || '';
+
+    selectLote.disabled = true;
+    inputRz.disabled = true;
+    inputVolume.disabled = true;
+  } else {
+    inputRz.value = '';
+    inputVolume.value = '';
+
+    selectLote.disabled = false;
+    inputRz.disabled = false;
+    inputVolume.disabled = false;
+  }
+
+  modal.classList.remove('hidden');
+};
