@@ -1,5 +1,5 @@
 // ===============================
-// MAPA.JS — ENDEREÇAMENTO PROFISSIONAL (ATUALIZADO)
+// MAPA.JS — ENDEREÇAMENTO PROFISSIONAL
 // ===============================
 
 
@@ -30,6 +30,7 @@ window.cadastrarArea = async function () {
 
     state.areas.push(data);
     input.value = '';
+
     renderMapa();
 
   } catch (err) {
@@ -43,22 +44,36 @@ window.cadastrarArea = async function () {
 // ===============================
 // EXCLUIR ÁREA
 // ===============================
-window.excluirArea = async function (id) {
+window.excluirArea = async function (areaId) {
 
-  if (!confirm('Excluir área? Isso removerá ruas e posições vinculadas.')) return;
+  if (areaTemRuas(areaId)) {
+    if (!confirm('Essa área possui ruas vinculadas. Deseja realmente excluir tudo?')) {
+      return;
+    }
+  } else {
+    if (!confirm('Excluir área?')) return;
+  }
 
   try {
 
     const { error } = await window.supabaseClient
       .from('areas')
       .delete()
-      .eq('id', id);
+      .eq('id', areaId);
 
     if (error) throw error;
 
-    state.areas = state.areas.filter(a => a.id !== id);
-    state.ruas = state.ruas.filter(r => r.area_id !== id);
-    state.posicoes = state.posicoes.filter(p => p.rua_id !== id);
+    // Remove área
+    state.areas = state.areas.filter(a => a.id !== areaId);
+
+    // Remove ruas da área
+    const ruasRemovidas = state.ruas.filter(r => r.area_id === areaId);
+    const ruasIds = ruasRemovidas.map(r => r.id);
+
+    state.ruas = state.ruas.filter(r => r.area_id !== areaId);
+
+    // Remove posições das ruas removidas
+    state.posicoes = state.posicoes.filter(p => !ruasIds.includes(p.rua_id));
 
     renderMapa();
 
@@ -79,6 +94,7 @@ window.criarRua = async function (areaId) {
   if (!nome) return;
 
   const quantidade = Number(prompt('Quantas posições essa rua terá?'));
+
   if (!quantidade || quantidade <= 0) {
     alert('Quantidade inválida.');
     return;
@@ -101,6 +117,7 @@ window.criarRua = async function (areaId) {
 
     state.ruas.push(novaRua);
 
+    // Criar posições
     const posicoesCriadas = [];
 
     for (let i = 1; i <= quantidade; i++) {
@@ -136,7 +153,13 @@ window.criarRua = async function (areaId) {
 // ===============================
 window.excluirRua = async function (ruaId) {
 
-  if (!confirm('Excluir rua? Isso removerá todas as posições dela.')) return;
+  if (ruaTemPosicoesOcupadas(ruaId)) {
+    if (!confirm('Essa rua possui posições ocupadas. Deseja realmente excluir?')) {
+      return;
+    }
+  } else {
+    if (!confirm('Excluir rua?')) return;
+  }
 
   try {
 
@@ -147,7 +170,10 @@ window.excluirRua = async function (ruaId) {
 
     if (error) throw error;
 
+    // Remove rua
     state.ruas = state.ruas.filter(r => r.id !== ruaId);
+
+    // Remove posições vinculadas
     state.posicoes = state.posicoes.filter(p => p.rua_id !== ruaId);
 
     renderMapa();
@@ -224,7 +250,6 @@ window.renderMapa = function () {
             posDiv.style.color = '#fff';
           }
 
-          // Tooltip profissional
           posDiv.title = `
 Lote: ${lote?.nome || '-'}
 RZ: ${pos.rz || '-'}
@@ -235,9 +260,10 @@ Volume: ${pos.volume || '-'}
           posDiv.classList.add('livre');
         }
 
-        // 🔥 Abre modal por ID
         posDiv.onclick = () => {
-          abrirModalPorId(pos.id);
+          if (typeof abrirModalPorId === "function") {
+            abrirModalPorId(pos.id);
+          }
         };
 
         grid.appendChild(posDiv);
@@ -255,7 +281,7 @@ Volume: ${pos.volume || '-'}
     mapa.appendChild(areaDiv);
   });
 
-  if (typeof renderDashboard === 'function') {
-    renderDashboard();
+  if (typeof atualizarDashboard === 'function') {
+    atualizarDashboard();
   }
 };
