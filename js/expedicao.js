@@ -1,5 +1,5 @@
 // ===============================
-// EXPEDICAO.JS — PADRÃO SUPABASE PROFISSIONAL
+// EXPEDICAO.JS — PADRÃO SUPABASE PROFISSIONAL (ID BASED)
 // ===============================
 
 
@@ -7,14 +7,14 @@
 // -------------------------------
 // ABRIR MODAL DE EXPEDIÇÃO
 // -------------------------------
-window.expedirLote = function (nomeLote) {
+window.expedirLote = function (loteId) {
 
   const lista = document.getElementById('listaExpedicao');
   if (!lista) return;
 
   lista.innerHTML = '';
 
-  const lote = state.lotes.find(l => l.nome === nomeLote);
+  const lote = state.lotes.find(l => l.id === loteId);
 
   if (!lote) {
     alert('Lote não encontrado.');
@@ -22,7 +22,7 @@ window.expedirLote = function (nomeLote) {
   }
 
   // 🔥 Busca posições ocupadas desse lote
-  const selecionaveis = state.posicoes.filter(p =>
+  const selecionaveis = (state.posicoes || []).filter(p =>
     p.ocupada === true &&
     p.lote_id === lote.id
   );
@@ -118,10 +118,10 @@ window.confirmarExpedicao = async function () {
 
     const agora = new Date();
 
-    // 🔥 Registra no banco
+    // 🔥 REGISTRA HISTÓRICO (SEMPRE COM lote_id)
     const { error: erroHist } = await dbRegistrarExpedicao({
       lote_id: lote.id,
-      nome: lote.nome,
+      nome: lote.nome, // opcional para exibição
       rz: pos.rz,
       volume: pos.volume,
       status: 'EXPEDIDO',
@@ -136,7 +136,7 @@ window.confirmarExpedicao = async function () {
       continue;
     }
 
-    // 🔥 Libera posição no banco
+    // 🔥 LIBERA POSIÇÃO (NÃO ALTERA QUANTIDADE DO LOTE)
     const { error: erroLiberar } = await dbLiberarPosicao(pos.id);
 
     if (erroLiberar) {
@@ -147,13 +147,18 @@ window.confirmarExpedicao = async function () {
 
   fecharModalExpedicao();
 
-  // 🔄 Recarrega dados do banco para manter sincronizado
+  // 🔄 Recarrega dados para manter sincronizado
   if (typeof carregarDadosIniciais === 'function') {
     await carregarDadosIniciais();
   }
 
-  renderMapa();
-  renderDashboard();
+  if (typeof renderMapa === 'function') {
+    renderMapa();
+  }
+
+  if (typeof renderDashboard === 'function') {
+    renderDashboard();
+  }
 };
 
 
