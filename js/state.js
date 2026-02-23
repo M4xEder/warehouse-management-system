@@ -1,5 +1,5 @@
 // ===============================
-// STATE.JS — ESTADO GLOBAL PROFISSIONAL + REALTIME
+// STATE.JS — ESTADO GLOBAL PROFISSIONAL + REALTIME (FINAL)
 // ===============================
 
 window.state = {
@@ -15,12 +15,14 @@ window.state = {
 let realtimeChannel = null;
 
 
+
 // ======================================
 // CARREGAR TODOS OS DADOS
 // ======================================
 window.carregarSistema = async function () {
 
   try {
+
     state.carregando = true;
 
     const [
@@ -59,15 +61,17 @@ window.carregarSistema = async function () {
       atualizarDashboard();
     }
 
-    // 🔥 Inicia realtime apenas uma vez
     if (!state.realtimeAtivo) {
       iniciarRealtime();
     }
 
   } catch (err) {
+
     console.error("Erro ao carregar sistema:", err);
     alert("Erro ao carregar dados do banco.");
+
   } finally {
+
     state.carregando = false;
   }
 };
@@ -75,7 +79,7 @@ window.carregarSistema = async function () {
 
 
 // ======================================
-// REALTIME SUPABASE — NÍVEL EMPRESA
+// REALTIME SUPABASE — PADRÃO EMPRESA
 // ======================================
 window.iniciarRealtime = function () {
 
@@ -109,17 +113,19 @@ window.iniciarRealtime = function () {
     }, payload => handleRealtimeChange('lotes', payload))
 
     .subscribe((status) => {
+
       if (status === 'SUBSCRIBED') {
         console.log("🔥 Realtime conectado");
         state.realtimeAtivo = true;
       }
+
     });
 };
 
 
 
 // ======================================
-// PROCESSADOR DE EVENTOS REALTIME
+// PROCESSADOR REALTIME INTELIGENTE
 // ======================================
 window.handleRealtimeChange = function (table, payload) {
 
@@ -129,36 +135,46 @@ window.handleRealtimeChange = function (table, payload) {
 
   if (!state[table]) return;
 
+  // =====================
   // INSERT
+  // =====================
   if (evento === 'INSERT') {
 
     const jaExiste = state[table].some(item => item.id === novo.id);
+
     if (!jaExiste) {
       state[table].push(novo);
     }
   }
 
-  // UPDATE
+  // =====================
+  // UPDATE (REFERÊNCIA PRESERVADA)
+  // =====================
   if (evento === 'UPDATE') {
 
     const index = state[table].findIndex(item => item.id === novo.id);
+
     if (index !== -1) {
-      state[table][index] = novo;
+      Object.assign(state[table][index], novo);
     }
   }
 
+  // =====================
   // DELETE
+  // =====================
   if (evento === 'DELETE') {
 
     state[table] = state[table].filter(item => item.id !== antigo.id);
   }
 
-  // Renderizações inteligentes
-  if (typeof renderMapa === "function") {
+  // =====================
+  // RENDER OTIMIZADO
+  // =====================
+  if (table === 'posicoes' && typeof renderMapa === "function") {
     renderMapa();
   }
 
-  if (typeof atualizarDashboard === "function") {
+  if (table === 'lotes' && typeof atualizarDashboard === "function") {
     atualizarDashboard();
   }
 };
@@ -183,7 +199,7 @@ window.atualizarPosicaoLocal = function (posicaoId, novosDados) {
 
 
 // ======================================
-// RECARREGAMENTOS MANUAIS (fallback)
+// RECARREGAMENTOS MANUAIS (FALLBACK)
 // ======================================
 window.recarregarPosicoes = async function () {
 
@@ -223,29 +239,23 @@ window.recarregarLotes = async function () {
 // ======================================
 // UTILITÁRIOS
 // ======================================
-window.getAreaById = function (id) {
-  return state.areas.find(a => a.id === id);
-};
+window.getAreaById = id =>
+  state.areas.find(a => a.id === id);
 
-window.getRuaById = function (id) {
-  return state.ruas.find(r => r.id === id);
-};
+window.getRuaById = id =>
+  state.ruas.find(r => r.id === id);
 
-window.getPosicaoById = function (id) {
-  return state.posicoes.find(p => p.id === id);
-};
+window.getPosicaoById = id =>
+  state.posicoes.find(p => p.id === id);
 
-window.getLoteById = function (id) {
-  return state.lotes.find(l => l.id === id);
-};
+window.getLoteById = id =>
+  state.lotes.find(l => l.id === id);
 
-window.areaTemRuas = function (areaId) {
-  return state.ruas.some(r => r.area_id === areaId);
-};
+window.areaTemRuas = areaId =>
+  state.ruas.some(r => r.area_id === areaId);
 
-window.ruaTemPosicoesOcupadas = function (ruaId) {
-  return state.posicoes.some(p => p.rua_id === ruaId && p.ocupada);
-};
+window.ruaTemPosicoesOcupadas = ruaId =>
+  state.posicoes.some(p => p.rua_id === ruaId && p.ocupada);
 
 
 
