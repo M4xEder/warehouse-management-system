@@ -1,30 +1,22 @@
 // ===============================
-// MODAL.JS — SUPABASE INTEGRADO
+// MODAL.JS — SUPABASE INTEGRADO PRO
 // ===============================
 
 let modalContext = {
-  posicaoId: null,
-  areaIndex: null,
-  ruaIndex: null,
-  posicaoIndex: null
+  posicaoId: null
 };
 
 // -------------------------------
-window.abrirModal = function (areaIndex, ruaIndex, posicaoIndex) {
+window.abrirModalPorId = function (posicaoId) {
 
-  const pos = state?.areas?.[areaIndex]?.ruas?.[ruaIndex]?.posicoes?.[posicaoIndex];
+  const pos = state.posicoes.find(p => p.id === posicaoId);
 
   if (!pos) {
-    alert('Posição inválida');
+    alert('Posição não encontrada');
     return;
   }
 
-  modalContext = {
-    posicaoId: pos.id,
-    areaIndex,
-    ruaIndex,
-    posicaoIndex
-  };
+  modalContext = { posicaoId };
 
   const modal = document.getElementById('modal');
   const selectLote = document.getElementById('modalLote');
@@ -32,18 +24,22 @@ window.abrirModal = function (areaIndex, ruaIndex, posicaoIndex) {
   const inputVolume = document.getElementById('modalVolume');
 
   selectLote.innerHTML = '<option value="">Selecione um lote</option>';
+
+  // 🔥 Apenas lotes ativos com saldo
+  state.lotes
+    .filter(l => l.status === 'ativo')
+    .forEach(lote => {
+
+      if (lote.quantidade <= 0 && lote.id !== pos.lote_id) return;
+
+      const opt = document.createElement('option');
+      opt.value = lote.id;
+      opt.textContent = `${lote.nome} (saldo: ${lote.quantidade})`;
+      selectLote.appendChild(opt);
+    });
+
   inputRz.value = pos.rz || '';
   inputVolume.value = pos.volume || '';
-
-  state.lotes.forEach(lote => {
-
-    if (lote.quantidade <= 0 && lote.id !== pos.lote_id) return;
-
-    const opt = document.createElement('option');
-    opt.value = lote.id;
-    opt.textContent = `${lote.nome} (saldo: ${lote.quantidade})`;
-    selectLote.appendChild(opt);
-  });
 
   if (pos.ocupada) {
     selectLote.value = pos.lote_id || '';
@@ -58,6 +54,7 @@ window.abrirModal = function (areaIndex, ruaIndex, posicaoIndex) {
 
   modal.classList.remove('hidden');
 };
+
 
 // -------------------------------
 window.confirmarEndereco = async function () {
@@ -80,53 +77,62 @@ window.confirmarEndereco = async function () {
 
   try {
 
-    // Buscar lote atual
     const lote = state.lotes.find(l => l.id === loteId);
 
     if (!lote || lote.quantidade <= 0) {
-      alert('Este lote não possui saldo disponível');
+      alert('Lote sem saldo disponível');
       return;
     }
 
-    // Atualizar posição
-    const { error: erroPos } = await window.supabaseClient
-      .from('posicoes')
-      .update({
-        lote_id: loteId,
-        volume,
-        rz,
-        ocupada: true
-      })
-      .eq('id', posicaoId);
+    // 🔥 1. Atualização otimista imediata (visual instantâneo)
+    atualizarPosicaoLocal(posicaoId, {
+      lote_id: loteId,
+      volume,
+      rz,
+      ocupada: true
+    });
+
+    // 🔥 2. Atualiza posição no banco
+    const { error: erroPos } = await dbAtualizarPosicao(posicaoId, {
+      lote_id: loteId,
+      volume,
+      rz,
+      ocupada: true
+    });
 
     if (erroPos) {
-      console.error(erroPos);
       alert('Erro ao salvar posição');
       return;
     }
 
-    // Diminuir quantidade do lote
-    await window.supabaseClient
-      .from('lotes')
-      .update({
+    // 🔥 3. Atualiza lote no banco
+    const { data: loteAtualizado, error: erroLote } =
+      await dbAtualizarLote(loteId, {
         quantidade: lote.quantidade - 1
-      })
-      .eq('id', loteId);
+      });
 
-    await carregarLotesDoBanco();
+    if (erroLote) {
+      alert('Erro ao atualizar lote');
+      return;
+    }
 
-    if (typeof carregarMapaDoBanco === 'function') {
-      await carregarMapaDoBanco();
+    // 🔥 4. Atualização otimista do lote
+    const index = state.lotes.findIndex(l => l.id === loteId);
+    if (index !== -1) {
+      state.lotes[index] = loteAtualizado;
+    }
+
+    if (typeof atualizarDashboard === 'function') {
+      atualizarDashboard();
     }
 
     fecharModal();
-    renderMapa();
-    renderDashboard();
 
   } catch (err) {
-    console.error('Erro geral confirmarEndereco:', err);
+    console.error('Erro confirmarEndereco:', err);
   }
 };
+
 
 // -------------------------------
 window.removerGaylord = async function () {
@@ -137,104 +143,50 @@ window.removerGaylord = async function () {
 
   try {
 
-    // Buscar posição atual
-    const { data } = await window.supabaseClient
-      .from('posicoes')
-      .select('lote_id')
-      .eq('id', posicaoId)
-      .single();
+    const pos = state.posicoes.find(p => p.id === posicaoId);
+    if (!pos || !pos.lote_id) return;
 
-    const loteId = data?.lote_id;
+    const loteId = pos.lote_id;
+    const lote = state.lotes.find(l => l.id === loteId);
 
-    // Limpar posição
-    await window.supabaseClient
-      .from('posicoes')
-      .update({
-        lote_id: null,
-        volume: null,
-        rz: null,
-        ocupada: false
-      })
-      .eq('id', posicaoId);
+    // 🔥 1. Atualização visual imediata
+    atualizarPosicaoLocal(posicaoId, {
+      lote_id: null,
+      volume: null,
+      rz: null,
+      ocupada: false
+    });
 
-    // Devolver quantidade ao lote
-    if (loteId) {
-      const lote = state.lotes.find(l => l.id === loteId);
+    // 🔥 2. Banco posição
+    await dbLiberarPosicao(posicaoId);
 
-      if (lote) {
-        await window.supabaseClient
-          .from('lotes')
-          .update({
-            quantidade: lote.quantidade + 1
-          })
-          .eq('id', loteId);
+    // 🔥 3. Devolve saldo ao lote
+    if (lote) {
+
+      const { data: loteAtualizado } =
+        await dbAtualizarLote(loteId, {
+          quantidade: lote.quantidade + 1
+        });
+
+      const index = state.lotes.findIndex(l => l.id === loteId);
+      if (index !== -1) {
+        state.lotes[index] = loteAtualizado;
       }
     }
 
-    await carregarLotesDoBanco();
-
-    if (typeof carregarMapaDoBanco === 'function') {
-      await carregarMapaDoBanco();
+    if (typeof atualizarDashboard === 'function') {
+      atualizarDashboard();
     }
 
     fecharModal();
-    renderMapa();
-    renderDashboard();
 
   } catch (err) {
-    console.error('Erro geral removerGaylord:', err);
+    console.error('Erro removerGaylord:', err);
   }
 };
+
 
 // -------------------------------
 window.fecharModal = function () {
   document.getElementById('modal').classList.add('hidden');
-};
-
-window.abrirModalPorId = function (posicaoId) {
-
-  const pos = state.posicoes.find(p => p.id === posicaoId);
-
-  if (!pos) {
-    alert('Posição não encontrada');
-    return;
-  }
-
-  modalContext = { posicaoId };
-
-  const modal = document.getElementById('modal');
-  const selectLote = document.getElementById('modalLote');
-  const inputRz = document.getElementById('modalRz');
-  const inputVolume = document.getElementById('modalVolume');
-
-  selectLote.innerHTML = '<option value="">Selecione um lote</option>';
-
-  state.lotes.forEach(lote => {
-
-    if (lote.quantidade <= 0 && lote.id !== pos.lote_id) return;
-
-    const opt = document.createElement('option');
-    opt.value = lote.id;
-    opt.textContent = `${lote.nome} (saldo: ${lote.quantidade})`;
-    selectLote.appendChild(opt);
-  });
-
-  if (pos.ocupada) {
-    selectLote.value = pos.lote_id || '';
-    inputRz.value = pos.rz || '';
-    inputVolume.value = pos.volume || '';
-
-    selectLote.disabled = true;
-    inputRz.disabled = true;
-    inputVolume.disabled = true;
-  } else {
-    inputRz.value = '';
-    inputVolume.value = '';
-
-    selectLote.disabled = false;
-    inputRz.disabled = false;
-    inputVolume.disabled = false;
-  }
-
-  modal.classList.remove('hidden');
 };
