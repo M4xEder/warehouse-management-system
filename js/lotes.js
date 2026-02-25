@@ -1,12 +1,12 @@
-// ===============================
-// LOTES.JS — SUPABASE INTEGRADO (REATIVO)
-// ===============================
+// =====================================================
+// LOTES.JS — VERSÃO PROFISSIONAL FINAL BLINDADA
+// =====================================================
 
 
 
-// ===============================
+// =====================================================
 // CADASTRAR LOTE
-// ===============================
+// =====================================================
 window.cadastrarLote = async function () {
 
   const nomeInput = document.getElementById('loteNome');
@@ -29,15 +29,11 @@ window.cadastrarLote = async function () {
       await window.supabaseClient
         .from('lotes')
         .select('id')
-        .eq('nome', nome);
+        .ilike('nome', nome);
 
-    if (erroBusca) {
-      console.error(erroBusca);
-      alert('Erro ao validar lote.');
-      return;
-    }
+    if (erroBusca) throw erroBusca;
 
-    if (existente && existente.length > 0) {
+    if (existente.length > 0) {
       alert('Já existe um lote com esse nome.');
       return;
     }
@@ -61,40 +57,35 @@ window.cadastrarLote = async function () {
         nome,
         quantidade,
         cor,
-        status: 'ativo'
+        status: 'ATIVO'
       }])
       .select()
       .single();
 
-    if (error) {
-      console.error(error);
-      alert('Erro ao cadastrar lote.');
-      return;
-    }
+    if (error) throw error;
 
-    // 🔥 Atualização local imediata
-    state.lotes.push(data);
-
-    if (typeof atualizarDashboard === 'function') {
-      atualizarDashboard();
+    // 🔄 Recarrega sistema completo
+    if (typeof carregarSistema === 'function') {
+      await carregarSistema();
     }
 
     nomeInput.value = '';
     totalInput.value = '';
 
   } catch (err) {
-    console.error('❌ Erro geral cadastrarLote:', err);
+    console.error('Erro ao cadastrar lote:', err);
+    alert('Erro ao cadastrar lote.');
   }
 };
 
 
 
-// ===============================
+// =====================================================
 // ALTERAR QUANTIDADE
-// ===============================
-window.alterarQuantidadeLote = async function (nomeLote) {
+// =====================================================
+window.alterarQuantidadeLote = async function (loteId) {
 
-  const lote = state.lotes.find(l => l.nome === nomeLote);
+  const lote = state.lotes.find(l => l.id === loteId);
 
   if (!lote) {
     alert('Lote não encontrado.');
@@ -112,48 +103,58 @@ window.alterarQuantidadeLote = async function (nomeLote) {
 
   try {
 
-    const { data, error } = await window.supabaseClient
+    const { error } = await window.supabaseClient
       .from('lotes')
       .update({ quantidade: novoTotal })
-      .eq('id', lote.id)
-      .select()
-      .single();
+      .eq('id', lote.id);
 
-    if (error) {
-      console.error(error);
-      alert('Erro ao atualizar lote.');
-      return;
-    }
+    if (error) throw error;
 
-    // 🔥 Atualiza local mantendo referência
-    Object.assign(lote, data);
-
-    if (typeof atualizarDashboard === 'function') {
-      atualizarDashboard();
+    if (typeof carregarSistema === 'function') {
+      await carregarSistema();
     }
 
     alert('Quantidade atualizada com sucesso.');
 
   } catch (err) {
-    console.error('❌ Erro geral alterarQuantidadeLote:', err);
+    console.error('Erro ao atualizar lote:', err);
+    alert('Erro ao atualizar lote.');
   }
 };
 
 
 
-// ===============================
-// EXCLUIR LOTE
-// ===============================
-window.excluirLote = async function (nomeLote) {
+// =====================================================
+// EXCLUIR LOTE (BLINDADO)
+// =====================================================
+window.excluirLote = async function (loteId) {
 
-  const lote = state.lotes.find(l => l.nome === nomeLote);
+  const lote = state.lotes.find(l => l.id === loteId);
 
   if (!lote) {
     alert('Lote não encontrado.');
     return;
   }
 
-  if (!confirm(`Deseja realmente excluir o lote "${nomeLote}"?`)) {
+  // 🔒 Verifica se ainda existem posições vinculadas
+  const { count, error: erroCount } =
+    await window.supabaseClient
+      .from('posicoes')
+      .select('*', { count: 'exact', head: true })
+      .eq('lote_id', lote.id);
+
+  if (erroCount) {
+    console.error(erroCount);
+    alert('Erro ao validar posições do lote.');
+    return;
+  }
+
+  if (count > 0) {
+    alert('Não é possível excluir lote com posições vinculadas.');
+    return;
+  }
+
+  if (!confirm(`Deseja realmente excluir o lote "${lote.nome}"?`)) {
     return;
   }
 
@@ -164,22 +165,36 @@ window.excluirLote = async function (nomeLote) {
       .delete()
       .eq('id', lote.id);
 
-    if (error) {
-      console.error(error);
-      alert('Erro ao excluir lote.');
-      return;
-    }
+    if (error) throw error;
 
-    // 🔥 Remove localmente
-    state.lotes = state.lotes.filter(l => l.id !== lote.id);
-
-    if (typeof atualizarDashboard === 'function') {
-      atualizarDashboard();
+    if (typeof carregarSistema === 'function') {
+      await carregarSistema();
     }
 
     alert('Lote excluído com sucesso.');
 
   } catch (err) {
-    console.error('❌ Erro geral excluirLote:', err);
+    console.error('Erro ao excluir lote:', err);
+    alert('Erro ao excluir lote.');
   }
+};
+
+
+
+// =====================================================
+// UTILITÁRIOS DE FILTRO
+// =====================================================
+
+// Lotes Ativos (ATIVO + PARCIAL)
+window.getLotesAtivos = function () {
+  return state.lotes.filter(l =>
+    l.status === 'ATIVO' || l.status === 'PARCIAL'
+  );
+};
+
+// Lotes Expedidos
+window.getLotesExpedidos = function () {
+  return state.lotes.filter(l =>
+    l.status === 'EXPEDIDO'
+  );
 };
