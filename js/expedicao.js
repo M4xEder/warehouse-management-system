@@ -1,12 +1,12 @@
-// ===============================
-// EXPEDICAO.JS — SUPABASE PROFISSIONAL (ID BASED)
-// ===============================
+// =====================================================
+// EXPEDICAO.JS — VERSÃO PROFISSIONAL BLINDADA
+// =====================================================
 
 
 
-// --------------------------------------------------
+// =====================================================
 // ABRIR MODAL DE EXPEDIÇÃO
-// --------------------------------------------------
+// =====================================================
 window.expedirLote = function (loteId) {
 
   const lista = document.getElementById('listaExpedicao');
@@ -21,7 +21,6 @@ window.expedirLote = function (loteId) {
     return;
   }
 
-  // 🔎 Busca posições ocupadas desse lote
   const selecionaveis = (state.posicoes || []).filter(p =>
     p.ocupada === true &&
     p.lote_id === lote.id
@@ -59,35 +58,26 @@ window.expedirLote = function (loteId) {
 
 
 
-// --------------------------------------------------
-// SELECIONAR TODOS
-// --------------------------------------------------
+// =====================================================
+// SELECIONAR / DESMARCAR TODOS
+// =====================================================
 window.selecionarTodosGaylords = function () {
-
   document
     .querySelectorAll('#listaExpedicao input[type="checkbox"]')
     .forEach(c => c.checked = true);
-
 };
 
-
-
-// --------------------------------------------------
-// DESMARCAR TODOS
-// --------------------------------------------------
 window.desmarcarTodosGaylords = function () {
-
   document
     .querySelectorAll('#listaExpedicao input[type="checkbox"]')
     .forEach(c => c.checked = false);
-
 };
 
 
 
-// --------------------------------------------------
-// CONFIRMAR EXPEDIÇÃO (VERSÃO FINAL)
-// --------------------------------------------------
+// =====================================================
+// CONFIRMAR EXPEDIÇÃO — BLINDADO
+// =====================================================
 window.confirmarExpedicao = async function () {
 
   const checks = document.querySelectorAll(
@@ -103,61 +93,74 @@ window.confirmarExpedicao = async function () {
     return;
   }
 
+  const lotesAfetados = new Set();
+
   for (const chk of checks) {
 
     const posId = chk.dataset.posid;
 
-    const pos = state.posicoes.find(p => p.id == posId);
+    // 🔎 Busca posição direto do banco (blindagem)
+    const { data: posBanco, error: erroBusca } = await supabase
+      .from('posicoes')
+      .select('*')
+      .eq('id', posId)
+      .single();
 
-    // 🔒 Validação forte
-    if (!pos || pos.ocupada !== true) {
+    if (erroBusca || !posBanco || posBanco.ocupada !== true) {
       console.warn('Posição inválida ou já liberada:', posId);
       continue;
     }
 
-    const lote = state.lotes.find(l => l.id === pos.lote_id);
-    if (!lote) {
-      console.warn('Lote não encontrado para posição:', posId);
-      continue;
-    }
+    const loteId = posBanco.lote_id;
+    lotesAfetados.add(loteId);
 
-    const rua = state.ruas.find(r => r.id === pos.rua_id);
-    const area = state.areas.find(a => a.id === rua?.area_id);
-
-    // ==================================================
-    // 1️⃣ LIBERA POSIÇÃO PRIMEIRO
-    // ==================================================
-    const { error: erroLiberar } = await dbLiberarPosicao(pos.id);
+    // =================================================
+    // 1️⃣ LIBERA POSIÇÃO
+    // =================================================
+    const { error: erroLiberar } = await supabase
+      .from('posicoes')
+      .update({
+        ocupada: false,
+        lote_id: null,
+        volume: null
+      })
+      .eq('id', posId);
 
     if (erroLiberar) {
       console.error('Erro ao liberar posição:', erroLiberar);
       continue;
     }
 
-    // ==================================================
-    // 2️⃣ REGISTRA HISTÓRICO COM ID
-    // ==================================================
-    const { error: erroHist } = await dbRegistrarExpedicao({
-      lote_id: lote.id,
-      posicao_id: pos.id,
-      nome: lote.nome,
-      rz: pos.rz,
-      volume: pos.volume,
-      area: area?.nome || null,
-      rua: rua?.nome || null
-    });
+    // =================================================
+    // 2️⃣ REGISTRA HISTÓRICO
+    // =================================================
+    await supabase
+      .from('historico_expedidos')
+      .insert([{
+        lote_id: loteId,
+        posicao_id: posBanco.id,
+        lote: posBanco.lote_nome || null,
+        area: posBanco.area_nome || null,
+        rua: posBanco.rua_nome || null,
+        posicao: posBanco.rz,
+        volume: posBanco.volume,
+        data_expedicao: new Date().toISOString()
+      }]);
 
-    if (erroHist) {
-      console.error('Erro ao registrar histórico:', erroHist);
-    }
+  }
 
+  // =====================================================
+  // 3️⃣ ATUALIZA STATUS DOS LOTES AFETADOS
+  // =====================================================
+  for (const loteId of lotesAfetados) {
+    await atualizarStatusLote(loteId);
   }
 
   fecharModalExpedicao();
 
-  // ==================================================
-  // 🔄 RECARREGA SISTEMA
-  // ==================================================
+  // =====================================================
+  // 🔄 RECARREGA SISTEMA COMPLETO
+  // =====================================================
   if (typeof carregarDadosIniciais === 'function') {
     await carregarDadosIniciais();
   }
@@ -174,9 +177,47 @@ window.confirmarExpedicao = async function () {
 
 
 
-// --------------------------------------------------
+// =====================================================
+// ATUALIZA STATUS DO LOTE (ATIVO / PARCIAL / EXPEDIDO)
+// =====================================================
+async function atualizarStatusLote(loteId) {
+
+  const { data: todas } = await supabase
+    .from('posicoes')
+    .select('id')
+    .eq('lote_id', loteId);
+
+  const total = todas.length;
+
+  const { data: ocupadas } = await supabase
+    .from('posicoes')
+    .select('id')
+    .eq('lote_id', loteId)
+    .eq('ocupada', true);
+
+  const restantes = ocupadas.length;
+
+  let novoStatus = 'ATIVO';
+
+  if (total > 0 && restantes === 0) {
+    novoStatus = 'EXPEDIDO';
+  }
+  else if (restantes < total) {
+    novoStatus = 'PARCIAL';
+  }
+
+  await supabase
+    .from('lotes')
+    .update({ status: novoStatus })
+    .eq('id', loteId);
+
+}
+
+
+
+// =====================================================
 // FECHAR MODAL
-// --------------------------------------------------
+// =====================================================
 window.fecharModalExpedicao = function () {
 
   document
@@ -184,24 +225,3 @@ window.fecharModalExpedicao = function () {
     ?.classList.add('hidden');
 
 };
-
-
-
-// ==================================================
-// FUNÇÃO DE REGISTRO NO SUPABASE (ATUALIZADA)
-// ==================================================
-async function dbRegistrarExpedicao(dados) {
-
-  return await supabase
-    .from('historico_expedidos')
-    .insert([{
-      lote_id: dados.lote_id,
-      posicao_id: dados.posicao_id,
-      lote: dados.nome,
-      area: dados.area,
-      rua: dados.rua,
-      posicao: dados.rz,
-      data_expedicao: new Date().toISOString()
-    }]);
-
-    }
