@@ -1,11 +1,11 @@
 // =====================================================
-// EXPEDICAO.JS — VERSÃO PROFISSIONAL BLINDADA
+// EXPEDICAO.JS — VERSÃO PROFISSIONAL FINAL
 // =====================================================
 
 
 
 // =====================================================
-// ABRIR MODAL DE EXPEDIÇÃO
+// ABRIR MODAL
 // =====================================================
 window.expedirLote = function (loteId) {
 
@@ -15,13 +15,12 @@ window.expedirLote = function (loteId) {
   lista.innerHTML = '';
 
   const lote = state.lotes.find(l => l.id === loteId);
-
   if (!lote) {
     alert('Lote não encontrado.');
     return;
   }
 
-  const selecionaveis = (state.posicoes || []).filter(p =>
+  const selecionaveis = state.posicoes.filter(p =>
     p.ocupada === true &&
     p.lote_id === lote.id
   );
@@ -59,24 +58,7 @@ window.expedirLote = function (loteId) {
 
 
 // =====================================================
-// SELECIONAR / DESMARCAR TODOS
-// =====================================================
-window.selecionarTodosGaylords = function () {
-  document
-    .querySelectorAll('#listaExpedicao input[type="checkbox"]')
-    .forEach(c => c.checked = true);
-};
-
-window.desmarcarTodosGaylords = function () {
-  document
-    .querySelectorAll('#listaExpedicao input[type="checkbox"]')
-    .forEach(c => c.checked = false);
-};
-
-
-
-// =====================================================
-// CONFIRMAR EXPEDIÇÃO — BLINDADO
+// CONFIRMAR EXPEDIÇÃO
 // =====================================================
 window.confirmarExpedicao = async function () {
 
@@ -99,110 +81,83 @@ window.confirmarExpedicao = async function () {
 
     const posId = chk.dataset.posid;
 
-    // 🔎 Busca posição direto do banco (blindagem)
-    const { data: posBanco, error: erroBusca } = await supabase
+    const { data: posBanco, error } = await supabase
       .from('posicoes')
       .select('*')
       .eq('id', posId)
       .single();
 
-    if (erroBusca || !posBanco || posBanco.ocupada !== true) {
-      console.warn('Posição inválida ou já liberada:', posId);
+    if (error || !posBanco || !posBanco.ocupada) {
+      console.warn('Posição inválida:', posId);
       continue;
     }
 
     const loteId = posBanco.lote_id;
     lotesAfetados.add(loteId);
 
-    // =================================================
-    // 1️⃣ LIBERA POSIÇÃO
-    // =================================================
-    const { error: erroLiberar } = await supabase
+    // 🔥 LIBERA POSIÇÃO (MAS MANTÉM lote_id)
+    await supabase
       .from('posicoes')
       .update({
         ocupada: false,
-        lote_id: null,
         volume: null
       })
       .eq('id', posId);
 
-    if (erroLiberar) {
-      console.error('Erro ao liberar posição:', erroLiberar);
-      continue;
-    }
-
-    // =================================================
-    // 2️⃣ REGISTRA HISTÓRICO
-    // =================================================
+    // 🔥 HISTÓRICO
     await supabase
       .from('historico_expedidos')
       .insert([{
         lote_id: loteId,
         posicao_id: posBanco.id,
-        lote: posBanco.lote_nome || null,
-        area: posBanco.area_nome || null,
-        rua: posBanco.rua_nome || null,
         posicao: posBanco.rz,
         volume: posBanco.volume,
         data_expedicao: new Date().toISOString()
       }]);
-
   }
 
-  // =====================================================
-  // 3️⃣ ATUALIZA STATUS DOS LOTES AFETADOS
-  // =====================================================
+  // 🔥 ATUALIZA STATUS
   for (const loteId of lotesAfetados) {
     await atualizarStatusLote(loteId);
   }
 
   fecharModalExpedicao();
 
-  // =====================================================
-  // 🔄 RECARREGA SISTEMA COMPLETO
-  // =====================================================
-  if (typeof carregarDadosIniciais === 'function') {
-    await carregarDadosIniciais();
+  // 🔥 RECARREGA SISTEMA CORRETAMENTE
+  if (typeof carregarSistema === 'function') {
+    await carregarSistema();
   }
-
-  if (typeof renderMapa === 'function') {
-    renderMapa();
-  }
-
-  if (typeof renderDashboard === 'function') {
-    renderDashboard();
-  }
-
 };
 
 
 
 // =====================================================
-// ATUALIZA STATUS DO LOTE (ATIVO / PARCIAL / EXPEDIDO)
+// ATUALIZAR STATUS DO LOTE
 // =====================================================
 async function atualizarStatusLote(loteId) {
 
-  const { data: todas } = await supabase
+  const { data: posicoes } = await supabase
     .from('posicoes')
-    .select('id')
+    .select('id, ocupada')
     .eq('lote_id', loteId);
 
-  const total = todas.length;
+  if (!posicoes || posicoes.length === 0) {
+    await supabase
+      .from('lotes')
+      .update({ status: 'EXPEDIDO' })
+      .eq('id', loteId);
+    return;
+  }
 
-  const { data: ocupadas } = await supabase
-    .from('posicoes')
-    .select('id')
-    .eq('lote_id', loteId)
-    .eq('ocupada', true);
-
-  const restantes = ocupadas.length;
+  const total = posicoes.length;
+  const ocupadas = posicoes.filter(p => p.ocupada).length;
 
   let novoStatus = 'ATIVO';
 
-  if (total > 0 && restantes === 0) {
+  if (ocupadas === 0) {
     novoStatus = 'EXPEDIDO';
   }
-  else if (restantes < total) {
+  else if (ocupadas < total) {
     novoStatus = 'PARCIAL';
   }
 
@@ -210,7 +165,6 @@ async function atualizarStatusLote(loteId) {
     .from('lotes')
     .update({ status: novoStatus })
     .eq('id', loteId);
-
 }
 
 
@@ -223,5 +177,4 @@ window.fecharModalExpedicao = function () {
   document
     .getElementById('modalExpedicao')
     ?.classList.add('hidden');
-
 };
