@@ -1,15 +1,29 @@
 // ===============================
-// MODAL.JS — SUPABASE INTEGRADO PRO (VERSÃO CORRIGIDA FINAL)
+// MODAL.JS — SUPABASE INTEGRADO PRO (BLINDADO)
 // ===============================
 
 let modalContext = {
-  posicaoId: null
+  posicaoId: null,
+  salvando: false
 };
 
 // --------------------------------------------------
-// FUNÇÃO AUXILIAR — CALCULAR SALDO REAL DO LOTE
+// 🔒 VALIDADOR GLOBAL
+// --------------------------------------------------
+function validarState() {
+  if (!window.state) throw new Error("State não definido");
+  if (!Array.isArray(state.lotes)) state.lotes = [];
+  if (!Array.isArray(state.posicoes)) state.posicoes = [];
+  if (!Array.isArray(state.historicoExpedidos)) state.historicoExpedidos = [];
+}
+
+// --------------------------------------------------
+// 🔒 CALCULAR SALDO REAL DO LOTE
 // --------------------------------------------------
 function calcularSaldoLote(loteId) {
+  validarState();
+
+  if (!loteId) return 0;
 
   const lote = state.lotes.find(l => l.id === loteId);
   if (!lote) return 0;
@@ -17,124 +31,154 @@ function calcularSaldoLote(loteId) {
   const total = Number(lote.quantidade ?? 0);
 
   const alocados = state.posicoes.filter(p =>
-    p.ocupada === true &&
-    p.lote_id === loteId
+    p?.ocupada === true &&
+    p?.lote_id === loteId
   ).length;
 
-  const expedidos = state.historicoExpedidos
-    ? state.historicoExpedidos.filter(h =>
-        h.lote_id === loteId &&
-        h.status === 'EXPEDIDO'
-      ).length
-    : 0;
+  const expedidos = state.historicoExpedidos.filter(h =>
+    h?.lote_id === loteId &&
+    h?.status === 'EXPEDIDO'
+  ).length;
 
   return total - alocados - expedidos;
 }
 
-
 // --------------------------------------------------
-// ABRIR MODAL
+// 🔒 ABRIR MODAL
 // --------------------------------------------------
 window.abrirModalPorId = function (posicaoId) {
+  try {
 
-  const pos = state.posicoes.find(p => p.id === posicaoId);
+    validarState();
 
-  if (!pos) {
-    alert('Posição não encontrada');
-    return;
+    if (!posicaoId) {
+      alert('ID inválido');
+      return;
+    }
+
+    const pos = state.posicoes.find(p => p.id === posicaoId);
+    if (!pos) {
+      alert('Posição não encontrada');
+      return;
+    }
+
+    modalContext = { posicaoId, salvando: false };
+
+    const modal = document.getElementById('modal');
+    const selectLote = document.getElementById('modalLote');
+    const inputRz = document.getElementById('modalRz');
+    const inputVolume = document.getElementById('modalVolume');
+
+    if (!modal || !selectLote || !inputRz || !inputVolume) {
+      console.error("Elementos do modal não encontrados no DOM");
+      return;
+    }
+
+    selectLote.innerHTML = '<option value="">Selecione um lote</option>';
+
+    state.lotes
+      .filter(l => l?.status === 'ativo')
+      .forEach(lote => {
+
+        const saldo = calcularSaldoLote(lote.id);
+
+        if (saldo <= 0 && lote.id !== pos.lote_id) return;
+
+        const opt = document.createElement('option');
+        opt.value = lote.id;
+        opt.textContent = `${lote.nome || 'Sem nome'} (Saldo: ${saldo})`;
+        selectLote.appendChild(opt);
+      });
+
+    inputRz.value = pos?.rz ?? '';
+    inputVolume.value = pos?.volume ?? '';
+
+    const bloqueado = pos?.ocupada === true;
+
+    selectLote.value = pos?.lote_id ?? '';
+    selectLote.disabled = bloqueado;
+    inputRz.disabled = bloqueado;
+    inputVolume.disabled = bloqueado;
+
+    modal.classList.remove('hidden');
+
+  } catch (err) {
+    console.error("Erro abrirModal:", err);
   }
-
-  modalContext = { posicaoId };
-
-  const modal = document.getElementById('modal');
-  const selectLote = document.getElementById('modalLote');
-  const inputRz = document.getElementById('modalRz');
-  const inputVolume = document.getElementById('modalVolume');
-
-  selectLote.innerHTML = '<option value="">Selecione um lote</option>';
-
-  // 🔥 Apenas lotes ativos com saldo calculado corretamente
-  state.lotes
-    .filter(l => l.status === 'ativo')
-    .forEach(lote => {
-
-      const saldo = calcularSaldoLote(lote.id);
-
-      // Permite mostrar lote atual mesmo se saldo zerado
-      if (saldo <= 0 && lote.id !== pos.lote_id) return;
-
-      const opt = document.createElement('option');
-      opt.value = lote.id;
-      opt.textContent = `${lote.nome} (Saldo: ${saldo})`;
-      selectLote.appendChild(opt);
-    });
-
-  inputRz.value = pos.rz || '';
-  inputVolume.value = pos.volume || '';
-
-  if (pos.ocupada) {
-    selectLote.value = pos.lote_id || '';
-    selectLote.disabled = true;
-    inputRz.disabled = true;
-    inputVolume.disabled = true;
-  } else {
-    selectLote.disabled = false;
-    inputRz.disabled = false;
-    inputVolume.disabled = false;
-  }
-
-  modal.classList.remove('hidden');
 };
 
-
 // --------------------------------------------------
-// CONFIRMAR ENDEREÇAMENTO
+// 🔒 CONFIRMAR ENDEREÇAMENTO
 // --------------------------------------------------
 window.confirmarEndereco = async function () {
 
-  const { posicaoId } = modalContext;
-
-  const loteId = document.getElementById('modalLote').value;
-  const rz = document.getElementById('modalRz').value.trim();
-  const volume = document.getElementById('modalVolume').value.trim();
-
-  if (!loteId) {
-    alert('Selecione um lote');
-    return;
-  }
-
-  if (!rz) {
-    alert('RZ é obrigatório');
-    return;
-  }
+  if (modalContext.salvando) return;
+  modalContext.salvando = true;
 
   try {
+
+    validarState();
+
+    const { posicaoId } = modalContext;
+
+    const select = document.getElementById('modalLote');
+    const inputRz = document.getElementById('modalRz');
+    const inputVolume = document.getElementById('modalVolume');
+
+    if (!select || !inputRz || !inputVolume) {
+      alert("Campos do modal não encontrados");
+      modalContext.salvando = false;
+      return;
+    }
+
+    const loteId = select.value;
+    const rz = inputRz.value.trim();
+    const volume = inputVolume.value.trim();
+
+    if (!loteId) {
+      alert('Selecione um lote');
+      modalContext.salvando = false;
+      return;
+    }
+
+    if (!rz) {
+      alert('RZ é obrigatório');
+      modalContext.salvando = false;
+      return;
+    }
 
     const saldo = calcularSaldoLote(loteId);
 
     if (saldo <= 0) {
       alert('Lote sem saldo disponível');
+      modalContext.salvando = false;
       return;
     }
 
-    // 🔥 Atualização local imediata
-    atualizarPosicaoLocal(posicaoId, {
+    const dadosAtualizacao = {
       lote_id: loteId,
-      volume,
+      volume: volume || null,
       rz,
       ocupada: true
-    });
+    };
 
-    // 🔥 Atualiza posição no banco
-    const { error } = await dbAtualizarPosicao(posicaoId, {
-      lote_id: loteId,
-      volume,
-      rz,
-      ocupada: true
-    });
+    // Backup para rollback
+    const posOriginal = { ...state.posicoes.find(p => p.id === posicaoId) };
+
+    // 🔥 Atualiza local
+    atualizarPosicaoLocal(posicaoId, dadosAtualizacao);
+
+    // 🔥 Atualiza banco
+    const { error } = await dbAtualizarPosicao(posicaoId, dadosAtualizacao);
 
     if (error) {
-      alert('Erro ao salvar posição');
+      console.error(error);
+
+      // 🔥 Rollback automático
+      atualizarPosicaoLocal(posicaoId, posOriginal);
+
+      alert('Erro ao salvar no banco');
+      modalContext.salvando = false;
       return;
     }
 
@@ -145,35 +189,49 @@ window.confirmarEndereco = async function () {
     fecharModal();
 
   } catch (err) {
-    console.error('Erro confirmarEndereco:', err);
+    console.error("Erro confirmarEndereco:", err);
   }
+
+  modalContext.salvando = false;
 };
 
-
 // --------------------------------------------------
-// REMOVER GAYLORD
+// 🔒 REMOVER GAYLORD
 // --------------------------------------------------
 window.removerGaylord = async function () {
-
-  const { posicaoId } = modalContext;
 
   if (!confirm('Remover gaylord desta posição?')) return;
 
   try {
 
-    const pos = state.posicoes.find(p => p.id === posicaoId);
-    if (!pos) return;
+    validarState();
 
-    // 🔥 Atualização local
-    atualizarPosicaoLocal(posicaoId, {
+    const { posicaoId } = modalContext;
+    const pos = state.posicoes.find(p => p.id === posicaoId);
+
+    if (!pos) {
+      alert("Posição não encontrada");
+      return;
+    }
+
+    const backup = { ...pos };
+
+    const dadosLimpar = {
       lote_id: null,
       volume: null,
       rz: null,
       ocupada: false
-    });
+    };
 
-    // 🔥 Atualiza banco
-    await dbLiberarPosicao(posicaoId);
+    atualizarPosicaoLocal(posicaoId, dadosLimpar);
+
+    const { error } = await dbLiberarPosicao(posicaoId);
+
+    if (error) {
+      atualizarPosicaoLocal(posicaoId, backup);
+      alert("Erro ao liberar posição");
+      return;
+    }
 
     if (typeof atualizarDashboard === 'function') {
       atualizarDashboard();
@@ -182,14 +240,14 @@ window.removerGaylord = async function () {
     fecharModal();
 
   } catch (err) {
-    console.error('Erro removerGaylord:', err);
+    console.error("Erro removerGaylord:", err);
   }
 };
 
-
 // --------------------------------------------------
-// FECHAR MODAL
+// 🔒 FECHAR MODAL
 // --------------------------------------------------
 window.fecharModal = function () {
-  document.getElementById('modal').classList.add('hidden');
+  const modal = document.getElementById('modal');
+  if (modal) modal.classList.add('hidden');
 };
