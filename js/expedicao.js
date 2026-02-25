@@ -1,12 +1,12 @@
 // ===============================
-// EXPEDICAO.JS — PADRÃO SUPABASE PROFISSIONAL (ID BASED)
+// EXPEDICAO.JS — SUPABASE PROFISSIONAL (BLINDADO)
 // ===============================
 
 
 
-// -------------------------------
+// --------------------------------------------------
 // ABRIR MODAL DE EXPEDIÇÃO
-// -------------------------------
+// --------------------------------------------------
 window.expedirLote = function (loteId) {
 
   const lista = document.getElementById('listaExpedicao');
@@ -59,9 +59,9 @@ window.expedirLote = function (loteId) {
 
 
 
-// -------------------------------
+// --------------------------------------------------
 // SELECIONAR TODOS
-// -------------------------------
+// --------------------------------------------------
 window.selecionarTodosGaylords = function () {
 
   document
@@ -72,9 +72,9 @@ window.selecionarTodosGaylords = function () {
 
 
 
-// -------------------------------
+// --------------------------------------------------
 // DESMARCAR TODOS
-// -------------------------------
+// --------------------------------------------------
 window.desmarcarTodosGaylords = function () {
 
   document
@@ -85,9 +85,9 @@ window.desmarcarTodosGaylords = function () {
 
 
 
-// -------------------------------
-// CONFIRMAR EXPEDIÇÃO
-// -------------------------------
+// --------------------------------------------------
+// CONFIRMAR EXPEDIÇÃO (BLINDADO)
+// --------------------------------------------------
 window.confirmarExpedicao = async function () {
 
   const checks = document.querySelectorAll(
@@ -95,7 +95,7 @@ window.confirmarExpedicao = async function () {
   );
 
   if (checks.length === 0) {
-    alert('Selecione ao menos uma gaylord');
+    alert('Selecione ao menos uma gaylord.');
     return;
   }
 
@@ -108,20 +108,41 @@ window.confirmarExpedicao = async function () {
     const posId = chk.dataset.posid;
 
     const pos = state.posicoes.find(p => p.id == posId);
-    if (!pos || !pos.ocupada) continue;
+
+    // 🔒 Validação forte
+    if (!pos || pos.ocupada !== true) {
+      console.warn('Posição inválida ou já liberada:', posId);
+      continue;
+    }
 
     const lote = state.lotes.find(l => l.id === pos.lote_id);
-    if (!lote) continue;
+
+    if (!lote) {
+      console.warn('Lote não encontrado para posição:', posId);
+      continue;
+    }
 
     const rua = state.ruas.find(r => r.id === pos.rua_id);
     const area = state.areas.find(a => a.id === rua?.area_id);
 
     const agora = new Date();
 
-    // 🔥 REGISTRA HISTÓRICO (SEMPRE COM lote_id)
+    // ==================================================
+    // 1️⃣ LIBERA POSIÇÃO PRIMEIRO (EVITA DUPLICIDADE)
+    // ==================================================
+    const { error: erroLiberar } = await dbLiberarPosicao(pos.id);
+
+    if (erroLiberar) {
+      console.error('Erro ao liberar posição:', erroLiberar);
+      continue; // não registra histórico se falhar
+    }
+
+    // ==================================================
+    // 2️⃣ REGISTRA HISTÓRICO
+    // ==================================================
     const { error: erroHist } = await dbRegistrarExpedicao({
       lote_id: lote.id,
-      nome: lote.nome, // opcional para exibição
+      nome: lote.nome,
       rz: pos.rz,
       volume: pos.volume,
       status: 'EXPEDIDO',
@@ -133,21 +154,15 @@ window.confirmarExpedicao = async function () {
 
     if (erroHist) {
       console.error('Erro ao registrar histórico:', erroHist);
-      continue;
-    }
-
-    // 🔥 LIBERA POSIÇÃO (NÃO ALTERA QUANTIDADE DO LOTE)
-    const { error: erroLiberar } = await dbLiberarPosicao(pos.id);
-
-    if (erroLiberar) {
-      console.error('Erro ao liberar posição:', erroLiberar);
     }
 
   }
 
   fecharModalExpedicao();
 
-  // 🔄 Recarrega dados para manter sincronizado
+  // ==================================================
+  // 🔄 SINCRONIZA SISTEMA
+  // ==================================================
   if (typeof carregarDadosIniciais === 'function') {
     await carregarDadosIniciais();
   }
@@ -159,13 +174,14 @@ window.confirmarExpedicao = async function () {
   if (typeof renderDashboard === 'function') {
     renderDashboard();
   }
+
 };
 
 
 
-// -------------------------------
+// --------------------------------------------------
 // FECHAR MODAL
-// -------------------------------
+// --------------------------------------------------
 window.fecharModalExpedicao = function () {
 
   document
