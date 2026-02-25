@@ -4,29 +4,58 @@
 
 document.addEventListener('DOMContentLoaded', async () => {
 
-  // Mostrar usuário logado
-  if (typeof window.mostrarUsuarioLogado === 'function') {
-    await window.mostrarUsuarioLogado();
+  const container = document.getElementById('header-container');
+  if (!container) return;
+
+  try {
+
+    // 🔥 CAMINHO CORRETO
+    const response = await fetch('components/header.html');
+
+    if (!response.ok) {
+      throw new Error('Header não encontrado');
+    }
+
+    const html = await response.text();
+    container.innerHTML = html;
+
+    // Mostrar usuário logado
+    if (typeof window.mostrarUsuarioLogado === 'function') {
+      await window.mostrarUsuarioLogado();
+    }
+
+    controlarBotoesPorPagina();
+
+  } catch (err) {
+    console.error('Erro ao carregar header:', err);
   }
+
+});
+
+
+// =======================================
+// CONTROLE DE BOTÕES
+// =======================================
+
+function controlarBotoesPorPagina() {
 
   const paginaAtual = window.location.pathname.split('/').pop();
 
   const btnRelatorios = document.getElementById('btnRelatorios');
   const btnVoltar = document.getElementById('btnVoltar');
 
-  // Se estiver na index (Sistema)
-  if (paginaAtual === 'index.html') {
-    if (btnRelatorios) btnRelatorios.style.display = 'inline-block';
-    if (btnVoltar) btnVoltar.style.display = 'none';
+  if (!btnRelatorios || !btnVoltar) return;
+
+  if (paginaAtual === 'index.html' || paginaAtual === '') {
+    btnRelatorios.style.display = 'inline-block';
+    btnVoltar.style.display = 'none';
   }
 
-  // Se estiver em relatórios
   if (paginaAtual === 'relatorios.html') {
-    if (btnRelatorios) btnRelatorios.style.display = 'none';
-    if (btnVoltar) btnVoltar.style.display = 'inline-block';
+    btnRelatorios.style.display = 'none';
+    btnVoltar.style.display = 'inline-block';
   }
-
-});
+}
 
 
 // =======================================
