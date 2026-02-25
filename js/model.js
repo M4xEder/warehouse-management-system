@@ -1,13 +1,15 @@
 // ===============================
-// MODEL.JS — CAMADA DE DADOS SUPABASE (PRO)
+// MODEL.JS — CAMADA DE DADOS SUPABASE (PRO FINAL)
 // ===============================
 //
-// ✔ Apenas CRUD
+// ✔ CRUD padronizado
 // ✔ Sempre retorna { data, error }
+// ✔ Status padronizado
 // ✔ Compatível com Realtime
-// ✔ Padronização empresarial
+// ✔ Resumo completo de lote expedido
 //
 // ===============================
+
 
 
 // ======================================
@@ -108,31 +110,23 @@ window.dbCriarPosicao = async function (rua_id, numero) {
   return { data, error };
 };
 
-
-// 🔥 ATUALIZAÇÃO PRINCIPAL (SALVAR GAYLORD)
 window.dbAtualizarPosicao = async function (id, payload) {
-
   const { data, error } = await window.supabaseClient
     .from('posicoes')
     .update(payload)
     .eq('id', id)
     .select()
-    .single(); // ESSENCIAL para realtime sincronizar bem
+    .single();
 
   return { data, error };
 };
 
-
-// 🔓 LIBERAR POSIÇÃO
 window.dbLiberarPosicao = async function (id) {
-
   const { data, error } = await window.supabaseClient
     .from('posicoes')
     .update({
       ocupada: false,
-      lote_id: null,
-      volume: null,
-      rz: null
+      volume: null
     })
     .eq('id', id)
     .select()
@@ -156,15 +150,14 @@ window.dbBuscarLotes = async function () {
   return { data, error };
 };
 
-
-// 🔥 CRIAR LOTE PADRONIZADO
-window.dbCriarLote = async function (nome) {
-
+window.dbCriarLote = async function (nome, quantidade, cor) {
   const { data, error } = await window.supabaseClient
     .from('lotes')
     .insert([{
       nome,
-      status: 'ativo' // PADRONIZAÇÃO
+      quantidade,
+      cor,
+      status: 'ATIVO'
     }])
     .select()
     .single();
@@ -172,10 +165,7 @@ window.dbCriarLote = async function (nome) {
   return { data, error };
 };
 
-
-// 🔄 ATUALIZAR LOTE
 window.dbAtualizarLote = async function (id, payload) {
-
   const { data, error } = await window.supabaseClient
     .from('lotes')
     .update(payload)
@@ -185,7 +175,6 @@ window.dbAtualizarLote = async function (id, payload) {
 
   return { data, error };
 };
-
 
 window.dbDeletarLote = async function (id) {
   const { error } = await window.supabaseClient
@@ -206,14 +195,12 @@ window.dbBuscarHistorico = async function () {
   const { data, error } = await window.supabaseClient
     .from('historico_expedidos')
     .select('*')
-    .order('created_at', { ascending: false });
+    .order('data_expedicao', { ascending: false });
 
   return { data, error };
 };
 
-
 window.dbRegistrarExpedicao = async function (payload) {
-
   const { data, error } = await window.supabaseClient
     .from('historico_expedidos')
     .insert([payload])
@@ -221,4 +208,112 @@ window.dbRegistrarExpedicao = async function (payload) {
     .single();
 
   return { data, error };
+};
+
+
+
+// ======================================
+// 📦 RESUMO COMPLETO DO LOTE EXPEDIDO
+// ======================================
+
+window.dbBuscarResumoLoteExpedido = async function (loteId) {
+
+  try {
+
+    const { data: lote, error: erroLote } =
+      await window.supabaseClient
+        .from('lotes')
+        .select('*')
+        .eq('id', loteId)
+        .single();
+
+    if (erroLote) throw erroLote;
+
+    const { data: historico, error: erroHist } =
+      await window.supabaseClient
+        .from('historico_expedidos')
+        .select('*')
+        .eq('lote_id', loteId)
+        .order('data_expedicao', { ascending: false });
+
+    if (erroHist) throw erroHist;
+
+    const totalExpedido = historico.length;
+
+    const volumeTotal = historico.reduce((acc, item) =>
+      acc + Number(item.volume || 0), 0
+    );
+
+    const primeiraData = historico.length
+      ? historico[historico.length - 1].data_expedicao
+      : null;
+
+    const ultimaData = historico.length
+      ? historico[0].data_expedicao
+      : null;
+
+    return {
+      data: {
+        lote,
+        totalExpedido,
+        volumeTotal,
+        primeiraData,
+        ultimaData,
+        historico
+      },
+      error: null
+    };
+
+  } catch (error) {
+    console.error('Erro ao buscar resumo do lote:', error);
+    return { data: null, error };
+  }
+};
+
+
+
+// ======================================
+// 📦 LISTAR LOTES EXPEDIDOS COM RESUMO
+// ======================================
+
+window.dbBuscarLotesExpedidosComResumo = async function () {
+
+  try {
+
+    const { data: lotes, error } =
+      await window.supabaseClient
+        .from('lotes')
+        .select('*')
+        .eq('status', 'EXPEDIDO')
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    const resultado = [];
+
+    for (const lote of lotes) {
+
+      const { data: historico } =
+        await window.supabaseClient
+          .from('historico_expedidos')
+          .select('*')
+          .eq('lote_id', lote.id);
+
+      const volumeTotal = historico.reduce((acc, item) =>
+        acc + Number(item.volume || 0), 0
+      );
+
+      resultado.push({
+        ...lote,
+        totalExpedido: historico.length,
+        volumeTotal
+      });
+    }
+
+    return { data: resultado, error: null };
+
+  } catch (error) {
+    console.error('Erro ao buscar lotes expedidos:', error);
+    return { data: null, error };
+  }
 };
