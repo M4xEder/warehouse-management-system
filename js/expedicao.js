@@ -1,5 +1,5 @@
 // =====================================================
-// EXPEDICAO.JS — VERSÃO PROFISSIONAL BLINDADA
+// EXPEDICAO.JS — VERSÃO DEFINITIVA ESTÁVEL
 // =====================================================
 
 let expedicaoContext = {
@@ -10,11 +10,20 @@ let expedicaoContext = {
 // 🔒 VALIDADOR GLOBAL
 // =====================================================
 function validarStateExpedicao() {
-  if (!window.state) throw new Error("State não definido");
+
+  if (!window.state) window.state = {};
+
   if (!Array.isArray(state.lotes)) state.lotes = [];
   if (!Array.isArray(state.posicoes)) state.posicoes = [];
   if (!Array.isArray(state.ruas)) state.ruas = [];
   if (!Array.isArray(state.areas)) state.areas = [];
+}
+
+// =====================================================
+// 🔒 NORMALIZADOR DE ID (ANTI BUG DEFINITIVO)
+// =====================================================
+function idEquals(a, b) {
+  return String(a) === String(b);
 }
 
 // =====================================================
@@ -27,7 +36,7 @@ window.expedirLote = function (loteId) {
     validarStateExpedicao();
 
     if (!loteId) {
-      alert("Lote inválido");
+      alert("ID do lote inválido.");
       return;
     }
 
@@ -41,16 +50,19 @@ window.expedirLote = function (loteId) {
 
     lista.innerHTML = '';
 
-    const lote = state.lotes.find(l => l.id === loteId);
+    // 🔥 BUSCA LOTE COM NORMALIZAÇÃO
+    const lote = state.lotes.find(l => idEquals(l?.id, loteId));
 
     if (!lote) {
+      console.error("LoteId recebido:", loteId);
+      console.error("Lotes disponíveis:", state.lotes);
       alert('Lote não encontrado.');
       return;
     }
 
     const selecionaveis = state.posicoes.filter(p =>
       p?.ocupada === true &&
-      p?.lote_id === lote.id
+      idEquals(p?.lote_id, lote.id)
     );
 
     if (selecionaveis.length === 0) {
@@ -60,8 +72,13 @@ window.expedirLote = function (loteId) {
 
     selecionaveis.forEach(pos => {
 
-      const rua = state.ruas.find(r => r.id === pos?.rua_id);
-      const area = state.areas.find(a => a.id === rua?.area_id);
+      const rua = state.ruas.find(r =>
+        idEquals(r?.id, pos?.rua_id)
+      );
+
+      const area = state.areas.find(a =>
+        idEquals(a?.id, rua?.area_id)
+      );
 
       const label = document.createElement('label');
       label.className = 'linha-expedicao';
@@ -120,7 +137,6 @@ window.confirmarExpedicao = async function () {
       const posId = chk?.dataset?.posid;
       if (!posId) continue;
 
-      // 🔥 BUSCA POSIÇÃO ATUAL NO BANCO
       const { data: posBanco, error } = await supabase
         .from('posicoes')
         .select('*')
@@ -166,7 +182,6 @@ window.confirmarExpedicao = async function () {
       if (erroInsert) {
         console.error("Erro histórico:", erroInsert);
       }
-
     }
 
     // 🔥 ATUALIZA STATUS DOS LOTES
@@ -176,7 +191,6 @@ window.confirmarExpedicao = async function () {
 
     fecharModalExpedicao();
 
-    // 🔥 RECARREGA SISTEMA
     if (typeof carregarSistema === 'function') {
       await carregarSistema();
     }
@@ -189,7 +203,7 @@ window.confirmarExpedicao = async function () {
 };
 
 // =====================================================
-// ATUALIZAR STATUS DO LOTE (BLINDADO)
+// ATUALIZAR STATUS DO LOTE
 // =====================================================
 async function atualizarStatusLote(loteId) {
 
@@ -220,8 +234,7 @@ async function atualizarStatusLote(loteId) {
 
     if (ocupadas === 0) {
       novoStatus = 'EXPEDIDO';
-    }
-    else if (ocupadas < total) {
+    } else if (ocupadas < total) {
       novoStatus = 'PARCIAL';
     }
 
