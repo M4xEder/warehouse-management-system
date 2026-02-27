@@ -1,7 +1,26 @@
-// ===============================
-// STATE.JS — ESTADO GLOBAL PROFISSIONAL + REALTIME (FINAL)
-// ===============================
+// ======================================================
+// STATE.JS — ENTERPRISE DEFINITIVO ULTRA BLINDADO
+// ======================================================
 
+// ======================================
+// NORMALIZADOR GLOBAL DE ID
+// ======================================
+function idEquals(a, b) {
+  return String(a) === String(b);
+}
+
+function normalizeId(obj) {
+  if (!obj) return obj;
+  if (obj.id !== undefined) obj.id = String(obj.id);
+  if (obj.lote_id !== undefined) obj.lote_id = String(obj.lote_id);
+  if (obj.rua_id !== undefined) obj.rua_id = String(obj.rua_id);
+  if (obj.area_id !== undefined) obj.area_id = String(obj.area_id);
+  return obj;
+}
+
+// ======================================
+// ESTADO GLOBAL
+// ======================================
 window.state = {
   areas: [],
   ruas: [],
@@ -14,12 +33,12 @@ window.state = {
 
 let realtimeChannel = null;
 
-
-
 // ======================================
-// CARREGAR TODOS OS DADOS
+// CARREGAR SISTEMA (ANTI CORRUPÇÃO)
 // ======================================
 window.carregarSistema = async function () {
+
+  if (state.carregando) return;
 
   try {
 
@@ -45,41 +64,32 @@ window.carregarSistema = async function () {
     if (lotesRes.error) throw lotesRes.error;
     if (histRes.error) throw histRes.error;
 
-    state.areas = areasRes.data || [];
-    state.ruas = ruasRes.data || [];
-    state.posicoes = posRes.data || [];
-    state.lotes = lotesRes.data || [];
-    state.historicoExpedidos = histRes.data || [];
+    // 🔥 NORMALIZA TUDO
+    state.areas = (areasRes.data || []).map(normalizeId);
+    state.ruas = (ruasRes.data || []).map(normalizeId);
+    state.posicoes = (posRes.data || []).map(normalizeId);
+    state.lotes = (lotesRes.data || []).map(normalizeId);
+    state.historicoExpedidos = (histRes.data || []).map(normalizeId);
 
-    console.log("✅ Sistema carregado com sucesso");
+    console.log("✅ Sistema carregado blindado");
 
-    if (typeof renderMapa === "function") {
-      renderMapa();
-    }
+    if (typeof renderMapa === "function") renderMapa();
+    if (typeof atualizarDashboard === "function") atualizarDashboard();
 
-    if (typeof atualizarDashboard === "function") {
-      atualizarDashboard();
-    }
-
-    if (!state.realtimeAtivo) {
-      iniciarRealtime();
-    }
+    if (!state.realtimeAtivo) iniciarRealtime();
 
   } catch (err) {
 
-    console.error("Erro ao carregar sistema:", err);
+    console.error("❌ Erro ao carregar sistema:", err);
     alert("Erro ao carregar dados do banco.");
 
   } finally {
-
     state.carregando = false;
   }
 };
 
-
-
 // ======================================
-// REALTIME SUPABASE — PADRÃO EMPRESA
+// REALTIME ENTERPRISE
 // ======================================
 window.iniciarRealtime = function () {
 
@@ -91,176 +101,106 @@ window.iniciarRealtime = function () {
     .on('postgres_changes', {
       event: '*',
       schema: 'public',
-      table: 'areas'
-    }, payload => handleRealtimeChange('areas', payload))
+      table: '*'
+    }, payload => {
 
-    .on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'ruas'
-    }, payload => handleRealtimeChange('ruas', payload))
+      const tabela = payload.table;
+      handleRealtimeChange(tabela, payload);
 
-    .on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'posicoes'
-    }, payload => handleRealtimeChange('posicoes', payload))
+    })
 
-    .on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'lotes'
-    }, payload => handleRealtimeChange('lotes', payload))
-
-    .subscribe((status) => {
+    .subscribe(status => {
 
       if (status === 'SUBSCRIBED') {
-        console.log("🔥 Realtime conectado");
+        console.log("🔥 Realtime conectado enterprise");
         state.realtimeAtivo = true;
       }
 
     });
 };
 
-
-
 // ======================================
-// PROCESSADOR REALTIME INTELIGENTE
+// PROCESSADOR REALTIME 100% SEGURO
 // ======================================
 window.handleRealtimeChange = function (table, payload) {
 
-  const evento = payload.eventType;
-  const novo = payload.new;
-  const antigo = payload.old;
-
   if (!state[table]) return;
 
-  // =====================
+  const evento = payload.eventType;
+  const novo = normalizeId(payload.new);
+  const antigo = normalizeId(payload.old);
+
   // INSERT
-  // =====================
   if (evento === 'INSERT') {
 
-    const jaExiste = state[table].some(item => item.id === novo.id);
+    const existe = state[table].some(item =>
+      idEquals(item.id, novo.id)
+    );
 
-    if (!jaExiste) {
-      state[table].push(novo);
-    }
+    if (!existe) state[table].push(novo);
   }
 
-  // =====================
-  // UPDATE (REFERÊNCIA PRESERVADA)
-  // =====================
+  // UPDATE
   if (evento === 'UPDATE') {
 
-    const index = state[table].findIndex(item => item.id === novo.id);
+    const index = state[table].findIndex(item =>
+      idEquals(item.id, novo.id)
+    );
 
     if (index !== -1) {
       Object.assign(state[table][index], novo);
     }
   }
 
-  // =====================
   // DELETE
-  // =====================
   if (evento === 'DELETE') {
 
-    state[table] = state[table].filter(item => item.id !== antigo.id);
+    state[table] = state[table].filter(item =>
+      !idEquals(item.id, antigo.id)
+    );
   }
 
-  // =====================
-  // RENDER OTIMIZADO
-  // =====================
+  // RENDER INTELIGENTE
   if (table === 'posicoes' && typeof renderMapa === "function") {
     renderMapa();
   }
 
-  if (table === 'lotes' && typeof atualizarDashboard === "function") {
+  if (
+    (table === 'lotes' || table === 'historico_expedidos') &&
+    typeof atualizarDashboard === "function"
+  ) {
     atualizarDashboard();
   }
 };
 
-
-
 // ======================================
-// ATUALIZAÇÃO LOCAL OTIMISTA
-// ======================================
-window.atualizarPosicaoLocal = function (posicaoId, novosDados) {
-
-  const pos = state.posicoes.find(p => p.id === posicaoId);
-  if (!pos) return;
-
-  Object.assign(pos, novosDados);
-
-  if (typeof renderMapa === "function") {
-    renderMapa();
-  }
-};
-
-
-
-// ======================================
-// RECARREGAMENTOS MANUAIS (FALLBACK)
-// ======================================
-window.recarregarPosicoes = async function () {
-
-  const { data, error } = await dbBuscarPosicoes();
-
-  if (error) {
-    console.error("Erro ao recarregar posições:", error);
-    return;
-  }
-
-  state.posicoes = data || [];
-
-  if (typeof renderMapa === "function") {
-    renderMapa();
-  }
-};
-
-
-window.recarregarLotes = async function () {
-
-  const { data, error } = await dbBuscarLotes();
-
-  if (error) {
-    console.error("Erro ao recarregar lotes:", error);
-    return;
-  }
-
-  state.lotes = data || [];
-
-  if (typeof atualizarDashboard === "function") {
-    atualizarDashboard();
-  }
-};
-
-
-
-// ======================================
-// UTILITÁRIOS
+// GETTERS 100% SEGUROS
 // ======================================
 window.getAreaById = id =>
-  state.areas.find(a => a.id === id);
+  state.areas.find(a => idEquals(a.id, id));
 
 window.getRuaById = id =>
-  state.ruas.find(r => r.id === id);
+  state.ruas.find(r => idEquals(r.id, id));
 
 window.getPosicaoById = id =>
-  state.posicoes.find(p => p.id === id);
+  state.posicoes.find(p => idEquals(p.id, id));
 
 window.getLoteById = id =>
-  state.lotes.find(l => l.id === id);
-
-window.areaTemRuas = areaId =>
-  state.ruas.some(r => r.area_id === areaId);
-
-window.ruaTemPosicoesOcupadas = ruaId =>
-  state.posicoes.some(p => p.rua_id === ruaId && p.ocupada);
-
-
+  state.lotes.find(l => idEquals(l.id, id));
 
 // ======================================
-// RESET CONTROLADO
+// VERIFICAÇÕES
+// ======================================
+window.areaTemRuas = areaId =>
+  state.ruas.some(r => idEquals(r.area_id, areaId));
+
+window.ruaTemPosicoesOcupadas = ruaId =>
+  state.posicoes.some(p =>
+    idEquals(p.rua_id, ruaId) && p.ocupada === true
+  );
+
+// ======================================
+// RESET TOTAL CONTROLADO
 // ======================================
 window.resetState = function () {
 
@@ -275,4 +215,6 @@ window.resetState = function () {
     window.supabaseClient.removeChannel(realtimeChannel);
     realtimeChannel = null;
   }
+
+  console.log("🔄 Estado resetado com segurança");
 };
