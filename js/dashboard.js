@@ -1,6 +1,13 @@
 // ===============================
-// DASHBOARD.JS — VERSÃO BLINDADA PROFISSIONAL
+// DASHBOARD.JS — ENTERPRISE DEFINITIVO
 // ===============================
+
+// =====================================================
+// COMPARADOR GLOBAL DE ID (ANTI BUG)
+// =====================================================
+function idEquals(a, b) {
+  return String(a) === String(b);
+}
 
 // =====================================================
 // VALIDADOR GLOBAL
@@ -32,19 +39,19 @@ window.renderDashboard = window.atualizarDashboard;
 
 
 // =====================================================
-// CALCULAR DADOS DO LOTE (PADRÃO ÚNICO DO SISTEMA)
+// CALCULAR DADOS DO LOTE (BLINDADO)
 // =====================================================
 function calcularDadosLote(lote) {
 
   const total = Number(lote?.quantidade ?? 0);
 
   const alocados = state.posicoes.filter(p =>
-    p?.lote_id === lote?.id &&
+    idEquals(p?.lote_id, lote?.id) &&
     p?.ocupada === true
   ).length;
 
   const expedidos = state.historicoExpedidos.filter(r =>
-    r?.lote_id === lote?.id
+    idEquals(r?.lote_id, lote?.id)
   ).length;
 
   const naoAlocados = Math.max(total - alocados - expedidos, 0);
@@ -89,7 +96,6 @@ function renderLotesAtivos() {
       saldoDisponivel
     } = calcularDadosLote(lote);
 
-    // 🔒 Se totalmente expedido não aparece como ativo
     if (saldoDisponivel <= 0) return;
 
     exibiu = true;
@@ -120,7 +126,7 @@ function renderLotesAtivos() {
         </p>
 
         <div class="acoes">
-          <button onclick="expedirLote('${lote.id}')">
+          <button onclick="expedirLote('${String(lote.id)}')">
             Expedir
           </button>
 
@@ -143,7 +149,6 @@ function renderLotesAtivos() {
 }
 
 
-
 // ===============================
 // LOTES EXPEDIDOS
 // ===============================
@@ -161,18 +166,24 @@ function renderLotesExpedidos() {
 
   const porLote = {};
 
-  // 🔒 Agrupa por lote
   state.historicoExpedidos.forEach(reg => {
+
     if (!reg?.lote_id) return;
-    porLote[reg.lote_id] ??= [];
-    porLote[reg.lote_id].push(reg);
+
+    const key = String(reg.lote_id);
+
+    if (!porLote[key]) porLote[key] = [];
+    porLote[key].push(reg);
   });
 
   let exibiu = false;
 
   Object.entries(porLote).forEach(([loteId, registros]) => {
 
-    const lote = state.lotes.find(l => l?.id === loteId);
+    const lote = state.lotes.find(l =>
+      idEquals(l?.id, loteId)
+    );
+
     if (!lote) return;
 
     const total = Number(lote.quantidade ?? 0);
@@ -216,12 +227,12 @@ function renderLotesExpedidos() {
         <p><strong>Última expedição:</strong> ${dataFormatada}</p>
 
         <div class="acoes">
-          <button onclick="mostrarDetalhes('${lote.id}')">
+          <button onclick="mostrarDetalhes('${String(lote.id)}')">
             Detalhes
           </button>
 
           <button class="danger"
-            onclick="excluirHistoricoLote('${lote.id}')">
+            onclick="excluirHistoricoLote('${String(lote.id)}')">
             Excluir Histórico
           </button>
         </div>
@@ -232,4 +243,4 @@ function renderLotesExpedidos() {
   if (!exibiu) {
     div.innerHTML = '<p>Nenhum lote expedido.</p>';
   }
-}
+                                  }
