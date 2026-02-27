@@ -1,262 +1,235 @@
-// =====================================================
-// EXPEDICAO.JS — VERSÃO DEFINITIVA ESTÁVEL
-// =====================================================
-
-let expedicaoContext = {
-  processando: false
-};
+// ===============================
+// DASHBOARD.JS — VERSÃO BLINDADA PROFISSIONAL
+// ===============================
 
 // =====================================================
-// 🔒 VALIDADOR GLOBAL
+// VALIDADOR GLOBAL
 // =====================================================
-function validarStateExpedicao() {
+function validarStateDashboard() {
 
   if (!window.state) window.state = {};
 
   if (!Array.isArray(state.lotes)) state.lotes = [];
   if (!Array.isArray(state.posicoes)) state.posicoes = [];
-  if (!Array.isArray(state.ruas)) state.ruas = [];
-  if (!Array.isArray(state.areas)) state.areas = [];
+  if (!Array.isArray(state.historicoExpedidos)) state.historicoExpedidos = [];
 }
 
 // =====================================================
-// 🔒 NORMALIZADOR DE ID (ANTI BUG DEFINITIVO)
+// ATUALIZAR DASHBOARD
 // =====================================================
-function idEquals(a, b) {
-  return String(a) === String(b);
+window.atualizarDashboard = function () {
+
+  try {
+    validarStateDashboard();
+    renderLotesAtivos();
+    renderLotesExpedidos();
+  } catch (err) {
+    console.error("Erro atualizarDashboard:", err);
+  }
+};
+
+window.renderDashboard = window.atualizarDashboard;
+
+
+// =====================================================
+// CALCULAR DADOS DO LOTE (PADRÃO ÚNICO DO SISTEMA)
+// =====================================================
+function calcularDadosLote(lote) {
+
+  const total = Number(lote?.quantidade ?? 0);
+
+  const alocados = state.posicoes.filter(p =>
+    p?.lote_id === lote?.id &&
+    p?.ocupada === true
+  ).length;
+
+  const expedidos = state.historicoExpedidos.filter(r =>
+    r?.lote_id === lote?.id
+  ).length;
+
+  const naoAlocados = Math.max(total - alocados - expedidos, 0);
+  const saldoDisponivel = Math.max(total - expedidos, 0);
+
+  return {
+    total,
+    alocados,
+    expedidos,
+    naoAlocados,
+    saldoDisponivel
+  };
 }
 
-// =====================================================
-// ABRIR MODAL
-// =====================================================
-window.expedirLote = function (loteId) {
 
-  try {
+// ===============================
+// LOTES ATIVOS
+// ===============================
+function renderLotesAtivos() {
 
-    validarStateExpedicao();
+  const div = document.getElementById('lotesAtivos');
+  if (!div) return;
 
-    if (!loteId) {
-      alert("ID do lote inválido.");
-      return;
-    }
+  div.innerHTML = '';
 
-    const lista = document.getElementById('listaExpedicao');
-    const modal = document.getElementById('modalExpedicao');
-
-    if (!lista || !modal) {
-      console.error("Elementos do modal não encontrados");
-      return;
-    }
-
-    lista.innerHTML = '';
-
-    // 🔥 BUSCA LOTE COM NORMALIZAÇÃO
-    const lote = state.lotes.find(l => idEquals(l?.id, loteId));
-
-    if (!lote) {
-      console.error("LoteId recebido:", loteId);
-      console.error("Lotes disponíveis:", state.lotes);
-      alert('Lote não encontrado.');
-      return;
-    }
-
-    const selecionaveis = state.posicoes.filter(p =>
-      p?.ocupada === true &&
-      idEquals(p?.lote_id, lote.id)
-    );
-
-    if (selecionaveis.length === 0) {
-      alert('Nenhuma gaylord alocada neste lote.');
-      return;
-    }
-
-    selecionaveis.forEach(pos => {
-
-      const rua = state.ruas.find(r =>
-        idEquals(r?.id, pos?.rua_id)
-      );
-
-      const area = state.areas.find(a =>
-        idEquals(a?.id, rua?.area_id)
-      );
-
-      const label = document.createElement('label');
-      label.className = 'linha-expedicao';
-
-      label.innerHTML = `
-        <input
-          type="checkbox"
-          data-posid="${pos.id}"
-          checked
-        />
-        Área: ${area?.nome || '-'} |
-        Rua: ${rua?.nome || '-'} |
-        RZ: ${pos?.rz || '-'} |
-        Volume: ${pos?.volume || '-'}
-      `;
-
-      lista.appendChild(label);
-    });
-
-    modal.classList.remove('hidden');
-
-  } catch (err) {
-    console.error("Erro abrir modal expedição:", err);
-  }
-};
-
-// =====================================================
-// CONFIRMAR EXPEDIÇÃO
-// =====================================================
-window.confirmarExpedicao = async function () {
-
-  if (expedicaoContext.processando) return;
-  expedicaoContext.processando = true;
-
-  try {
-
-    const checks = document.querySelectorAll(
-      '#listaExpedicao input[type="checkbox"]:checked'
-    );
-
-    if (!checks || checks.length === 0) {
-      alert('Selecione ao menos uma gaylord.');
-      expedicaoContext.processando = false;
-      return;
-    }
-
-    if (!confirm(`Confirmar expedição de ${checks.length} gaylord(s)?`)) {
-      expedicaoContext.processando = false;
-      return;
-    }
-
-    const lotesAfetados = new Set();
-
-    for (const chk of checks) {
-
-      const posId = chk?.dataset?.posid;
-      if (!posId) continue;
-
-      const { data: posBanco, error } = await supabase
-        .from('posicoes')
-        .select('*')
-        .eq('id', posId)
-        .single();
-
-      if (error || !posBanco || posBanco.ocupada !== true) {
-        console.warn('Posição inválida ou já liberada:', posId);
-        continue;
-      }
-
-      const loteId = posBanco.lote_id;
-      lotesAfetados.add(loteId);
-
-      const volumeOriginal = posBanco.volume;
-
-      // 🔥 LIBERA POSIÇÃO
-      const { error: erroUpdate } = await supabase
-        .from('posicoes')
-        .update({
-          ocupada: false,
-          volume: null
-        })
-        .eq('id', posId);
-
-      if (erroUpdate) {
-        console.error("Erro liberar posição:", erroUpdate);
-        continue;
-      }
-
-      // 🔥 INSERE HISTÓRICO
-      const { error: erroInsert } = await supabase
-        .from('historico_expedidos')
-        .insert([{
-          lote_id: loteId,
-          posicao_id: posBanco.id,
-          posicao: posBanco.rz,
-          volume: volumeOriginal,
-          data_expedicao: new Date().toISOString(),
-          status: 'EXPEDIDO'
-        }]);
-
-      if (erroInsert) {
-        console.error("Erro histórico:", erroInsert);
-      }
-    }
-
-    // 🔥 ATUALIZA STATUS DOS LOTES
-    for (const loteId of lotesAfetados) {
-      await atualizarStatusLote(loteId);
-    }
-
-    fecharModalExpedicao();
-
-    if (typeof carregarSistema === 'function') {
-      await carregarSistema();
-    }
-
-  } catch (err) {
-    console.error("Erro confirmarExpedicao:", err);
+  if (state.lotes.length === 0) {
+    div.innerHTML = '<p>Nenhum lote cadastrado.</p>';
+    return;
   }
 
-  expedicaoContext.processando = false;
-};
+  let exibiu = false;
 
-// =====================================================
-// ATUALIZAR STATUS DO LOTE
-// =====================================================
-async function atualizarStatusLote(loteId) {
+  state.lotes.forEach(lote => {
 
-  try {
+    if (!lote?.id) return;
 
-    const { data: posicoes, error } = await supabase
-      .from('posicoes')
-      .select('id, ocupada')
-      .eq('lote_id', loteId);
+    const {
+      total,
+      alocados,
+      expedidos,
+      naoAlocados,
+      saldoDisponivel
+    } = calcularDadosLote(lote);
 
-    if (error) {
-      console.error("Erro buscar posições:", error);
-      return;
+    // 🔒 Se totalmente expedido não aparece como ativo
+    if (saldoDisponivel <= 0) return;
+
+    exibiu = true;
+
+    let statusTexto = 'Ativo';
+    let classeStatus = 'status-ativo';
+
+    if (expedidos > 0 && saldoDisponivel > 0) {
+      statusTexto = 'Parcial';
+      classeStatus = 'status-parcial';
     }
 
-    if (!posicoes || posicoes.length === 0) {
-      await supabase
-        .from('lotes')
-        .update({ status: 'EXPEDIDO' })
-        .eq('id', loteId);
-      return;
-    }
+    div.innerHTML += `
+      <div class="lote-card">
+        <h3>${lote.nome || '-'}</h3>
 
-    const total = posicoes.length;
-    const ocupadas = posicoes.filter(p => p?.ocupada === true).length;
+        <p><strong>Total:</strong> ${total}</p>
+        <p><strong>Alocados:</strong> ${alocados}</p>
+        <p><strong>Não alocados:</strong> ${naoAlocados}</p>
+        <p><strong>Expedidos:</strong> ${expedidos}</p>
+        <p><strong>Saldo disponível:</strong> ${saldoDisponivel}</p>
 
-    let novoStatus = 'ATIVO';
+        <p>
+          <strong>Status:</strong>
+          <span class="${classeStatus}">
+            ${statusTexto}
+          </span>
+        </p>
 
-    if (ocupadas === 0) {
-      novoStatus = 'EXPEDIDO';
-    } else if (ocupadas < total) {
-      novoStatus = 'PARCIAL';
-    }
+        <div class="acoes">
+          <button onclick="expedirLote('${lote.id}')">
+            Expedir
+          </button>
 
-    const { error: erroUpdate } = await supabase
-      .from('lotes')
-      .update({ status: novoStatus })
-      .eq('id', loteId);
+          <button onclick="alterarQuantidadeLote('${lote.nome}')">
+            Alterar Quantidade
+          </button>
 
-    if (erroUpdate) {
-      console.error("Erro atualizar status lote:", erroUpdate);
-    }
+          <button class="danger"
+            onclick="excluirLote('${lote.nome}')">
+            Excluir
+          </button>
+        </div>
+      </div>
+    `;
+  });
 
-  } catch (err) {
-    console.error("Erro atualizarStatusLote:", err);
+  if (!exibiu) {
+    div.innerHTML = '<p>Nenhum lote ativo.</p>';
   }
 }
 
-// =====================================================
-// FECHAR MODAL
-// =====================================================
-window.fecharModalExpedicao = function () {
 
-  const modal = document.getElementById('modalExpedicao');
-  if (modal) modal.classList.add('hidden');
-};
+
+// ===============================
+// LOTES EXPEDIDOS
+// ===============================
+function renderLotesExpedidos() {
+
+  const div = document.getElementById('lotesExpedidos');
+  if (!div) return;
+
+  div.innerHTML = '';
+
+  if (state.historicoExpedidos.length === 0) {
+    div.innerHTML = '<p>Nenhum lote expedido.</p>';
+    return;
+  }
+
+  const porLote = {};
+
+  // 🔒 Agrupa por lote
+  state.historicoExpedidos.forEach(reg => {
+    if (!reg?.lote_id) return;
+    porLote[reg.lote_id] ??= [];
+    porLote[reg.lote_id].push(reg);
+  });
+
+  let exibiu = false;
+
+  Object.entries(porLote).forEach(([loteId, registros]) => {
+
+    const lote = state.lotes.find(l => l?.id === loteId);
+    if (!lote) return;
+
+    const total = Number(lote.quantidade ?? 0);
+    const totalExpedido = registros.length;
+
+    if (totalExpedido <= 0) return;
+
+    exibiu = true;
+
+    const ultima = registros[registros.length - 1];
+
+    let statusTexto = '';
+    let classeStatus = '';
+
+    if (totalExpedido < total) {
+      statusTexto = 'Parcial';
+      classeStatus = 'status-parcial';
+    } else {
+      statusTexto = 'Expedido Total';
+      classeStatus = 'status-total';
+    }
+
+    const dataFormatada = ultima?.data_expedicao
+      ? new Date(ultima.data_expedicao).toLocaleString()
+      : '-';
+
+    div.innerHTML += `
+      <div class="lote-card expedido">
+        <h3>${lote.nome || '-'}</h3>
+
+        <p><strong>Total:</strong> ${total}</p>
+        <p><strong>Expedidos:</strong> ${totalExpedido}</p>
+
+        <p>
+          <strong>Status:</strong>
+          <span class="${classeStatus}">
+            ${statusTexto}
+          </span>
+        </p>
+
+        <p><strong>Última expedição:</strong> ${dataFormatada}</p>
+
+        <div class="acoes">
+          <button onclick="mostrarDetalhes('${lote.id}')">
+            Detalhes
+          </button>
+
+          <button class="danger"
+            onclick="excluirHistoricoLote('${lote.id}')">
+            Excluir Histórico
+          </button>
+        </div>
+      </div>
+    `;
+  });
+
+  if (!exibiu) {
+    div.innerHTML = '<p>Nenhum lote expedido.</p>';
+  }
+  }
