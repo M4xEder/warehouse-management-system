@@ -1,16 +1,16 @@
 // ===============================
-// DASHBOARD.JS — ENTERPRISE DEFINITIVO
+// DASHBOARD.JS — ENTERPRISE DEFINITIVO (100% CORRIGIDO)
 // ===============================
 
 // =====================================================
-// COMPARADOR GLOBAL DE ID (ANTI BUG)
+// COMPARADOR GLOBAL DE ID (ANTI BUG NUMBER/STRING)
 // =====================================================
 function idEquals(a, b) {
   return String(a) === String(b);
 }
 
 // =====================================================
-// VALIDADOR GLOBAL
+// VALIDADOR GLOBAL DE STATE
 // =====================================================
 function validarStateDashboard() {
 
@@ -67,9 +67,9 @@ function calcularDadosLote(lote) {
 }
 
 
-// ===============================
+// =====================================================
 // LOTES ATIVOS
-// ===============================
+// =====================================================
 function renderLotesAtivos() {
 
   const div = document.getElementById('lotesAtivos');
@@ -130,12 +130,12 @@ function renderLotesAtivos() {
             Expedir
           </button>
 
-          <button onclick="alterarQuantidadeLote('${lote.nome}')">
+          <button onclick="alterarQuantidadeLote('${String(lote.id)}')">
             Alterar Quantidade
           </button>
 
           <button class="danger"
-            onclick="excluirLote('${lote.nome}')">
+            onclick="excluirLote('${String(lote.id)}')">
             Excluir
           </button>
         </div>
@@ -149,9 +149,9 @@ function renderLotesAtivos() {
 }
 
 
-// ===============================
+// =====================================================
 // LOTES EXPEDIDOS
-// ===============================
+// =====================================================
 function renderLotesExpedidos() {
 
   const div = document.getElementById('lotesExpedidos');
@@ -243,4 +243,4 @@ function renderLotesExpedidos() {
   if (!exibiu) {
     div.innerHTML = '<p>Nenhum lote expedido.</p>';
   }
-                                  }
+}
