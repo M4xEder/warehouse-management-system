@@ -181,3 +181,40 @@ window.expedirLote = async function (id) {
     renderMapa();
   }
 };
+// ===============================
+// ATUALIZAR RESUMO GERAL
+// ===============================
+window.atualizarDashboard = function () {
+
+  if (!state?.lotes || !state?.posicoes) return;
+
+  const totalLotes = state.lotes.length;
+
+  const totalAlocados = state.posicoes
+    .filter(p => p.ocupada === true)
+    .length;
+
+  const totalNaoAlocados = state.posicoes
+    .filter(p => p.ocupada === false)
+    .length;
+
+  // Expedidos = posições que tinham lote e foram liberadas
+  const totalExpedidos = state.posicoes
+    .filter(p => p.expedido === true)
+    .length || 0;
+
+  const saldo = totalAlocados - totalExpedidos;
+
+  // Atualiza HTML
+  const elLotes = document.getElementById("resumoLotes");
+  const elAlocados = document.getElementById("resumoAlocados");
+  const elNaoAlocados = document.getElementById("resumoNaoAlocados");
+  const elExpedidos = document.getElementById("resumoExpedidos");
+  const elSaldo = document.getElementById("resumoSaldo");
+
+  if (elLotes) elLotes.textContent = totalLotes;
+  if (elAlocados) elAlocados.textContent = totalAlocados;
+  if (elNaoAlocados) elNaoAlocados.textContent = totalNaoAlocados;
+  if (elExpedidos) elExpedidos.textContent = totalExpedidos;
+  if (elSaldo) elSaldo.textContent = saldo;
+};
