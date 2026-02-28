@@ -1,13 +1,14 @@
 // ===============================
-// DASHBOARD.JS — COMPATÍVEL COM SUPABASE
+// DASHBOARD.JS — VERSÃO FINAL ESTÁVEL
 // ===============================
 
-// ===============================
-// INICIALIZAÇÃO
-// ===============================
 document.addEventListener("DOMContentLoaded", () => {
   if (typeof renderLotesAtivos === "function") {
     renderLotesAtivos();
+  }
+
+  if (typeof atualizarDashboard === "function") {
+    atualizarDashboard();
   }
 });
 
@@ -21,21 +22,27 @@ window.renderLotesAtivos = function () {
 
   container.innerHTML = "";
 
-  if (!state?.lotes) return;
+  if (!state || !state.lotes || !state.posicoes) return;
 
   state.lotes.forEach(lote => {
 
-    const totalAlocado = state.posicoes
-      ?.filter(p => p.lote_id === lote.id)
-      ?.length || 0;
+    const posicoesDoLote = state.posicoes.filter(p => p.lote_id === lote.id);
 
+    const alocados = posicoesDoLote.length;
+    const expedidos = posicoesDoLote.filter(p => p.expedido === true).length;
+    const naoAlocados = lote.quantidade - alocados;
+    const saldo = alocados - expedidos;
+
+    // ===============================
+    // STATUS VISUAL
+    // ===============================
     let statusClass = "status-ativo";
 
-    if (totalAlocado > 0 && totalAlocado < lote.quantidade) {
+    if (alocados > 0 && saldo > 0 && alocados < lote.quantidade) {
       statusClass = "status-parcial";
     }
 
-    if (totalAlocado >= lote.quantidade) {
+    if (saldo === 0 && alocados >= lote.quantidade) {
       statusClass = "status-total";
     }
 
@@ -44,8 +51,12 @@ window.renderLotesAtivos = function () {
 
     card.innerHTML = `
       <h3>${lote.nome}</h3>
-      <p>Total: ${lote.quantidade}</p>
-      <p>Alocado: ${totalAlocado}</p>
+
+      <p><strong>Total:</strong> ${lote.quantidade}</p>
+      <p><strong>Alocados:</strong> ${alocados}</p>
+      <p><strong>Não Alocados:</strong> ${naoAlocados < 0 ? 0 : naoAlocados}</p>
+      <p><strong>Expedidos:</strong> ${expedidos}</p>
+      <p><strong>Saldo:</strong> ${saldo < 0 ? 0 : saldo}</p>
 
       <div class="acoes">
         <button onclick="expedirLote('${lote.id}')">
@@ -64,7 +75,6 @@ window.renderLotesAtivos = function () {
     `;
 
     container.appendChild(card);
-
   });
 
 };
@@ -78,7 +88,12 @@ window.alterarQuantidade = async function (id) {
   if (!lote) return alert("Lote não encontrado.");
 
   const novaQtd = prompt("Nova quantidade:", lote.quantidade);
-  if (!novaQtd) return;
+  if (!novaQtd || isNaN(novaQtd)) return;
+
+  if (Number(novaQtd) < 0) {
+    alert("Quantidade inválida.");
+    return;
+  }
 
   const { error } = await window.supabaseClient
     .from("lotes")
@@ -91,7 +106,9 @@ window.alterarQuantidade = async function (id) {
   }
 
   lote.quantidade = Number(novaQtd);
+
   renderLotesAtivos();
+  atualizarDashboard();
 };
 
 // ===============================
@@ -101,10 +118,10 @@ window.excluirLote = async function (id) {
 
   if (!confirm("Deseja excluir este lote?")) return;
 
-  // Remove das posições
+  // Limpa posições
   const { error: erroPos } = await window.supabaseClient
     .from("posicoes")
-    .update({ ocupada: false, lote_id: null })
+    .update({ ocupada: false, lote_id: null, expedido: false })
     .eq("lote_id", id);
 
   if (erroPos) {
@@ -112,7 +129,6 @@ window.excluirLote = async function (id) {
     return;
   }
 
-  // Remove lote
   const { error } = await window.supabaseClient
     .from("lotes")
     .delete()
@@ -124,14 +140,17 @@ window.excluirLote = async function (id) {
   }
 
   state.lotes = state.lotes.filter(l => l.id !== id);
+
   state.posicoes.forEach(p => {
     if (p.lote_id === id) {
       p.lote_id = null;
       p.ocupada = false;
+      p.expedido = false;
     }
   });
 
   renderLotesAtivos();
+  atualizarDashboard();
 
   if (typeof renderMapa === "function") {
     renderMapa();
@@ -139,27 +158,33 @@ window.excluirLote = async function (id) {
 };
 
 // ===============================
-// EXPEDIR LOTE
+// EXPEDIR LOTE (CORRIGIDO)
 // ===============================
 window.expedirLote = async function (id) {
 
-  const qtd = Number(prompt("Quantidade para expedir:"));
-  if (!qtd || qtd <= 0) return;
+  const lote = state.lotes.find(l => l.id === id);
+  if (!lote) return alert("Lote não encontrado.");
 
-  const posicoesDoLote = state.posicoes
-    .filter(p => p.lote_id === id)
-    .slice(0, qtd);
+  const posicoesDoLote = state.posicoes.filter(p => p.lote_id === id);
 
   if (posicoesDoLote.length === 0) {
-    alert("Nenhuma posição encontrada.");
+    alert("Nenhuma posição alocada.");
     return;
   }
 
-  const ids = posicoesDoLote.map(p => p.id);
+  const qtd = Number(prompt(`Quantidade para expedir (máx ${posicoesDoLote.length}):`));
+  if (!qtd || qtd <= 0) return;
+
+  const selecionadas = posicoesDoLote.slice(0, qtd);
+  const ids = selecionadas.map(p => p.id);
 
   const { error } = await window.supabaseClient
     .from("posicoes")
-    .update({ ocupada: false, lote_id: null })
+    .update({
+      ocupada: false,
+      lote_id: null,
+      expedido: true
+    })
     .in("id", ids);
 
   if (error) {
@@ -167,22 +192,24 @@ window.expedirLote = async function (id) {
     return;
   }
 
-  // Atualiza state local
   state.posicoes.forEach(p => {
     if (ids.includes(p.id)) {
       p.lote_id = null;
       p.ocupada = false;
+      p.expedido = true;
     }
   });
 
   renderLotesAtivos();
+  atualizarDashboard();
 
   if (typeof renderMapa === "function") {
     renderMapa();
   }
 };
+
 // ===============================
-// ATUALIZAR RESUMO GERAL
+// RESUMO GERAL DO DASHBOARD
 // ===============================
 window.atualizarDashboard = function () {
 
@@ -198,14 +225,12 @@ window.atualizarDashboard = function () {
     .filter(p => p.ocupada === false)
     .length;
 
-  // Expedidos = posições que tinham lote e foram liberadas
   const totalExpedidos = state.posicoes
     .filter(p => p.expedido === true)
-    .length || 0;
+    .length;
 
   const saldo = totalAlocados - totalExpedidos;
 
-  // Atualiza HTML
   const elLotes = document.getElementById("resumoLotes");
   const elAlocados = document.getElementById("resumoAlocados");
   const elNaoAlocados = document.getElementById("resumoNaoAlocados");
@@ -216,5 +241,5 @@ window.atualizarDashboard = function () {
   if (elAlocados) elAlocados.textContent = totalAlocados;
   if (elNaoAlocados) elNaoAlocados.textContent = totalNaoAlocados;
   if (elExpedidos) elExpedidos.textContent = totalExpedidos;
-  if (elSaldo) elSaldo.textContent = saldo;
+  if (elSaldo) elSaldo.textContent = saldo < 0 ? 0 : saldo;
 };
