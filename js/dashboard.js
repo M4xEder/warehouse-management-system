@@ -1,132 +1,56 @@
 // ===============================
-// DASHBOARD.JS — ENTERPRISE DEFINITIVO (100% CORRIGIDO)
+// DASHBOARD.JS — 100% BLINDADO
 // ===============================
 
-// =====================================================
-// COMPARADOR GLOBAL DE ID (ANTI BUG NUMBER/STRING)
-// =====================================================
 function idEquals(a, b) {
   return String(a) === String(b);
 }
 
-// =====================================================
-// VALIDADOR GLOBAL DE STATE
-// =====================================================
-function validarStateDashboard() {
-
-  if (!window.state) window.state = {};
-
-  if (!Array.isArray(state.lotes)) state.lotes = [];
-  if (!Array.isArray(state.posicoes)) state.posicoes = [];
-  if (!Array.isArray(state.historicoExpedidos)) state.historicoExpedidos = [];
-}
-
-// =====================================================
-// ATUALIZAR DASHBOARD
-// =====================================================
-window.atualizarDashboard = function () {
-
-  try {
-    validarStateDashboard();
-    renderLotesAtivos();
-    renderLotesExpedidos();
-  } catch (err) {
-    console.error("Erro atualizarDashboard:", err);
+function atualizarSistema() {
+  saveState();
+  renderLotesAtivos();
+  if (typeof renderMapa === "function") {
+    renderMapa();
   }
-};
-
-window.renderDashboard = window.atualizarDashboard;
-
-
-// =====================================================
-// CALCULAR DADOS DO LOTE (BLINDADO)
-// =====================================================
-function calcularDadosLote(lote) {
-
-  const total = Number(lote?.quantidade ?? 0);
-
-  const alocados = state.posicoes.filter(p =>
-    idEquals(p?.lote_id, lote?.id) &&
-    p?.ocupada === true
-  ).length;
-
-  const expedidos = state.historicoExpedidos.filter(r =>
-    idEquals(r?.lote_id, lote?.id)
-  ).length;
-
-  const naoAlocados = Math.max(total - alocados - expedidos, 0);
-  const saldoDisponivel = Math.max(total - expedidos, 0);
-
-  return {
-    total,
-    alocados,
-    expedidos,
-    naoAlocados,
-    saldoDisponivel
-  };
 }
 
-
-// =====================================================
+// ===============================
 // LOTES ATIVOS
-// =====================================================
-function renderLotesAtivos() {
+// ===============================
 
-  const div = document.getElementById('lotesAtivos');
-  if (!div) return;
+window.renderLotesAtivos = function () {
+  const container = document.getElementById("lotesAtivos");
+  if (!container) return;
 
-  div.innerHTML = '';
+  container.innerHTML = "";
 
-  if (state.lotes.length === 0) {
-    div.innerHTML = '<p>Nenhum lote cadastrado.</p>';
-    return;
-  }
+  state.lotes
+    .filter(l => l.status !== "total")
+    .forEach(lote => {
 
-  let exibiu = false;
+      const totalAlocado = state.areas
+        .flatMap(a => a.ruas)
+        .flatMap(r => r.posicoes)
+        .filter(p => p.loteId && idEquals(p.loteId, lote.id))
+        .length;
 
-  state.lotes.forEach(lote => {
+      let statusClass = "";
+      if (totalAlocado === 0) statusClass = "status-ativo";
+      if (totalAlocado > 0 && totalAlocado < lote.quantidade)
+        statusClass = "status-parcial";
+      if (totalAlocado >= lote.quantidade)
+        statusClass = "status-total";
 
-    if (!lote?.id) return;
+      const card = document.createElement("div");
+      card.className = `lote-card ${statusClass}`;
 
-    const {
-      total,
-      alocados,
-      expedidos,
-      naoAlocados,
-      saldoDisponivel
-    } = calcularDadosLote(lote);
-
-    if (saldoDisponivel <= 0) return;
-
-    exibiu = true;
-
-    let statusTexto = 'Ativo';
-    let classeStatus = 'status-ativo';
-
-    if (expedidos > 0 && saldoDisponivel > 0) {
-      statusTexto = 'Parcial';
-      classeStatus = 'status-parcial';
-    }
-
-    div.innerHTML += `
-      <div class="lote-card">
-        <h3>${lote.nome || '-'}</h3>
-
-        <p><strong>Total:</strong> ${total}</p>
-        <p><strong>Alocados:</strong> ${alocados}</p>
-        <p><strong>Não alocados:</strong> ${naoAlocados}</p>
-        <p><strong>Expedidos:</strong> ${expedidos}</p>
-        <p><strong>Saldo disponível:</strong> ${saldoDisponivel}</p>
-
-        <p>
-          <strong>Status:</strong>
-          <span class="${classeStatus}">
-            ${statusTexto}
-          </span>
-        </p>
+      card.innerHTML = `
+        <h3>${lote.nome}</h3>
+        <p>Total: ${lote.quantidade}</p>
+        <p>Alocado: ${totalAlocado}</p>
 
         <div class="acoes">
-          <button onclick="expedirLote('${String(lote.id)}')">
+          <button onclick="abrirModalExpedicao('${String(lote.id)}')">
             Expedir
           </button>
 
@@ -139,108 +63,102 @@ function renderLotesAtivos() {
             Excluir
           </button>
         </div>
-      </div>
-    `;
+      `;
+
+      container.appendChild(card);
+    });
+};
+
+// ===============================
+// ALTERAR QUANTIDADE
+// ===============================
+
+window.alterarQuantidadeLote = function (id) {
+  const lote = state.lotes.find(l => idEquals(l.id, id));
+  if (!lote) return alert("Lote não encontrado.");
+
+  const novaQtd = prompt("Nova quantidade:", lote.quantidade);
+  if (!novaQtd) return;
+
+  lote.quantidade = parseInt(novaQtd);
+  atualizarSistema();
+};
+
+// ===============================
+// EXCLUIR LOTE
+// ===============================
+
+window.excluirLote = function (id) {
+  const lote = state.lotes.find(l => idEquals(l.id, id));
+  if (!lote) return alert("Lote não encontrado.");
+
+  if (!confirm("Deseja excluir este lote?")) return;
+
+  // Remove gaylords do mapa
+  state.areas.forEach(area => {
+    area.ruas.forEach(rua => {
+      rua.posicoes.forEach(pos => {
+        if (pos.loteId && idEquals(pos.loteId, id)) {
+          pos.loteId = null;
+        }
+      });
+    });
   });
 
-  if (!exibiu) {
-    div.innerHTML = '<p>Nenhum lote ativo.</p>';
-  }
-}
+  state.lotes = state.lotes.filter(l => !idEquals(l.id, id));
 
+  atualizarSistema();
+};
 
-// =====================================================
-// LOTES EXPEDIDOS
-// =====================================================
-function renderLotesExpedidos() {
+// ===============================
+// EXPEDIÇÃO
+// ===============================
 
-  const div = document.getElementById('lotesExpedidos');
-  if (!div) return;
+window.abrirModalExpedicao = function (id) {
+  const lote = state.lotes.find(l => idEquals(l.id, id));
+  if (!lote) return alert("Lote não encontrado.");
 
-  div.innerHTML = '';
+  const qtd = prompt("Quantidade para expedir:");
+  if (!qtd) return;
 
-  if (state.historicoExpedidos.length === 0) {
-    div.innerHTML = '<p>Nenhum lote expedido.</p>';
-    return;
-  }
+  expedirLote(id, parseInt(qtd));
+};
 
-  const porLote = {};
+window.expedirLote = function (id, quantidade) {
+  const lote = state.lotes.find(l => idEquals(l.id, id));
+  if (!lote) return alert("Lote não encontrado.");
 
-  state.historicoExpedidos.forEach(reg => {
+  let removidas = 0;
 
-    if (!reg?.lote_id) return;
-
-    const key = String(reg.lote_id);
-
-    if (!porLote[key]) porLote[key] = [];
-    porLote[key].push(reg);
+  state.areas.forEach(area => {
+    area.ruas.forEach(rua => {
+      rua.posicoes.forEach(pos => {
+        if (
+          pos.loteId &&
+          idEquals(pos.loteId, id) &&
+          removidas < quantidade
+        ) {
+          pos.loteId = null;
+          removidas++;
+        }
+      });
+    });
   });
 
-  let exibiu = false;
+  if (removidas === 0)
+    return alert("Nenhuma gaylord alocada encontrada.");
 
-  Object.entries(porLote).forEach(([loteId, registros]) => {
+  const totalAlocado = state.areas
+    .flatMap(a => a.ruas)
+    .flatMap(r => r.posicoes)
+    .filter(p => p.loteId && idEquals(p.loteId, id))
+    .length;
 
-    const lote = state.lotes.find(l =>
-      idEquals(l?.id, loteId)
-    );
-
-    if (!lote) return;
-
-    const total = Number(lote.quantidade ?? 0);
-    const totalExpedido = registros.length;
-
-    if (totalExpedido <= 0) return;
-
-    exibiu = true;
-
-    const ultima = registros[registros.length - 1];
-
-    let statusTexto = '';
-    let classeStatus = '';
-
-    if (totalExpedido < total) {
-      statusTexto = 'Parcial';
-      classeStatus = 'status-parcial';
-    } else {
-      statusTexto = 'Expedido Total';
-      classeStatus = 'status-total';
-    }
-
-    const dataFormatada = ultima?.data_expedicao
-      ? new Date(ultima.data_expedicao).toLocaleString()
-      : '-';
-
-    div.innerHTML += `
-      <div class="lote-card expedido">
-        <h3>${lote.nome || '-'}</h3>
-
-        <p><strong>Total:</strong> ${total}</p>
-        <p><strong>Expedidos:</strong> ${totalExpedido}</p>
-
-        <p>
-          <strong>Status:</strong>
-          <span class="${classeStatus}">
-            ${statusTexto}
-          </span>
-        </p>
-
-        <p><strong>Última expedição:</strong> ${dataFormatada}</p>
-
-        <div class="acoes">
-          <button onclick="mostrarDetalhes('${String(lote.id)}')">
-            Detalhes
-          </button>
-
-          <button class="danger"
-            onclick="excluirHistoricoLote('${String(lote.id)}')">
-            Excluir Histórico
-          </button>
-        </div>
-      </div>
-    `;
-  });
-
-  if (!exibiu) {
-    div.innerHTML = '<p>Nenhum lote expedido.</p>';
+  if (totalAlocado === 0) {
+    lote.status = "total";
+  } else {
+    lote.status = "parcial";
   }
-}
+
+  atualizarSistema();
+};
