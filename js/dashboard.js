@@ -1,72 +1,103 @@
 // ===============================
-// DASHBOARD.JS — 100% BLINDADO
+// DASHBOARD.JS — VERSÃO ESTÁVEL FINAL
 // ===============================
 
+// Garante comparação segura de IDs
 function idEquals(a, b) {
   return String(a) === String(b);
 }
 
-function atualizarSistema() {
-  saveState();
+// ===============================
+// INICIALIZAÇÃO
+// ===============================
+
+document.addEventListener("DOMContentLoaded", () => {
+
+  if (typeof loadState === "function") {
+    loadState();
+  }
+
   renderLotesAtivos();
+
+});
+
+// ===============================
+// ATUALIZA SISTEMA
+// ===============================
+
+function atualizarSistema() {
+  if (typeof saveState === "function") {
+    saveState();
+  }
+
+  renderLotesAtivos();
+
   if (typeof renderMapa === "function") {
     renderMapa();
   }
 }
 
 // ===============================
-// LOTES ATIVOS
+// RENDER LOTES ATIVOS
 // ===============================
 
 window.renderLotesAtivos = function () {
+
   const container = document.getElementById("lotesAtivos");
   if (!container) return;
 
   container.innerHTML = "";
 
-  state.lotes
-    .filter(l => l.status !== "total")
-    .forEach(lote => {
+  if (!state || !state.lotes) return;
 
-      const totalAlocado = state.areas
-        .flatMap(a => a.ruas)
-        .flatMap(r => r.posicoes)
-        .filter(p => p.loteId && idEquals(p.loteId, lote.id))
-        .length;
+  state.lotes.forEach(lote => {
 
-      let statusClass = "";
-      if (totalAlocado === 0) statusClass = "status-ativo";
-      if (totalAlocado > 0 && totalAlocado < lote.quantidade)
-        statusClass = "status-parcial";
-      if (totalAlocado >= lote.quantidade)
-        statusClass = "status-total";
+    if (lote.status === "total") return;
 
-      const card = document.createElement("div");
-      card.className = `lote-card ${statusClass}`;
+    const totalAlocado = state.areas
+      .flatMap(a => a.ruas)
+      .flatMap(r => r.posicoes)
+      .filter(p => p.loteId && idEquals(p.loteId, lote.id))
+      .length;
 
-      card.innerHTML = `
-        <h3>${lote.nome}</h3>
-        <p>Total: ${lote.quantidade}</p>
-        <p>Alocado: ${totalAlocado}</p>
+    let statusClass = "status-ativo";
 
-        <div class="acoes">
-          <button onclick="abrirModalExpedicao('${String(lote.id)}')">
-            Expedir
-          </button>
+    if (totalAlocado > 0 && totalAlocado < lote.quantidade) {
+      statusClass = "status-parcial";
+    }
 
-          <button onclick="alterarQuantidadeLote('${String(lote.id)}')">
-            Alterar Quantidade
-          </button>
+    if (totalAlocado >= lote.quantidade) {
+      statusClass = "status-total";
+    }
 
-          <button class="danger"
-            onclick="excluirLote('${String(lote.id)}')">
-            Excluir
-          </button>
-        </div>
-      `;
+    const card = document.createElement("div");
+    card.className = `lote-card ${statusClass}`;
 
-      container.appendChild(card);
-    });
+    card.innerHTML = `
+      <h3>${lote.nome}</h3>
+      <p>Total: ${lote.quantidade}</p>
+      <p>Alocado: ${totalAlocado}</p>
+
+      <div class="acoes">
+        <button onclick="abrirModalExpedicao('${String(lote.id)}')">
+          Expedir
+        </button>
+
+        <button onclick="alterarQuantidadeLote('${String(lote.id)}')">
+          Alterar Quantidade
+        </button>
+
+        <button class="danger"
+          onclick="excluirLote('${String(lote.id)}')">
+          Excluir
+        </button>
+      </div>
+    `;
+
+    container.appendChild(card);
+
+  });
+
 };
 
 // ===============================
@@ -74,6 +105,7 @@ window.renderLotesAtivos = function () {
 // ===============================
 
 window.alterarQuantidadeLote = function (id) {
+
   const lote = state.lotes.find(l => idEquals(l.id, id));
   if (!lote) return alert("Lote não encontrado.");
 
@@ -81,6 +113,7 @@ window.alterarQuantidadeLote = function (id) {
   if (!novaQtd) return;
 
   lote.quantidade = parseInt(novaQtd);
+
   atualizarSistema();
 };
 
@@ -89,6 +122,7 @@ window.alterarQuantidadeLote = function (id) {
 // ===============================
 
 window.excluirLote = function (id) {
+
   const lote = state.lotes.find(l => idEquals(l.id, id));
   if (!lote) return alert("Lote não encontrado.");
 
@@ -115,6 +149,7 @@ window.excluirLote = function (id) {
 // ===============================
 
 window.abrirModalExpedicao = function (id) {
+
   const lote = state.lotes.find(l => idEquals(l.id, id));
   if (!lote) return alert("Lote não encontrado.");
 
@@ -125,6 +160,7 @@ window.abrirModalExpedicao = function (id) {
 };
 
 window.expedirLote = function (id, quantidade) {
+
   const lote = state.lotes.find(l => idEquals(l.id, id));
   if (!lote) return alert("Lote não encontrado.");
 
@@ -133,6 +169,7 @@ window.expedirLote = function (id, quantidade) {
   state.areas.forEach(area => {
     area.ruas.forEach(rua => {
       rua.posicoes.forEach(pos => {
+
         if (
           pos.loteId &&
           idEquals(pos.loteId, id) &&
@@ -141,12 +178,15 @@ window.expedirLote = function (id, quantidade) {
           pos.loteId = null;
           removidas++;
         }
+
       });
     });
   });
 
-  if (removidas === 0)
-    return alert("Nenhuma gaylord alocada encontrada.");
+  if (removidas === 0) {
+    alert("Nenhuma gaylord alocada encontrada.");
+    return;
+  }
 
   const totalAlocado = state.areas
     .flatMap(a => a.ruas)
