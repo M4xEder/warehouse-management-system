@@ -1,46 +1,19 @@
 // ===============================
-// DASHBOARD.JS — VERSÃO ESTÁVEL FINAL
+// DASHBOARD.JS — COMPATÍVEL COM SUPABASE
 // ===============================
-
-// Garante comparação segura de IDs
-function idEquals(a, b) {
-  return String(a) === String(b);
-}
 
 // ===============================
 // INICIALIZAÇÃO
 // ===============================
-
 document.addEventListener("DOMContentLoaded", () => {
-
-  if (typeof loadState === "function") {
-    loadState();
+  if (typeof renderLotesAtivos === "function") {
+    renderLotesAtivos();
   }
-
-  renderLotesAtivos();
-
 });
-
-// ===============================
-// ATUALIZA SISTEMA
-// ===============================
-
-function atualizarSistema() {
-  if (typeof saveState === "function") {
-    saveState();
-  }
-
-  renderLotesAtivos();
-
-  if (typeof renderMapa === "function") {
-    renderMapa();
-  }
-}
 
 // ===============================
 // RENDER LOTES ATIVOS
 // ===============================
-
 window.renderLotesAtivos = function () {
 
   const container = document.getElementById("lotesAtivos");
@@ -48,17 +21,13 @@ window.renderLotesAtivos = function () {
 
   container.innerHTML = "";
 
-  if (!state || !state.lotes) return;
+  if (!state?.lotes) return;
 
   state.lotes.forEach(lote => {
 
-    if (lote.status === "total") return;
-
-    const totalAlocado = state.areas
-      .flatMap(a => a.ruas)
-      .flatMap(r => r.posicoes)
-      .filter(p => p.loteId && idEquals(p.loteId, lote.id))
-      .length;
+    const totalAlocado = state.posicoes
+      ?.filter(p => p.lote_id === lote.id)
+      ?.length || 0;
 
     let statusClass = "status-ativo";
 
@@ -79,16 +48,16 @@ window.renderLotesAtivos = function () {
       <p>Alocado: ${totalAlocado}</p>
 
       <div class="acoes">
-        <button onclick="abrirModalExpedicao('${String(lote.id)}')">
+        <button onclick="expedirLote('${lote.id}')">
           Expedir
         </button>
 
-        <button onclick="alterarQuantidadeLote('${String(lote.id)}')">
-          Alterar Quantidade
+        <button onclick="alterarQuantidade('${lote.id}')">
+          Alterar Qtd
         </button>
 
         <button class="danger"
-          onclick="excluirLote('${String(lote.id)}')">
+          onclick="excluirLote('${lote.id}')">
           Excluir
         </button>
       </div>
@@ -103,102 +72,112 @@ window.renderLotesAtivos = function () {
 // ===============================
 // ALTERAR QUANTIDADE
 // ===============================
+window.alterarQuantidade = async function (id) {
 
-window.alterarQuantidadeLote = function (id) {
-
-  const lote = state.lotes.find(l => idEquals(l.id, id));
+  const lote = state.lotes.find(l => l.id === id);
   if (!lote) return alert("Lote não encontrado.");
 
   const novaQtd = prompt("Nova quantidade:", lote.quantidade);
   if (!novaQtd) return;
 
-  lote.quantidade = parseInt(novaQtd);
+  const { error } = await window.supabaseClient
+    .from("lotes")
+    .update({ quantidade: Number(novaQtd) })
+    .eq("id", id);
 
-  atualizarSistema();
+  if (error) {
+    alert("Erro ao atualizar quantidade");
+    return;
+  }
+
+  lote.quantidade = Number(novaQtd);
+  renderLotesAtivos();
 };
 
 // ===============================
 // EXCLUIR LOTE
 // ===============================
-
-window.excluirLote = function (id) {
-
-  const lote = state.lotes.find(l => idEquals(l.id, id));
-  if (!lote) return alert("Lote não encontrado.");
+window.excluirLote = async function (id) {
 
   if (!confirm("Deseja excluir este lote?")) return;
 
-  // Remove gaylords do mapa
-  state.areas.forEach(area => {
-    area.ruas.forEach(rua => {
-      rua.posicoes.forEach(pos => {
-        if (pos.loteId && idEquals(pos.loteId, id)) {
-          pos.loteId = null;
-        }
-      });
-    });
-  });
+  // Remove das posições
+  const { error: erroPos } = await window.supabaseClient
+    .from("posicoes")
+    .update({ ocupada: false, lote_id: null })
+    .eq("lote_id", id);
 
-  state.lotes = state.lotes.filter(l => !idEquals(l.id, id));
-
-  atualizarSistema();
-};
-
-// ===============================
-// EXPEDIÇÃO
-// ===============================
-
-window.abrirModalExpedicao = function (id) {
-
-  const lote = state.lotes.find(l => idEquals(l.id, id));
-  if (!lote) return alert("Lote não encontrado.");
-
-  const qtd = prompt("Quantidade para expedir:");
-  if (!qtd) return;
-
-  expedirLote(id, parseInt(qtd));
-};
-
-window.expedirLote = function (id, quantidade) {
-
-  const lote = state.lotes.find(l => idEquals(l.id, id));
-  if (!lote) return alert("Lote não encontrado.");
-
-  let removidas = 0;
-
-  state.areas.forEach(area => {
-    area.ruas.forEach(rua => {
-      rua.posicoes.forEach(pos => {
-
-        if (
-          pos.loteId &&
-          idEquals(pos.loteId, id) &&
-          removidas < quantidade
-        ) {
-          pos.loteId = null;
-          removidas++;
-        }
-
-      });
-    });
-  });
-
-  if (removidas === 0) {
-    alert("Nenhuma gaylord alocada encontrada.");
+  if (erroPos) {
+    alert("Erro ao limpar posições");
     return;
   }
 
-  const totalAlocado = state.areas
-    .flatMap(a => a.ruas)
-    .flatMap(r => r.posicoes)
-    .filter(p => p.loteId && idEquals(p.loteId, id))
-    .length;
+  // Remove lote
+  const { error } = await window.supabaseClient
+    .from("lotes")
+    .delete()
+    .eq("id", id);
 
-  if (totalAlocado === 0) {
-    lote.status = "total";
-  } else {
-    lote.status = "parcial";
+  if (error) {
+    alert("Erro ao excluir lote");
+    return;
   }
 
-  atualizarSistema();
+  state.lotes = state.lotes.filter(l => l.id !== id);
+  state.posicoes.forEach(p => {
+    if (p.lote_id === id) {
+      p.lote_id = null;
+      p.ocupada = false;
+    }
+  });
+
+  renderLotesAtivos();
+
+  if (typeof renderMapa === "function") {
+    renderMapa();
+  }
+};
+
+// ===============================
+// EXPEDIR LOTE
+// ===============================
+window.expedirLote = async function (id) {
+
+  const qtd = Number(prompt("Quantidade para expedir:"));
+  if (!qtd || qtd <= 0) return;
+
+  const posicoesDoLote = state.posicoes
+    .filter(p => p.lote_id === id)
+    .slice(0, qtd);
+
+  if (posicoesDoLote.length === 0) {
+    alert("Nenhuma posição encontrada.");
+    return;
+  }
+
+  const ids = posicoesDoLote.map(p => p.id);
+
+  const { error } = await window.supabaseClient
+    .from("posicoes")
+    .update({ ocupada: false, lote_id: null })
+    .in("id", ids);
+
+  if (error) {
+    alert("Erro ao expedir.");
+    return;
+  }
+
+  // Atualiza state local
+  state.posicoes.forEach(p => {
+    if (ids.includes(p.id)) {
+      p.lote_id = null;
+      p.ocupada = false;
+    }
+  });
+
+  renderLotesAtivos();
+
+  if (typeof renderMapa === "function") {
+    renderMapa();
+  }
 };
