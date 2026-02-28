@@ -9,33 +9,19 @@
   <link rel="stylesheet" href="css/style.css">
 
   <!-- ========================= -->
-  <!-- SUPABASE (DEVE VIR PRIMEIRO) -->
+  <!-- SUPABASE -->
   <!-- ========================= -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 
-  <!-- ========================= -->
-  <!-- CONEXÃO BANCO -->
-  <!-- ========================= -->
+  <!-- CONEXÃO -->
   <script src="js/supabase.js" defer></script>
 
-  <!-- ========================= -->
-  <!-- CAMADA DE DADOS -->
-  <!-- ========================= -->
+  <!-- BASE -->
   <script src="js/model.js" defer></script>
-
-  <!-- ========================= -->
-  <!-- ESTADO GLOBAL -->
-  <!-- ========================= -->
   <script src="js/state.js" defer></script>
-
-  <!-- ========================= -->
-  <!-- UTILITÁRIOS -->
-  <!-- ========================= -->
   <script src="js/utils.js" defer></script>
 
-  <!-- ========================= -->
-  <!-- MÓDULOS DO SISTEMA -->
-  <!-- ========================= -->
+  <!-- MÓDULOS -->
   <script src="js/lotes.js" defer></script>
   <script src="js/mapa.js" defer></script>
   <script src="js/modal.js" defer></script>
@@ -43,15 +29,11 @@
   <script src="js/busca.js" defer></script>
   <script src="js/dashboard.js" defer></script>
 
-  <!-- ========================= -->
   <!-- INTERFACE -->
-  <!-- ========================= -->
   <script src="js/header.js" defer></script>
   <script src="js/login.js" defer></script>
 
-  <!-- ========================= -->
-  <!-- INICIALIZAÇÃO FINAL -->
-  <!-- ========================= -->
+  <!-- INICIALIZAÇÃO -->
   <script src="js/main.js" defer></script>
 
 </head>
@@ -89,10 +71,7 @@
 <section class="cadastros">
   <h2>Cadastrar Lote</h2>
 
-  <input 
-    id="loteNome" 
-    placeholder="Nome do lote"
-  >
+  <input id="loteNome" placeholder="Nome do lote">
 
   <input 
     id="loteTotal" 
@@ -110,11 +89,46 @@
 <section id="mapa"></section>
 
 <!-- ========================= -->
-<!-- DASHBOARD -->
+<!-- RESUMO GERAL -->
+<!-- ========================= -->
+<section class="dashboard-resumo">
+
+  <div class="card">
+    <h3>Lotes</h3>
+    <span id="resumoLotes">0</span>
+  </div>
+
+  <div class="card">
+    <h3>Alocados</h3>
+    <span id="resumoAlocados">0</span>
+  </div>
+
+  <div class="card">
+    <h3>Não Alocados</h3>
+    <span id="resumoNaoAlocados">0</span>
+  </div>
+
+  <div class="card">
+    <h3>Expedidos</h3>
+    <span id="resumoExpedidos">0</span>
+  </div>
+
+  <div class="card">
+    <h3>Saldo</h3>
+    <span id="resumoSaldo">0</span>
+  </div>
+
+</section>
+
+<!-- ========================= -->
+<!-- LOTES ATIVOS -->
 <!-- ========================= -->
 <h2>Lotes Ativos</h2>
 <div id="lotesAtivos"></div>
 
+<!-- ========================= -->
+<!-- LOTES EXPEDIDOS -->
+<!-- ========================= -->
 <h2>Lotes Expedidos</h2>
 <div id="lotesExpedidos"></div>
 
