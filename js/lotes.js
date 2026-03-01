@@ -81,22 +81,30 @@ window.cadastrarLote = async function () {
 
 
 // =====================================================
-// ALTERAR QUANTIDADE
+// ALTERAR QUANTIDADE (VERSÃO CORRIGIDA)
 // =====================================================
 window.alterarQuantidadeLote = async function (loteId) {
 
-  const lote = state.lotes.find(l => l.id === loteId);
+  // 🔥 Garante que o ID seja número
+  const id = Number(loteId);
+
+  const lote = state.lotes.find(l => Number(l.id) === id);
 
   if (!lote) {
     alert('Lote não encontrado.');
     return;
   }
 
-  const novoTotal = Number(
-    prompt('Nova quantidade total do lote:', lote.quantidade)
+  const novoTotalStr = prompt(
+    `Quantidade atual: ${lote.quantidade}\n\nNova quantidade total:`,
+    lote.quantidade
   );
 
-  if (!novoTotal || novoTotal <= 0) {
+  if (novoTotalStr === null) return;
+
+  const novoTotal = Number(novoTotalStr);
+
+  if (isNaN(novoTotal) || novoTotal <= 0) {
     alert('Quantidade inválida.');
     return;
   }
@@ -106,10 +114,11 @@ window.alterarQuantidadeLote = async function (loteId) {
     const { error } = await window.supabaseClient
       .from('lotes')
       .update({ quantidade: novoTotal })
-      .eq('id', lote.id);
+      .eq('id', id);
 
     if (error) throw error;
 
+    // 🔄 Recarrega sistema completo
     if (typeof carregarSistema === 'function') {
       await carregarSistema();
     }
@@ -119,63 +128,6 @@ window.alterarQuantidadeLote = async function (loteId) {
   } catch (err) {
     console.error('Erro ao atualizar lote:', err);
     alert('Erro ao atualizar lote.');
-  }
-};
-
-
-
-// =====================================================
-// EXCLUIR LOTE (BLINDADO)
-// =====================================================
-window.excluirLote = async function (loteId) {
-
-  const lote = state.lotes.find(l => l.id === loteId);
-
-  if (!lote) {
-    alert('Lote não encontrado.');
-    return;
-  }
-
-  // 🔒 Verifica se ainda existem posições vinculadas
-  const { count, error: erroCount } =
-    await window.supabaseClient
-      .from('posicoes')
-      .select('*', { count: 'exact', head: true })
-      .eq('lote_id', lote.id);
-
-  if (erroCount) {
-    console.error(erroCount);
-    alert('Erro ao validar posições do lote.');
-    return;
-  }
-
-  if (count > 0) {
-    alert('Não é possível excluir lote com posições vinculadas.');
-    return;
-  }
-
-  if (!confirm(`Deseja realmente excluir o lote "${lote.nome}"?`)) {
-    return;
-  }
-
-  try {
-
-    const { error } = await window.supabaseClient
-      .from('lotes')
-      .delete()
-      .eq('id', lote.id);
-
-    if (error) throw error;
-
-    if (typeof carregarSistema === 'function') {
-      await carregarSistema();
-    }
-
-    alert('Lote excluído com sucesso.');
-
-  } catch (err) {
-    console.error('Erro ao excluir lote:', err);
-    alert('Erro ao excluir lote.');
   }
 };
 
