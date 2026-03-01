@@ -163,3 +163,54 @@ window.renderLotesExpedidos = function () {
   });
 
 };
+window.alterarQuantidade = async function (loteId) {
+
+  const lote = state.lotes.find(l => l.id === loteId);
+  if (!lote) {
+    alert("Lote não encontrado.");
+    return;
+  }
+
+  const novaQuantidade = prompt(
+    `Quantidade atual: ${lote.quantidade}\n\nDigite a nova quantidade:`,
+    lote.quantidade
+  );
+
+  if (novaQuantidade === null) return;
+
+  const quantidadeNumero = parseInt(novaQuantidade);
+
+  if (isNaN(quantidadeNumero) || quantidadeNumero < 0) {
+    alert("Quantidade inválida.");
+    return;
+  }
+
+  try {
+
+    // 🔥 Atualiza no Supabase
+    const { error } = await supabase
+      .from("lotes")
+      .update({ quantidade: quantidadeNumero })
+      .eq("id", loteId);
+
+    if (error) {
+      console.error(error);
+      alert("Erro ao atualizar no banco.");
+      return;
+    }
+
+    // 🔥 Atualiza no state
+    lote.quantidade = quantidadeNumero;
+
+    // 🔥 Re-renderiza
+    renderLotesAtivos();
+    renderMapa();
+
+    alert("Quantidade atualizada com sucesso!");
+
+  } catch (err) {
+    console.error(err);
+    alert("Erro inesperado.");
+  }
+
+};
