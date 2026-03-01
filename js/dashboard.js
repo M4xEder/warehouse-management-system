@@ -1,178 +1,232 @@
-// =====================================================
-// DASHBOARD.JS — VERSÃO FINAL LIMPA E ESTÁVEL
-// =====================================================
-
-document.addEventListener("DOMContentLoaded", async () => {
-  await aguardarState();
-  renderDashboard();
-});
+// ===============================
+// DASHBOARD.JS — VERSÃO BLINDADA FINAL
+// ===============================
 
 // =====================================================
-// AGUARDAR STATE CARREGAR
+// VALIDADOR GLOBAL
 // =====================================================
-async function aguardarState() {
+function validarStateDashboard() {
 
-  let tentativas = 0;
+  if (!window.state) window.state = {};
 
-  while (
-    (!window.state ||
-      !Array.isArray(state.lotes) ||
-      !Array.isArray(state.posicoes))
-    && tentativas < 30
-  ) {
-    await new Promise(r => setTimeout(r, 200));
-    tentativas++;
-  }
-
-  if (!state.lotes) state.lotes = [];
-  if (!state.posicoes) state.posicoes = [];
+  if (!Array.isArray(state.lotes)) state.lotes = [];
+  if (!Array.isArray(state.posicoes)) state.posicoes = [];
+  if (!Array.isArray(state.historicoExpedidos)) state.historicoExpedidos = [];
 }
 
 // =====================================================
-// RENDER PRINCIPAL
+// ATUALIZAR DASHBOARD
 // =====================================================
-window.renderDashboard = function () {
-  renderResumoGeral();
-  renderLotesAtivos();
-  renderLotesExpedidos();
+window.atualizarDashboard = function () {
+
+  try {
+    validarStateDashboard();
+    renderLotesAtivos();
+    renderLotesExpedidos();
+  } catch (err) {
+    console.error("Erro atualizarDashboard:", err);
+  }
 };
 
-// =====================================================
-// RESUMO GERAL
-// =====================================================
-function renderResumoGeral() {
+window.renderDashboard = window.atualizarDashboard;
 
-  const totalLotes = state.lotes.length;
 
-  const totalAlocados = state.posicoes.filter(p =>
-    p.ocupada === true && p.expedido !== true
+// =====================================================
+// CALCULAR DADOS DO LOTE
+// =====================================================
+function calcularDadosLote(lote) {
+
+  const total = Number(lote?.quantidade ?? 0);
+
+  const alocados = state.posicoes.filter(p =>
+    p?.lote_id === lote?.id &&
+    p?.ocupada === true
   ).length;
 
-  const totalExpedidos = state.posicoes.filter(p =>
-    p.expedido === true
+  const expedidos = state.historicoExpedidos.filter(r =>
+    r?.lote_id === lote?.id
   ).length;
 
-  const totalQuantidade = state.lotes.reduce(
-    (s, l) => s + (Number(l.quantidade) || 0),
-    0
-  );
+  const naoAlocados = Math.max(total - alocados - expedidos, 0);
+  const saldoDisponivel = Math.max(total - expedidos, 0);
 
-  const totalNaoAlocados =
-    totalQuantidade - totalAlocados - totalExpedidos;
-
-  const totalSaldo = totalAlocados;
-
-  setText("resumoLotes", totalLotes);
-  setText("resumoAlocados", totalAlocados);
-  setText("resumoNaoAlocados", totalNaoAlocados < 0 ? 0 : totalNaoAlocados);
-  setText("resumoExpedidos", totalExpedidos);
-  setText("resumoSaldo", totalSaldo);
+  return {
+    total,
+    alocados,
+    expedidos,
+    naoAlocados,
+    saldoDisponivel
+  };
 }
 
-function setText(id, value) {
-  const el = document.getElementById(id);
-  if (el) el.textContent = value;
-}
 
-// =====================================================
+// ===============================
 // LOTES ATIVOS
-// =====================================================
-window.renderLotesAtivos = function () {
+// ===============================
+function renderLotesAtivos() {
 
-  const container = document.getElementById("lotesAtivos");
-  if (!container) return;
+  const div = document.getElementById('lotesAtivos');
+  if (!div) return;
 
-  container.innerHTML = "";
+  div.innerHTML = '';
 
-  if (!state.lotes.length) {
-    container.innerHTML = "<p>Nenhum lote cadastrado.</p>";
+  if (state.lotes.length === 0) {
+    div.innerHTML = '<p>Nenhum lote cadastrado.</p>';
     return;
   }
 
+  let exibiu = false;
+
   state.lotes.forEach(lote => {
 
-    const quantidade = Number(lote.quantidade) || 0;
+    if (!lote?.id) return;
 
-    const totalAlocado = state.posicoes.filter(p =>
-      String(p.lote_id) === String(lote.id) &&
-      p.ocupada === true &&
-      p.expedido !== true
-    ).length;
+    const {
+      total,
+      alocados,
+      expedidos,
+      naoAlocados,
+      saldoDisponivel
+    } = calcularDadosLote(lote);
 
-    const totalExpedido = state.posicoes.filter(p =>
-      p.expedido === true &&
-      String(p.lote_original_id) === String(lote.id)
-    ).length;
+    if (saldoDisponivel <= 0) return;
 
-    const naoAlocado = quantidade - totalAlocado - totalExpedido;
-    const saldo = totalAlocado;
+    exibiu = true;
 
-    // 🔥 Não mostra lote totalmente expedido
-    if (totalExpedido >= quantidade && quantidade > 0) {
-      return;
+    let statusTexto = 'Ativo';
+    let classeStatus = 'status-ativo';
+
+    if (expedidos > 0 && saldoDisponivel > 0) {
+      statusTexto = 'Parcial';
+      classeStatus = 'status-parcial';
     }
 
-    let statusClass = "lote-ativo";
-    if (totalExpedido > 0) statusClass = "lote-parcial";
+    div.innerHTML += `
+      <div class="lote-card">
+        <h3>${lote.nome || '-'}</h3>
 
-    const card = document.createElement("div");
-    card.className = `lote-card ${statusClass}`;
+        <p><strong>Total:</strong> ${total}</p>
+        <p><strong>Alocados:</strong> ${alocados}</p>
+        <p><strong>Não alocados:</strong> ${naoAlocados}</p>
+        <p><strong>Expedidos:</strong> ${expedidos}</p>
+        <p><strong>Saldo disponível:</strong> ${saldoDisponivel}</p>
 
-    card.innerHTML = `
-      <h3>${lote.nome}</h3>
+        <p>
+          <strong>Status:</strong>
+          <span class="${classeStatus}">
+            ${statusTexto}
+          </span>
+        </p>
 
-      <div class="resumo-lote">
-        <p><strong>Total:</strong> ${quantidade}</p>
-        <p><strong>Alocados:</strong> ${totalAlocado}</p>
-        <p><strong>Não Alocados:</strong> ${naoAlocado < 0 ? 0 : naoAlocado}</p>
-        <p><strong>Expedidos:</strong> ${totalExpedido}</p>
-        <p><strong>Saldo:</strong> ${saldo}</p>
-      </div>
+        <div class="acoes">
+          <button onclick="expedirLote('${lote.id}')">
+            Expedir
+          </button>
 
-      <div class="acoes">
-        <button onclick="expedirLote('${lote.id}')">Expedir</button>
-        <button onclick="alterarQuantidade('${lote.id}')">Alterar</button>
-        <button onclick="excluirLote('${lote.id}')">Excluir</button>
+          <button onclick="alterarQuantidade('${lote.id}')">
+            Alterar Quantidade
+          </button>
+
+          <button class="danger"
+            onclick="excluirLote('${lote.id}')">
+            Excluir
+          </button>
+        </div>
       </div>
     `;
-
-    container.appendChild(card);
   });
 
-  renderResumoGeral();
-};
+  if (!exibiu) {
+    div.innerHTML = '<p>Nenhum lote ativo.</p>';
+  }
+}
 
-// =====================================================
+
+// ===============================
 // LOTES EXPEDIDOS
-// =====================================================
-window.renderLotesExpedidos = function () {
+// ===============================
+function renderLotesExpedidos() {
 
-  const container = document.getElementById("lotesExpedidos");
-  if (!container) return;
+  const div = document.getElementById('lotesExpedidos');
+  if (!div) return;
 
-  container.innerHTML = "";
+  div.innerHTML = '';
 
-  state.lotes.forEach(lote => {
+  if (state.historicoExpedidos.length === 0) {
+    div.innerHTML = '<p>Nenhum lote expedido.</p>';
+    return;
+  }
 
-    const quantidade = Number(lote.quantidade) || 0;
+  const porLote = {};
 
-    const totalExpedido = state.posicoes.filter(p =>
-      p.expedido === true &&
-      String(p.lote_original_id) === String(lote.id)
-    ).length;
-
-    if (totalExpedido >= quantidade && quantidade > 0) {
-
-      const card = document.createElement("div");
-      card.className = "lote-card lote-total";
-
-      card.innerHTML = `
-        <h3>${lote.nome}</h3>
-        <p><strong>Total:</strong> ${quantidade}</p>
-        <p><strong>Expedidos:</strong> ${totalExpedido}</p>
-      `;
-
-      container.appendChild(card);
-    }
+  state.historicoExpedidos.forEach(reg => {
+    if (!reg?.lote_id) return;
+    porLote[reg.lote_id] ??= [];
+    porLote[reg.lote_id].push(reg);
   });
-};
+
+  let exibiu = false;
+
+  Object.entries(porLote).forEach(([loteId, registros]) => {
+
+    const lote = state.lotes.find(l => l?.id === loteId);
+    if (!lote) return;
+
+    const total = Number(lote.quantidade ?? 0);
+    const totalExpedido = registros.length;
+
+    if (totalExpedido <= 0) return;
+
+    exibiu = true;
+
+    const ultima = registros[registros.length - 1];
+
+    let statusTexto = '';
+    let classeStatus = '';
+
+    if (totalExpedido < total) {
+      statusTexto = 'Parcial';
+      classeStatus = 'status-parcial';
+    } else {
+      statusTexto = 'Expedido Total';
+      classeStatus = 'status-total';
+    }
+
+    const dataFormatada = ultima?.data_expedicao
+      ? new Date(ultima.data_expedicao).toLocaleString()
+      : '-';
+
+    div.innerHTML += `
+      <div class="lote-card expedido">
+        <h3>${lote.nome || '-'}</h3>
+
+        <p><strong>Total:</strong> ${total}</p>
+        <p><strong>Expedidos:</strong> ${totalExpedido}</p>
+
+        <p>
+          <strong>Status:</strong>
+          <span class="${classeStatus}">
+            ${statusTexto}
+          </span>
+        </p>
+
+        <p><strong>Última expedição:</strong> ${dataFormatada}</p>
+
+        <div class="acoes">
+          <button onclick="mostrarDetalhes('${lote.id}')">
+            Detalhes
+          </button>
+
+          <button class="danger"
+            onclick="excluirHistoricoLote('${lote.id}')">
+            Excluir Histórico
+          </button>
+        </div>
+      </div>
+    `;
+  });
+
+  if (!exibiu) {
+    div.innerHTML = '<p>Nenhum lote expedido.</p>';
+  }
+}
