@@ -1,7 +1,6 @@
 // =====================================================
-// LOTES.JS — VERSÃO PROFISSIONAL FINAL BLINDADA
+// LOTES.JS — VERSÃO FINAL ESTÁVEL SEM STATUS
 // =====================================================
-
 
 
 // =====================================================
@@ -51,22 +50,29 @@ window.cadastrarLote = async function () {
 
     const cor = cores[Math.floor(Math.random() * cores.length)];
 
+    // 🔥 NÃO usa mais status
     const { data, error } = await window.supabaseClient
       .from('lotes')
       .insert([{
         nome,
         quantidade,
-        cor,
-        status: 'ATIVO'
+        cor
       }])
       .select()
       .single();
 
     if (error) throw error;
 
-    // 🔄 Recarrega sistema completo
+    // Atualiza state
+    if (!window.state) window.state = {};
+    if (!Array.isArray(state.lotes)) state.lotes = [];
+
+    state.lotes.push(data);
+
     if (typeof carregarSistema === 'function') {
       await carregarSistema();
+    } else if (typeof renderDashboard === 'function') {
+      renderDashboard();
     }
 
     nomeInput.value = '';
@@ -78,20 +84,23 @@ window.cadastrarLote = async function () {
   }
 };
 
-//======================================================
-// alterar quantidade lote 
-//======================================================
+
+// =====================================================
+// ALTERAR QUANTIDADE
+// =====================================================
 window.alterarQuantidade = async function (loteId) {
 
-  console.log("ID recebido:", loteId);
+  if (!window.state || !Array.isArray(state.lotes)) {
+    alert("State não carregado.");
+    return;
+  }
 
   let lote = state.lotes.find(l =>
     String(l.id) === String(loteId)
   );
 
-  // 🔥 Se não encontrar no state, busca direto no banco
+  // Se não encontrar no state, busca no banco
   if (!lote) {
-    console.warn("Não encontrado no state. Buscando no banco...");
 
     const { data, error } = await window.supabaseClient
       .from("lotes")
@@ -135,7 +144,7 @@ window.alterarQuantidade = async function (loteId) {
       return;
     }
 
-    // 🔥 Atualiza state corretamente
+    // Atualiza state corretamente
     const index = state.lotes.findIndex(l =>
       String(l.id) === String(lote.id)
     );
@@ -144,7 +153,9 @@ window.alterarQuantidade = async function (loteId) {
       state.lotes[index] = data;
     }
 
-    renderDashboard();
+    if (typeof renderDashboard === 'function') {
+      renderDashboard();
+    }
 
     alert("Quantidade atualizada com sucesso!");
 
@@ -154,20 +165,72 @@ window.alterarQuantidade = async function (loteId) {
   }
 };
 
-// =====================================================
-// UTILITÁRIOS DE FILTRO
-// =====================================================
 
-// Lotes Ativos (ATIVO + PARCIAL)
-window.getLotesAtivos = function () {
-  return state.lotes.filter(l =>
-    l.status === 'ATIVO' || l.status === 'PARCIAL'
-  );
+// =====================================================
+// EXCLUIR LOTE
+// =====================================================
+window.excluirLote = async function (loteId) {
+
+  if (!confirm("Tem certeza que deseja excluir este lote?")) return;
+
+  try {
+
+    const { error } = await window.supabaseClient
+      .from("lotes")
+      .delete()
+      .eq("id", loteId);
+
+    if (error) {
+      alert("Erro ao excluir: " + error.message);
+      return;
+    }
+
+    // Remove do state
+    state.lotes = state.lotes.filter(l =>
+      String(l.id) !== String(loteId)
+    );
+
+    if (typeof renderDashboard === 'function') {
+      renderDashboard();
+    }
+
+    alert("Lote excluído com sucesso!");
+
+  } catch (err) {
+    console.error(err);
+    alert("Erro inesperado.");
+  }
 };
 
-// Lotes Expedidos
+
+// =====================================================
+// FILTROS DINÂMICOS (SEM USAR STATUS)
+// =====================================================
+
+window.getLotesAtivos = function () {
+
+  return state.lotes.filter(lote => {
+
+    const total = Number(lote.quantidade ?? 0);
+
+    const expedidos = state.historicoExpedidos.filter(r =>
+      String(r.lote_id) === String(lote.id)
+    ).length;
+
+    return expedidos < total;
+  });
+};
+
 window.getLotesExpedidos = function () {
-  return state.lotes.filter(l =>
-    l.status === 'EXPEDIDO'
-  );
+
+  return state.lotes.filter(lote => {
+
+    const total = Number(lote.quantidade ?? 0);
+
+    const expedidos = state.historicoExpedidos.filter(r =>
+      String(r.lote_id) === String(lote.id)
+    ).length;
+
+    return total > 0 && expedidos >= total;
+  });
 };
