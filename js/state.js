@@ -1,5 +1,5 @@
 // ======================================================
-// STATE.JS — ENTERPRISE DEFINITIVO ULTRA BLINDADO
+// STATE.JS — ENTERPRISE DEFINITIVO ULTRA BLINDADO (FIXED)
 // ======================================================
 
 // ======================================
@@ -11,10 +11,13 @@ function idEquals(a, b) {
 
 function normalizeId(obj) {
   if (!obj) return obj;
+
   if (obj.id !== undefined) obj.id = String(obj.id);
   if (obj.lote_id !== undefined) obj.lote_id = String(obj.lote_id);
+  if (obj.lote_original_id !== undefined) obj.lote_original_id = String(obj.lote_original_id);
   if (obj.rua_id !== undefined) obj.rua_id = String(obj.rua_id);
   if (obj.area_id !== undefined) obj.area_id = String(obj.area_id);
+
   return obj;
 }
 
@@ -26,7 +29,7 @@ window.state = {
   ruas: [],
   posicoes: [],
   lotes: [],
-  historicoExpedidos: [],
+  historico_expedidos: [],
   carregando: false,
   realtimeAtivo: false
 };
@@ -64,17 +67,17 @@ window.carregarSistema = async function () {
     if (lotesRes.error) throw lotesRes.error;
     if (histRes.error) throw histRes.error;
 
-    // 🔥 NORMALIZA TUDO
+    // 🔥 NORMALIZAÇÃO TOTAL
     state.areas = (areasRes.data || []).map(normalizeId);
     state.ruas = (ruasRes.data || []).map(normalizeId);
     state.posicoes = (posRes.data || []).map(normalizeId);
     state.lotes = (lotesRes.data || []).map(normalizeId);
-    state.historicoExpedidos = (histRes.data || []).map(normalizeId);
+    state.historico_expedidos = (histRes.data || []).map(normalizeId);
 
     console.log("✅ Sistema carregado blindado");
 
     if (typeof renderMapa === "function") renderMapa();
-    if (typeof atualizarDashboard === "function") atualizarDashboard();
+    if (typeof renderDashboard === "function") renderDashboard();
 
     if (!state.realtimeAtivo) iniciarRealtime();
 
@@ -160,16 +163,16 @@ window.handleRealtimeChange = function (table, payload) {
     );
   }
 
-  // RENDER INTELIGENTE
+  // 🔥 RENDER INTELIGENTE CORRIGIDO
   if (table === 'posicoes' && typeof renderMapa === "function") {
     renderMapa();
   }
 
   if (
     (table === 'lotes' || table === 'historico_expedidos') &&
-    typeof atualizarDashboard === "function"
+    typeof renderDashboard === "function"
   ) {
-    atualizarDashboard();
+    renderDashboard();
   }
 };
 
@@ -208,7 +211,7 @@ window.resetState = function () {
   state.ruas = [];
   state.posicoes = [];
   state.lotes = [];
-  state.historicoExpedidos = [];
+  state.historico_expedidos = [];
   state.realtimeAtivo = false;
 
   if (realtimeChannel) {
