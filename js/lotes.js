@@ -79,58 +79,72 @@ window.cadastrarLote = async function () {
 };
 
 
+// ===============================
+// ALTERAR QUANTIDADE — ENTERPRISE DEFINITIVO
+// ===============================
+window.alterarQuantidade = async function (loteId) {
 
-// =====================================================
-// ALTERAR QUANTIDADE (VERSÃO CORRIGIDA)
-// =====================================================
-window.alterarQuantidadeLote = async function (loteId) {
-
-  // 🔥 Garante que o ID seja número
-  const id = Number(loteId);
-
-  const lote = state.lotes.find(l => Number(l.id) === id);
+  const lote = state.lotes.find(l =>
+    idEquals(l.id, loteId)
+  );
 
   if (!lote) {
-    alert('Lote não encontrado.');
+    alert("Lote não encontrado no state.");
     return;
   }
 
-  const novoTotalStr = prompt(
-    `Quantidade atual: ${lote.quantidade}\n\nNova quantidade total:`,
+  const novaQuantidade = prompt(
+    `Quantidade atual: ${lote.quantidade}\n\nDigite a nova quantidade:`,
     lote.quantidade
   );
 
-  if (novoTotalStr === null) return;
+  if (novaQuantidade === null) return;
 
-  const novoTotal = Number(novoTotalStr);
+  const quantidadeNumero = parseInt(novaQuantidade);
 
-  if (isNaN(novoTotal) || novoTotal <= 0) {
-    alert('Quantidade inválida.');
+  if (isNaN(quantidadeNumero) || quantidadeNumero < 0) {
+    alert("Quantidade inválida.");
     return;
   }
 
   try {
 
-    const { error } = await window.supabaseClient
-      .from('lotes')
-      .update({ quantidade: novoTotal })
-      .eq('id', id);
+    console.log("🔄 Atualizando lote UUID:", lote.id);
 
-    if (error) throw error;
+    const { data, error } = await window.supabaseClient
+      .from("lotes")
+      .update({ quantidade: quantidadeNumero })
+      .eq("id", lote.id) // 🔥 UUID STRING
+      .select(); // 🔥 força retorno
 
-    // 🔄 Recarrega sistema completo
-    if (typeof carregarSistema === 'function') {
-      await carregarSistema();
+    console.log("Resposta Supabase:", data);
+    console.log("Erro Supabase:", error);
+
+    if (error) {
+      alert("Erro ao atualizar no banco: " + error.message);
+      return;
     }
 
-    alert('Quantidade atualizada com sucesso.');
+    if (!data || data.length === 0) {
+      alert("Nenhum registro foi atualizado. Verifique RLS ou UUID.");
+      return;
+    }
+
+    // 🔥 Recarrega sistema completo (melhor prática)
+    if (typeof carregarSistema === "function") {
+      await carregarSistema();
+    } else {
+      lote.quantidade = quantidadeNumero;
+      renderDashboard();
+    }
+
+    alert("Quantidade atualizada com sucesso!");
 
   } catch (err) {
-    console.error('Erro ao atualizar lote:', err);
-    alert('Erro ao atualizar lote.');
+    console.error("Erro inesperado:", err);
+    alert("Erro inesperado ao atualizar.");
   }
 };
-
 
 
 // =====================================================
