@@ -78,19 +78,33 @@ window.cadastrarLote = async function () {
   }
 };
 
-
-// ===============================
-// ALTERAR QUANTIDADE — ENTERPRISE DEFINITIVO
-// ===============================
+//======================================================
+// alterar quantidade lote 
+//======================================================
 window.alterarQuantidade = async function (loteId) {
 
-  const lote = state.lotes.find(l =>
-    idEquals(l.id, loteId)
+  console.log("ID recebido:", loteId);
+
+  let lote = state.lotes.find(l =>
+    String(l.id) === String(loteId)
   );
 
+  // 🔥 Se não encontrar no state, busca direto no banco
   if (!lote) {
-    alert("Lote não encontrado no state.");
-    return;
+    console.warn("Não encontrado no state. Buscando no banco...");
+
+    const { data, error } = await window.supabaseClient
+      .from("lotes")
+      .select("*")
+      .eq("id", loteId)
+      .single();
+
+    if (error || !data) {
+      alert("Lote não encontrado.");
+      return;
+    }
+
+    lote = data;
   }
 
   const novaQuantidade = prompt(
@@ -109,43 +123,36 @@ window.alterarQuantidade = async function (loteId) {
 
   try {
 
-    console.log("🔄 Atualizando lote UUID:", lote.id);
-
     const { data, error } = await window.supabaseClient
       .from("lotes")
       .update({ quantidade: quantidadeNumero })
-      .eq("id", lote.id) // 🔥 UUID STRING
-      .select(); // 🔥 força retorno
-
-    console.log("Resposta Supabase:", data);
-    console.log("Erro Supabase:", error);
+      .eq("id", lote.id)
+      .select()
+      .single();
 
     if (error) {
-      alert("Erro ao atualizar no banco: " + error.message);
+      alert("Erro no banco: " + error.message);
       return;
     }
 
-    if (!data || data.length === 0) {
-      alert("Nenhum registro foi atualizado. Verifique RLS ou UUID.");
-      return;
+    // 🔥 Atualiza state corretamente
+    const index = state.lotes.findIndex(l =>
+      String(l.id) === String(lote.id)
+    );
+
+    if (index !== -1) {
+      state.lotes[index] = data;
     }
 
-    // 🔥 Recarrega sistema completo (melhor prática)
-    if (typeof carregarSistema === "function") {
-      await carregarSistema();
-    } else {
-      lote.quantidade = quantidadeNumero;
-      renderDashboard();
-    }
+    renderDashboard();
 
     alert("Quantidade atualizada com sucesso!");
 
   } catch (err) {
-    console.error("Erro inesperado:", err);
-    alert("Erro inesperado ao atualizar.");
+    console.error(err);
+    alert("Erro inesperado.");
   }
 };
-
 
 // =====================================================
 // UTILITÁRIOS DE FILTRO
