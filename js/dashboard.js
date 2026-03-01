@@ -1,5 +1,5 @@
 // ===============================
-// DASHBOARD.JS — COMPLETO ATUALIZADO
+// DASHBOARD.JS — ENTERPRISE DEFINITIVO
 // ===============================
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -38,22 +38,27 @@ window.renderDashboard = function () {
 };
 
 // ===============================
-// RESUMO GERAL
+// RESUMO GERAL (CORRIGIDO)
 // ===============================
 function renderResumoGeral() {
 
   const totalLotes = state.lotes.length;
 
-  const totalAlocados = state.posicoes.filter(p => !p.expedido).length;
+  const totalAlocados = state.posicoes.filter(p =>
+    p.ocupada === true && p.expedido !== true
+  ).length;
 
-  const totalExpedidos = state.posicoes.filter(p => p.expedido === true).length;
+  const totalExpedidos = state.posicoes.filter(p =>
+    p.expedido === true
+  ).length;
 
   const totalQuantidade = state.lotes.reduce(
     (s, l) => s + (Number(l.quantidade) || 0),
     0
   );
 
-  const totalNaoAlocados = totalQuantidade - totalAlocados - totalExpedidos;
+  const totalNaoAlocados =
+    totalQuantidade - totalAlocados - totalExpedidos;
 
   const totalSaldo = totalAlocados;
 
@@ -70,7 +75,7 @@ function setText(id, value) {
 }
 
 // ===============================
-// LOTES ATIVOS
+// LOTES ATIVOS (100% PADRÃO STATE)
 // ===============================
 window.renderLotesAtivos = function () {
 
@@ -86,23 +91,24 @@ window.renderLotesAtivos = function () {
 
   state.lotes.forEach(lote => {
 
-    const id = Number(lote.id);
-
     const totalAlocado = state.posicoes.filter(p =>
-      Number(p.lote_id) === id &&
-      !p.expedido
+      idEquals(p.lote_id, lote.id) &&
+      p.ocupada === true &&
+      p.expedido !== true
     ).length;
 
     const totalExpedido = state.posicoes.filter(p =>
       p.expedido === true &&
-      Number(p.lote_original_id) === id
+      idEquals(p.lote_original_id, lote.id)
     ).length;
 
-    const naoAlocado = lote.quantidade - totalAlocado - totalExpedido;
+    const quantidade = Number(lote.quantidade) || 0;
+
+    const naoAlocado = quantidade - totalAlocado - totalExpedido;
     const saldo = totalAlocado;
 
-    // Se totalmente expedido → não aparece
-    if (totalExpedido >= lote.quantidade && lote.quantidade > 0) {
+    // 🔥 Totalmente expedido não aparece
+    if (totalExpedido >= quantidade && quantidade > 0) {
       return;
     }
 
@@ -116,7 +122,7 @@ window.renderLotesAtivos = function () {
       <h3>${lote.nome}</h3>
 
       <div class="resumo-lote">
-        <p><strong>Total:</strong> ${lote.quantidade}</p>
+        <p><strong>Total:</strong> ${quantidade}</p>
         <p><strong>Alocados:</strong> ${totalAlocado}</p>
         <p><strong>Não Alocados:</strong> ${naoAlocado < 0 ? 0 : naoAlocado}</p>
         <p><strong>Expedidos:</strong> ${totalExpedido}</p>
@@ -124,9 +130,9 @@ window.renderLotesAtivos = function () {
       </div>
 
       <div class="acoes">
-        <button onclick="expedirLote(${id})">Expedir</button>
-        <button onclick="alterarQuantidade(${id})">Alterar</button>
-        <button onclick="excluirLote(${id})">Excluir</button>
+        <button onclick="expedirLote('${lote.id}')">Expedir</button>
+        <button onclick="alterarQuantidade('${lote.id}')">Alterar</button>
+        <button onclick="excluirLote('${lote.id}')">Excluir</button>
       </div>
     `;
 
@@ -148,21 +154,21 @@ window.renderLotesExpedidos = function () {
 
   state.lotes.forEach(lote => {
 
-    const id = Number(lote.id);
+    const quantidade = Number(lote.quantidade) || 0;
 
     const totalExpedido = state.posicoes.filter(p =>
       p.expedido === true &&
-      Number(p.lote_original_id) === id
+      idEquals(p.lote_original_id, lote.id)
     ).length;
 
-    if (totalExpedido >= lote.quantidade && lote.quantidade > 0) {
+    if (totalExpedido >= quantidade && quantidade > 0) {
 
       const card = document.createElement("div");
       card.className = "lote-card lote-total";
 
       card.innerHTML = `
         <h3>${lote.nome}</h3>
-        <p><strong>Total:</strong> ${lote.quantidade}</p>
+        <p><strong>Total:</strong> ${quantidade}</p>
         <p><strong>Expedidos:</strong> ${totalExpedido}</p>
       `;
 
@@ -172,13 +178,13 @@ window.renderLotesExpedidos = function () {
 };
 
 // ===============================
-// ALTERAR QUANTIDADE — CORRIGIDO
+// ALTERAR QUANTIDADE — PADRÃO STATE
 // ===============================
 window.alterarQuantidade = async function (loteId) {
 
-  const id = Number(loteId);
-
-  const lote = state.lotes.find(l => Number(l.id) === id);
+  const lote = state.lotes.find(l =>
+    idEquals(l.id, loteId)
+  );
 
   if (!lote) {
     alert("Lote não encontrado.");
@@ -201,24 +207,24 @@ window.alterarQuantidade = async function (loteId) {
 
   try {
 
-    // ✅ USANDO CLIENTE CORRETO
     const { error } = await window.supabaseClient
       .from("lotes")
       .update({ quantidade: quantidadeNumero })
-      .eq("id", id);
+      .eq("id", lote.id);
 
     if (error) {
-      console.error("Erro Supabase:", error);
+      console.error(error);
       alert("Erro ao atualizar no banco.");
       return;
     }
 
-    // Atualiza state local
-    lote.quantidade = quantidadeNumero;
-
-    // Re-render completo
-    renderDashboard();
-    if (typeof renderMapa === "function") renderMapa();
+    // Recarrega do banco para evitar inconsistência
+    if (typeof carregarSistema === "function") {
+      await carregarSistema();
+    } else {
+      lote.quantidade = quantidadeNumero;
+      renderDashboard();
+    }
 
     alert("Quantidade atualizada com sucesso!");
 
