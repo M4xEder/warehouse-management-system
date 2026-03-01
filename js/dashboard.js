@@ -1,5 +1,5 @@
 // ===============================
-// DASHBOARD.JS — COMPLETO
+// DASHBOARD.JS — COMPLETO ATUALIZADO
 // ===============================
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -15,8 +15,10 @@ async function aguardarState() {
   let tentativas = 0;
 
   while (
-    (!window.state || !Array.isArray(state.lotes) || !Array.isArray(state.posicoes))
-    && tentativas < 20
+    (!window.state ||
+      !Array.isArray(state.lotes) ||
+      !Array.isArray(state.posicoes))
+    && tentativas < 30
   ) {
     await new Promise(r => setTimeout(r, 200));
     tentativas++;
@@ -36,7 +38,7 @@ window.renderDashboard = function () {
 };
 
 // ===============================
-// RESUMO GERAL (cards do topo)
+// RESUMO GERAL
 // ===============================
 function renderResumoGeral() {
 
@@ -46,7 +48,10 @@ function renderResumoGeral() {
 
   const totalExpedidos = state.posicoes.filter(p => p.expedido === true).length;
 
-  const totalQuantidade = state.lotes.reduce((s, l) => s + (l.quantidade || 0), 0);
+  const totalQuantidade = state.lotes.reduce(
+    (s, l) => s + (Number(l.quantidade) || 0),
+    0
+  );
 
   const totalNaoAlocados = totalQuantidade - totalAlocados - totalExpedidos;
 
@@ -81,27 +86,28 @@ window.renderLotesAtivos = function () {
 
   state.lotes.forEach(lote => {
 
-    const posicoesDoLote = state.posicoes.filter(p => p.lote_id === lote.id && !p.expedido);
-    const totalAlocado = posicoesDoLote.length;
+    const id = Number(lote.id);
+
+    const totalAlocado = state.posicoes.filter(p =>
+      Number(p.lote_id) === id &&
+      !p.expedido
+    ).length;
 
     const totalExpedido = state.posicoes.filter(p =>
       p.expedido === true &&
-      p.lote_original_id === lote.id
+      Number(p.lote_original_id) === id
     ).length;
 
     const naoAlocado = lote.quantidade - totalAlocado - totalExpedido;
     const saldo = totalAlocado;
 
-    // Se totalmente expedido → não aparece em ativos
+    // Se totalmente expedido → não aparece
     if (totalExpedido >= lote.quantidade && lote.quantidade > 0) {
       return;
     }
 
     let statusClass = "lote-ativo";
-
-    if (totalExpedido > 0) {
-      statusClass = "lote-parcial";
-    }
+    if (totalExpedido > 0) statusClass = "lote-parcial";
 
     const card = document.createElement("div");
     card.className = `lote-card ${statusClass}`;
@@ -118,15 +124,16 @@ window.renderLotesAtivos = function () {
       </div>
 
       <div class="acoes">
-        <button onclick="expedirLote('${lote.id}')">Expedir</button>
-        <button onclick="alterarQuantidade('${lote.id}')">Alterar</button>
-        <button onclick="excluirLote('${lote.id}')">Excluir</button>
+        <button onclick="expedirLote(${id})">Expedir</button>
+        <button onclick="alterarQuantidade(${id})">Alterar</button>
+        <button onclick="excluirLote(${id})">Excluir</button>
       </div>
     `;
 
     container.appendChild(card);
   });
 
+  renderResumoGeral();
 };
 
 // ===============================
@@ -141,9 +148,11 @@ window.renderLotesExpedidos = function () {
 
   state.lotes.forEach(lote => {
 
+    const id = Number(lote.id);
+
     const totalExpedido = state.posicoes.filter(p =>
       p.expedido === true &&
-      p.lote_original_id === lote.id
+      Number(p.lote_original_id) === id
     ).length;
 
     if (totalExpedido >= lote.quantidade && lote.quantidade > 0) {
@@ -159,13 +168,18 @@ window.renderLotesExpedidos = function () {
 
       container.appendChild(card);
     }
-
   });
-
 };
+
+// ===============================
+// ALTERAR QUANTIDADE — CORRIGIDO
+// ===============================
 window.alterarQuantidade = async function (loteId) {
 
-  const lote = state.lotes.find(l => l.id === loteId);
+  const id = Number(loteId);
+
+  const lote = state.lotes.find(l => Number(l.id) === id);
+
   if (!lote) {
     alert("Lote não encontrado.");
     return;
@@ -187,24 +201,24 @@ window.alterarQuantidade = async function (loteId) {
 
   try {
 
-    // 🔥 Atualiza no Supabase
-    const { error } = await supabase
+    // ✅ USANDO CLIENTE CORRETO
+    const { error } = await window.supabaseClient
       .from("lotes")
       .update({ quantidade: quantidadeNumero })
-      .eq("id", loteId);
+      .eq("id", id);
 
     if (error) {
-      console.error(error);
+      console.error("Erro Supabase:", error);
       alert("Erro ao atualizar no banco.");
       return;
     }
 
-    // 🔥 Atualiza no state
+    // Atualiza state local
     lote.quantidade = quantidadeNumero;
 
-    // 🔥 Re-renderiza
-    renderLotesAtivos();
-    renderMapa();
+    // Re-render completo
+    renderDashboard();
+    if (typeof renderMapa === "function") renderMapa();
 
     alert("Quantidade atualizada com sucesso!");
 
@@ -212,5 +226,4 @@ window.alterarQuantidade = async function (loteId) {
     console.error(err);
     alert("Erro inesperado.");
   }
-
 };
