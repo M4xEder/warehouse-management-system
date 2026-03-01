@@ -1,5 +1,5 @@
 // ===============================
-// MODAL.JS — SUPABASE INTEGRADO PRO (BLINDADO)
+// MODAL.JS — SUPABASE INTEGRADO PRO (VERSÃO FINAL SEM STATUS)
 // ===============================
 
 let modalContext = {
@@ -25,19 +25,20 @@ function calcularSaldoLote(loteId) {
 
   if (!loteId) return 0;
 
-  const lote = state.lotes.find(l => l.id === loteId);
+  const lote = state.lotes.find(l =>
+    String(l.id) === String(loteId)
+  );
   if (!lote) return 0;
 
   const total = Number(lote.quantidade ?? 0);
 
   const alocados = state.posicoes.filter(p =>
     p?.ocupada === true &&
-    p?.lote_id === loteId
+    String(p?.lote_id) === String(loteId)
   ).length;
 
   const expedidos = state.historicoExpedidos.filter(h =>
-    h?.lote_id === loteId &&
-    h?.status === 'EXPEDIDO'
+    String(h?.lote_id) === String(loteId)
   ).length;
 
   return total - alocados - expedidos;
@@ -56,7 +57,10 @@ window.abrirModalPorId = function (posicaoId) {
       return;
     }
 
-    const pos = state.posicoes.find(p => p.id === posicaoId);
+    const pos = state.posicoes.find(p =>
+      String(p.id) === String(posicaoId)
+    );
+
     if (!pos) {
       alert('Posição não encontrada');
       return;
@@ -76,19 +80,18 @@ window.abrirModalPorId = function (posicaoId) {
 
     selectLote.innerHTML = '<option value="">Selecione um lote</option>';
 
-    state.lotes
-      .filter(l => l?.status === 'ativo')
-      .forEach(lote => {
+    // 🔥 LISTAR LOTES BASEADO EM SALDO (SEM STATUS)
+    state.lotes.forEach(lote => {
 
-        const saldo = calcularSaldoLote(lote.id);
+      const saldo = calcularSaldoLote(lote.id);
 
-        if (saldo <= 0 && lote.id !== pos.lote_id) return;
+      if (saldo <= 0 && String(lote.id) !== String(pos.lote_id)) return;
 
-        const opt = document.createElement('option');
-        opt.value = lote.id;
-        opt.textContent = `${lote.nome || 'Sem nome'} (Saldo: ${saldo})`;
-        selectLote.appendChild(opt);
-      });
+      const opt = document.createElement('option');
+      opt.value = lote.id;
+      opt.textContent = `${lote.nome || 'Sem nome'} (Saldo: ${saldo})`;
+      selectLote.appendChild(opt);
+    });
 
     inputRz.value = pos?.rz ?? '';
     inputVolume.value = pos?.volume ?? '';
@@ -162,16 +165,21 @@ window.confirmarEndereco = async function () {
       ocupada: true
     };
 
-    // Backup para rollback
-    const posOriginal = { ...state.posicoes.find(p => p.id === posicaoId) };
+    // 🔥 Backup para rollback
+    const posOriginal = {
+      ...state.posicoes.find(p =>
+        String(p.id) === String(posicaoId)
+      )
+    };
 
-    // 🔥 Atualiza local
+    // 🔥 Atualiza local primeiro (UX rápida)
     atualizarPosicaoLocal(posicaoId, dadosAtualizacao);
 
     // 🔥 Atualiza banco
     const { error } = await dbAtualizarPosicao(posicaoId, dadosAtualizacao);
 
     if (error) {
+
       console.error(error);
 
       // 🔥 Rollback automático
@@ -207,7 +215,10 @@ window.removerGaylord = async function () {
     validarState();
 
     const { posicaoId } = modalContext;
-    const pos = state.posicoes.find(p => p.id === posicaoId);
+
+    const pos = state.posicoes.find(p =>
+      String(p.id) === String(posicaoId)
+    );
 
     if (!pos) {
       alert("Posição não encontrada");
@@ -223,12 +234,19 @@ window.removerGaylord = async function () {
       ocupada: false
     };
 
+    // Atualiza local
     atualizarPosicaoLocal(posicaoId, dadosLimpar);
 
+    // Atualiza banco
     const { error } = await dbLiberarPosicao(posicaoId);
 
     if (error) {
+
+      console.error(error);
+
+      // Rollback
       atualizarPosicaoLocal(posicaoId, backup);
+
       alert("Erro ao liberar posição");
       return;
     }
