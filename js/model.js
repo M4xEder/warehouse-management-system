@@ -1,12 +1,12 @@
 // ===============================
-// MODEL.JS — CAMADA DE DADOS SUPABASE (PRO FINAL)
+// MODEL.JS — CAMADA DE DADOS SUPABASE (VERSÃO FINAL SEM STATUS)
 // ===============================
 //
 // ✔ CRUD padronizado
 // ✔ Sempre retorna { data, error }
-// ✔ Status padronizado
+// ✔ Sem coluna status
+// ✔ Status calculado dinamicamente
 // ✔ Compatível com Realtime
-// ✔ Resumo completo de lote expedido
 //
 // ===============================
 
@@ -126,7 +126,9 @@ window.dbLiberarPosicao = async function (id) {
     .from('posicoes')
     .update({
       ocupada: false,
-      volume: null
+      lote_id: null,
+      volume: null,
+      rz: null
     })
     .eq('id', id)
     .select()
@@ -156,8 +158,7 @@ window.dbCriarLote = async function (nome, quantidade, cor) {
     .insert([{
       nome,
       quantidade,
-      cor,
-      status: 'ATIVO'
+      cor
     }])
     .select()
     .single();
@@ -213,7 +214,7 @@ window.dbRegistrarExpedicao = async function (payload) {
 
 
 // ======================================
-// 📦 RESUMO COMPLETO DO LOTE EXPEDIDO
+// 📦 RESUMO COMPLETO DO LOTE
 // ======================================
 
 window.dbBuscarResumoLoteExpedido = async function (loteId) {
@@ -273,7 +274,7 @@ window.dbBuscarResumoLoteExpedido = async function (loteId) {
 
 
 // ======================================
-// 📦 LISTAR LOTES EXPEDIDOS COM RESUMO
+// 📦 LISTAR LOTES TOTALMENTE EXPEDIDOS
 // ======================================
 
 window.dbBuscarLotesExpedidosComResumo = async function () {
@@ -284,7 +285,6 @@ window.dbBuscarLotesExpedidosComResumo = async function () {
       await window.supabaseClient
         .from('lotes')
         .select('*')
-        .eq('status', 'EXPEDIDO')
         .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -299,15 +299,20 @@ window.dbBuscarLotesExpedidosComResumo = async function () {
           .select('*')
           .eq('lote_id', lote.id);
 
-      const volumeTotal = historico.reduce((acc, item) =>
-        acc + Number(item.volume || 0), 0
-      );
+      const totalExpedido = historico.length;
 
-      resultado.push({
-        ...lote,
-        totalExpedido: historico.length,
-        volumeTotal
-      });
+      if (totalExpedido >= Number(lote.quantidade)) {
+
+        const volumeTotal = historico.reduce((acc, item) =>
+          acc + Number(item.volume || 0), 0
+        );
+
+        resultado.push({
+          ...lote,
+          totalExpedido,
+          volumeTotal
+        });
+      }
     }
 
     return { data: resultado, error: null };
