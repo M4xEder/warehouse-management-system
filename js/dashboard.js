@@ -1,5 +1,5 @@
 // ===============================
-// DASHBOARD.JS — VERSÃO BLINDADA FINAL
+// DASHBOARD.JS — VERSÃO FINAL CORRIGIDA
 // ===============================
 
 // =====================================================
@@ -39,12 +39,12 @@ function calcularDadosLote(lote) {
   const total = Number(lote?.quantidade ?? 0);
 
   const alocados = state.posicoes.filter(p =>
-    p?.lote_id === lote?.id &&
+    String(p?.lote_id) === String(lote?.id) &&
     p?.ocupada === true
   ).length;
 
   const expedidos = state.historicoExpedidos.filter(r =>
-    r?.lote_id === lote?.id
+    String(r?.lote_id) === String(lote?.id)
   ).length;
 
   const naoAlocados = Math.max(total - alocados - expedidos, 0);
@@ -161,15 +161,19 @@ function renderLotesExpedidos() {
 
   state.historicoExpedidos.forEach(reg => {
     if (!reg?.lote_id) return;
-    porLote[reg.lote_id] ??= [];
-    porLote[reg.lote_id].push(reg);
+    const key = String(reg.lote_id);
+    porLote[key] ??= [];
+    porLote[key].push(reg);
   });
 
   let exibiu = false;
 
   Object.entries(porLote).forEach(([loteId, registros]) => {
 
-    const lote = state.lotes.find(l => l?.id === loteId);
+    const lote = state.lotes.find(l =>
+      String(l?.id) === String(loteId)
+    );
+
     if (!lote) return;
 
     const total = Number(lote.quantidade ?? 0);
