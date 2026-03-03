@@ -23,7 +23,6 @@ window.cadastrarLote = async function () {
 
   try {
 
-    // 🔎 Verificar duplicidade
     const { data: existente, error: erroBusca } =
       await window.supabaseClient
         .from('lotes')
@@ -50,33 +49,18 @@ window.cadastrarLote = async function () {
 
     const cor = cores[Math.floor(Math.random() * cores.length)];
 
-    // 🔥 NÃO usa mais status
-    const { data, error } = await window.supabaseClient
+    const { error } = await window.supabaseClient
       .from('lotes')
-      .insert([{
-        nome,
-        quantidade,
-        cor
-      }])
-      .select()
-      .single();
+      .insert([{ nome, quantidade, cor }]);
 
     if (error) throw error;
 
-    // Atualiza state
-    if (!window.state) window.state = {};
-    if (!Array.isArray(state.lotes)) state.lotes = [];
-
-    state.lotes.push(data);
-
-    if (typeof carregarSistema === 'function') {
-      await carregarSistema();
-    } else if (typeof renderDashboard === 'function') {
-      renderDashboard();
-    }
+    await carregarSistema();
 
     nomeInput.value = '';
     totalInput.value = '';
+
+    alert("Lote cadastrado com sucesso!");
 
   } catch (err) {
     console.error('Erro ao cadastrar lote:', err);
@@ -85,8 +69,9 @@ window.cadastrarLote = async function () {
 };
 
 
+
 // =====================================================
-// ALTERAR QUANTIDADE
+// ALTERAR QUANTIDADE (SEM SELECT / SEM RETURNING *)
 // =====================================================
 window.alterarQuantidade = async function (loteId) {
 
@@ -99,21 +84,9 @@ window.alterarQuantidade = async function (loteId) {
     String(l.id) === String(loteId)
   );
 
-  // Se não encontrar no state, busca no banco
   if (!lote) {
-
-    const { data, error } = await window.supabaseClient
-      .from("lotes")
-      .select("*")
-      .eq("id", loteId)
-      .single();
-
-    if (error || !data) {
-      alert("Lote não encontrado.");
-      return;
-    }
-
-    lote = data;
+    alert("Lote não encontrado.");
+    return;
   }
 
   const novaQuantidade = prompt(
@@ -132,25 +105,23 @@ window.alterarQuantidade = async function (loteId) {
 
   try {
 
-    const { data, error } = await window.supabaseClient
+    const { error } = await window.supabaseClient
       .from("lotes")
       .update({ quantidade: quantidadeNumero })
-      .eq("id", lote.id)
-      .select()
-      .single();
+      .eq("id", lote.id);
 
     if (error) {
       alert("Erro no banco: " + error.message);
       return;
     }
 
-    // Atualiza state corretamente
+    // Atualiza local
     const index = state.lotes.findIndex(l =>
       String(l.id) === String(lote.id)
     );
 
     if (index !== -1) {
-      state.lotes[index] = data;
+      state.lotes[index].quantidade = quantidadeNumero;
     }
 
     if (typeof renderDashboard === 'function') {
@@ -164,6 +135,7 @@ window.alterarQuantidade = async function (loteId) {
     alert("Erro inesperado.");
   }
 };
+
 
 
 // =====================================================
@@ -185,7 +157,6 @@ window.excluirLote = async function (loteId) {
       return;
     }
 
-    // Remove do state
     state.lotes = state.lotes.filter(l =>
       String(l.id) !== String(loteId)
     );
@@ -203,10 +174,10 @@ window.excluirLote = async function (loteId) {
 };
 
 
-// =====================================================
-// FILTROS DINÂMICOS (SEM USAR STATUS)
-// =====================================================
 
+// =====================================================
+// FILTROS DINÂMICOS (SEM STATUS)
+// =====================================================
 window.getLotesAtivos = function () {
 
   return state.lotes.filter(lote => {
