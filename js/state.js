@@ -1,5 +1,5 @@
 // ======================================================
-// STATE.JS — ENTERPRISE DEFINITIVO ULTRA BLINDADO (FIXED)
+// STATE.JS — ENTERPRISE DEFINITIVO ULTRA BLINDADO UUID
 // ======================================================
 
 // ======================================
@@ -37,7 +37,7 @@ window.state = {
 let realtimeChannel = null;
 
 // ======================================
-// CARREGAR SISTEMA (ANTI CORRUPÇÃO)
+// CARREGAR SISTEMA COMPLETO
 // ======================================
 window.carregarSistema = async function () {
 
@@ -67,14 +67,13 @@ window.carregarSistema = async function () {
     if (lotesRes.error) throw lotesRes.error;
     if (histRes.error) throw histRes.error;
 
-    // 🔥 NORMALIZAÇÃO TOTAL
     state.areas = (areasRes.data || []).map(normalizeId);
     state.ruas = (ruasRes.data || []).map(normalizeId);
     state.posicoes = (posRes.data || []).map(normalizeId);
     state.lotes = (lotesRes.data || []).map(normalizeId);
     state.historico_expedidos = (histRes.data || []).map(normalizeId);
 
-    console.log("✅ Sistema carregado blindado");
+    console.log("✅ Sistema carregado enterprise UUID");
 
     if (typeof renderMapa === "function") renderMapa();
     if (typeof renderDashboard === "function") renderDashboard();
@@ -92,7 +91,7 @@ window.carregarSistema = async function () {
 };
 
 // ======================================
-// REALTIME ENTERPRISE
+// REALTIME GLOBAL ENTERPRISE
 // ======================================
 window.iniciarRealtime = function () {
 
@@ -123,7 +122,7 @@ window.iniciarRealtime = function () {
 };
 
 // ======================================
-// PROCESSADOR REALTIME 100% SEGURO
+// PROCESSADOR REALTIME UUID SAFE
 // ======================================
 window.handleRealtimeChange = function (table, payload) {
 
@@ -151,7 +150,7 @@ window.handleRealtimeChange = function (table, payload) {
     );
 
     if (index !== -1) {
-      Object.assign(state[table][index], novo);
+      state[table][index] = { ...state[table][index], ...novo };
     }
   }
 
@@ -163,7 +162,7 @@ window.handleRealtimeChange = function (table, payload) {
     );
   }
 
-  // 🔥 RENDER INTELIGENTE CORRIGIDO
+  // 🔥 RENDER INTELIGENTE
   if (table === 'posicoes' && typeof renderMapa === "function") {
     renderMapa();
   }
@@ -177,7 +176,7 @@ window.handleRealtimeChange = function (table, payload) {
 };
 
 // ======================================
-// GETTERS 100% SEGUROS
+// GETTERS UUID SAFE
 // ======================================
 window.getAreaById = id =>
   state.areas.find(a => idEquals(a.id, id));
@@ -203,7 +202,29 @@ window.ruaTemPosicoesOcupadas = ruaId =>
   );
 
 // ======================================
-// RESET TOTAL CONTROLADO
+// CONTADORES OFICIAIS
+// ======================================
+window.contarGaylordsDoLote = function (loteId) {
+
+  if (!loteId) return 0;
+
+  return state.posicoes.filter(p =>
+    p.ocupada === true &&
+    idEquals(p.lote_id, loteId)
+  ).length;
+};
+
+window.totalExpedidoDoLote = function (loteId) {
+
+  if (!loteId) return 0;
+
+  return state.historico_expedidos
+    .filter(h => idEquals(h.lote_id, loteId))
+    .reduce((total, h) => total + (h.quantidade || 0), 0);
+};
+
+// ======================================
+// RESET CONTROLADO
 // ======================================
 window.resetState = function () {
 
