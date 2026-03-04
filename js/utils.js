@@ -1,13 +1,14 @@
 // ===============================
-// UTILS.JS — FUNÇÕES AUXILIARES (VERSÃO SEGURA SUPABASE)
+// UTILS.JS — FUNÇÕES AUXILIARES (SUPABASE + UUID)
 // ===============================
 
 
 // -------------------------------
-// CONTAR GAYLORDS ALOCADAS NO MAPA
+// CONTAR GAYLORDS ALOCADAS NO MAPA (POR LOTE_ID)
 // -------------------------------
-window.contarGaylordsDoLote = function (nomeLote) {
+window.contarGaylordsDoLote = function (loteId) {
 
+  if (!loteId) return 0;
   if (!Array.isArray(state.areas)) return 0;
 
   let total = 0;
@@ -21,9 +22,12 @@ window.contarGaylordsDoLote = function (nomeLote) {
       if (!Array.isArray(rua.posicoes)) return;
 
       rua.posicoes.forEach(pos => {
-        if (pos?.ocupada && pos?.lote === nomeLote) {
+
+        // 🔥 AGORA COMPARA UUID
+        if (pos?.ocupada === true && pos?.lote_id === loteId) {
           total++;
         }
+
       });
 
     });
@@ -35,14 +39,15 @@ window.contarGaylordsDoLote = function (nomeLote) {
 
 
 // -------------------------------
-// TOTAL EXPEDIDO DO LOTE
+// TOTAL EXPEDIDO DO LOTE (POR LOTE_ID)
 // -------------------------------
-window.totalExpedidoDoLote = function (nomeLote) {
+window.totalExpedidoDoLote = function (loteId) {
 
+  if (!loteId) return 0;
   if (!Array.isArray(state.historicoExpedidos)) return 0;
 
   return state.historicoExpedidos
-    .filter(h => h?.lote === nomeLote)
+    .filter(h => h?.lote_id === loteId)
     .reduce((soma, h) => {
 
       if (!Array.isArray(h?.detalhes)) return soma;
