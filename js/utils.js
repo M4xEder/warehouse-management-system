@@ -1,99 +1,159 @@
-// ===============================
-// UTILS.JS — FUNÇÕES AUXILIARES (SUPABASE + UUID)
-// ===============================
+// ======================================================
+// UTILS.JS — ENTERPRISE DEFINITIVO UUID SAFE
+// ======================================================
 
+// ======================================
+// UUID SAFE COMPARAÇÃO
+// ======================================
+window.idEquals = function (a, b) {
+  return String(a) === String(b);
+};
 
-// -------------------------------
-// CONTAR GAYLORDS ALOCADAS NO MAPA (POR LOTE_ID)
-// -------------------------------
-window.contarGaylordsDoLote = function (loteId) {
+// ======================================
+// NORMALIZADOR GLOBAL DE OBJETOS
+// ======================================
+window.normalizeId = function (obj) {
+  if (!obj) return obj;
 
-  if (!loteId) return 0;
-  if (!Array.isArray(state.areas)) return 0;
+  if (obj.id !== undefined) obj.id = String(obj.id);
+  if (obj.lote_id !== undefined) obj.lote_id = String(obj.lote_id);
+  if (obj.lote_original_id !== undefined) obj.lote_original_id = String(obj.lote_original_id);
+  if (obj.rua_id !== undefined) obj.rua_id = String(obj.rua_id);
+  if (obj.area_id !== undefined) obj.area_id = String(obj.area_id);
 
-  let total = 0;
+  return obj;
+};
 
-  state.areas.forEach(area => {
+// ======================================
+// GERADOR DE UUID (fallback local)
+// ======================================
+window.gerarUUID = function () {
+  return crypto.randomUUID();
+};
 
-    if (!Array.isArray(area.ruas)) return;
+// ======================================
+// FORMATADORES
+// ======================================
+window.formatarNumero = function (valor) {
+  if (!valor) return "0";
+  return Number(valor).toLocaleString('pt-BR');
+};
 
-    area.ruas.forEach(rua => {
+window.formatarData = function (dataISO) {
+  if (!dataISO) return "-";
 
-      if (!Array.isArray(rua.posicoes)) return;
+  const data = new Date(dataISO);
+  return data.toLocaleDateString('pt-BR') + " " +
+         data.toLocaleTimeString('pt-BR');
+};
 
-      rua.posicoes.forEach(pos => {
+// ======================================
+// VALIDAÇÕES
+// ======================================
+window.isUUID = function (valor) {
+  const regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return regex.test(valor);
+};
 
-        // 🔥 AGORA COMPARA UUID
-        if (pos?.ocupada === true && pos?.lote_id === loteId) {
-          total++;
-        }
+window.isEmpty = function (valor) {
+  return valor === null ||
+         valor === undefined ||
+         valor === "" ||
+         (typeof valor === "string" && valor.trim() === "");
+};
 
-      });
+// ======================================
+// NOTIFICAÇÃO PADRÃO SISTEMA
+// ======================================
+window.notificar = function (mensagem, tipo = "info") {
 
-    });
+  console.log(`[${tipo.toUpperCase()}] ${mensagem}`);
 
+  // Se tiver sistema de toast no futuro
+  // aqui já fica centralizado
+};
+
+// ======================================
+// CONFIRMAÇÃO PADRÃO
+// ======================================
+window.confirmar = function (mensagem) {
+  return confirm(mensagem);
+};
+
+// ======================================
+// DEBOUNCE (ANTI DUPLO CLIQUE)
+// ======================================
+window.debounce = function (fn, delay = 300) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), delay);
+  };
+};
+
+// ======================================
+// ORDENADORES PADRÃO
+// ======================================
+window.ordenarPorNumero = function (array, campo) {
+  return [...array].sort((a, b) => {
+    return Number(a[campo]) - Number(b[campo]);
   });
-
-  return total;
 };
 
-
-// -------------------------------
-// TOTAL EXPEDIDO DO LOTE (POR LOTE_ID)
-// -------------------------------
-window.totalExpedidoDoLote = function (loteId) {
-
-  if (!loteId) return 0;
-  if (!Array.isArray(state.historicoExpedidos)) return 0;
-
-  return state.historicoExpedidos
-    .filter(h => h?.lote_id === loteId)
-    .reduce((soma, h) => {
-
-      if (!Array.isArray(h?.detalhes)) return soma;
-
-      return soma + h.detalhes.length;
-
-    }, 0);
+window.ordenarPorTexto = function (array, campo) {
+  return [...array].sort((a, b) => {
+    return String(a[campo]).localeCompare(String(b[campo]));
+  });
 };
 
+// ======================================
+// AGRUPADOR POR CAMPO
+// ======================================
+window.agruparPor = function (array, campo) {
 
-// -------------------------------
-// CONFIGURAR HEADER
-// -------------------------------
-window.configurarHeader = function (tipoTela) {
+  return array.reduce((acc, item) => {
 
-  const usuario = JSON.parse(localStorage.getItem('usuarioLogado') || '{}');
+    const chave = item[campo];
 
-  const usuarioSpan = document.getElementById('usuarioHeader');
-  const btnRelatorios = document.getElementById('btnRelatorios');
-  const btnVoltar = document.getElementById('btnVoltar');
+    if (!acc[chave]) acc[chave] = [];
 
-  if (usuarioSpan && usuario.usuario) {
-    usuarioSpan.textContent = `Usuário: ${usuario.usuario}`;
-  }
+    acc[chave].push(item);
 
-  // Tela principal
-  if (tipoTela === 'sistema') {
-    if (btnRelatorios) btnRelatorios.style.display = 'inline-block';
-    if (btnVoltar) btnVoltar.style.display = 'none';
-  }
+    return acc;
 
-  // Tela relatórios
-  if (tipoTela === 'relatorios') {
-    if (btnRelatorios) btnRelatorios.style.display = 'none';
-    if (btnVoltar) btnVoltar.style.display = 'inline-block';
-  }
+  }, {});
 };
 
-
-// -------------------------------
-// NAVEGAÇÃO
-// -------------------------------
-window.irRelatorios = function () {
-  window.location.href = 'relatorios.html';
+// ======================================
+// SOMADOR GENÉRICO
+// ======================================
+window.somarCampo = function (array, campo) {
+  return array.reduce((total, item) => {
+    return total + (Number(item[campo]) || 0);
+  }, 0);
 };
 
-window.voltarSistema = function () {
-  window.location.href = 'index.html';
+// ======================================
+// FILTRO UUID SAFE
+// ======================================
+window.filtrarPorId = function (array, campo, valor) {
+  return array.filter(item =>
+    idEquals(item[campo], valor)
+  );
+};
+
+// ======================================
+// BUSCAR POR ID UUID SAFE
+// ======================================
+window.buscarPorId = function (array, id) {
+  return array.find(item =>
+    idEquals(item.id, id)
+  );
+};
+
+// ======================================
+// CLONE SEGURO (IMUTABILIDADE)
+// ======================================
+window.clonar = function (obj) {
+  return JSON.parse(JSON.stringify(obj));
 };
