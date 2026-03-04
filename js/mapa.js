@@ -1,283 +1,104 @@
 // ===============================
-// MAPA.JS — ENDEREÇAMENTO PROFISSIONAL
+// MAPA.JS — ENTERPRISE STABLE
 // ===============================
 
+document.addEventListener("DOMContentLoaded", () => {
+  inicializarMapa();
+});
 
+// --------------------------------------------------
+// INICIALIZAR MAPA
+// --------------------------------------------------
+function inicializarMapa() {
 
-// ===============================
-// CRIAR ÁREA
-// ===============================
-window.cadastrarArea = async function () {
-
-  const input = document.getElementById('areaNome');
-
-  if (!input || !input.value.trim()) {
-    alert('Informe o nome da área');
+  if (!window.state) {
+    console.error("State não carregado");
     return;
   }
 
-  const nome = input.value.trim();
+  renderizarMapa();
+}
 
-  try {
+// --------------------------------------------------
+// RENDERIZAR MAPA
+// --------------------------------------------------
+window.renderizarMapa = function () {
 
-    const { data, error } = await window.supabaseClient
-      .from('areas')
-      .insert([{ nome }])
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    state.areas.push(data);
-    input.value = '';
-
-    renderMapa();
-
-  } catch (err) {
-    console.error('Erro ao cadastrar área:', err);
-    alert('Erro ao criar área');
-  }
-};
-
-
-
-// ===============================
-// EXCLUIR ÁREA
-// ===============================
-window.excluirArea = async function (areaId) {
-
-  if (areaTemRuas(areaId)) {
-    if (!confirm('Essa área possui ruas vinculadas. Deseja realmente excluir tudo?')) {
-      return;
-    }
-  } else {
-    if (!confirm('Excluir área?')) return;
-  }
-
-  try {
-
-    const { error } = await window.supabaseClient
-      .from('areas')
-      .delete()
-      .eq('id', areaId);
-
-    if (error) throw error;
-
-    // Remove área
-    state.areas = state.areas.filter(a => a.id !== areaId);
-
-    // Remove ruas da área
-    const ruasRemovidas = state.ruas.filter(r => r.area_id === areaId);
-    const ruasIds = ruasRemovidas.map(r => r.id);
-
-    state.ruas = state.ruas.filter(r => r.area_id !== areaId);
-
-    // Remove posições das ruas removidas
-    state.posicoes = state.posicoes.filter(p => !ruasIds.includes(p.rua_id));
-
-    renderMapa();
-
-  } catch (err) {
-    console.error('Erro ao excluir área:', err);
-    alert('Erro ao excluir área');
-  }
-};
-
-
-
-// ===============================
-// CRIAR RUA + POSIÇÕES
-// ===============================
-window.criarRua = async function (areaId) {
-
-  const nome = prompt('Nome da rua');
-  if (!nome) return;
-
-  const quantidade = Number(prompt('Quantas posições essa rua terá?'));
-
-  if (!quantidade || quantidade <= 0) {
-    alert('Quantidade inválida.');
-    return;
-  }
-
-  try {
-
-    const { data: novaRua, error: erroRua } =
-      await window.supabaseClient
-        .from('ruas')
-        .insert([{
-          nome,
-          area_id: areaId,
-          quantidade_posicoes: quantidade
-        }])
-        .select()
-        .single();
-
-    if (erroRua) throw erroRua;
-
-    state.ruas.push(novaRua);
-
-    // Criar posições
-    const posicoesCriadas = [];
-
-    for (let i = 1; i <= quantidade; i++) {
-      posicoesCriadas.push({
-        rua_id: novaRua.id,
-        numero: i,
-        ocupada: false
-      });
-    }
-
-    const { data: posData, error: erroPos } =
-      await window.supabaseClient
-        .from('posicoes')
-        .insert(posicoesCriadas)
-        .select();
-
-    if (erroPos) throw erroPos;
-
-    state.posicoes.push(...posData);
-
-    renderMapa();
-
-  } catch (err) {
-    console.error('Erro ao criar rua:', err);
-    alert('Erro ao criar rua');
-  }
-};
-
-
-
-// ===============================
-// EXCLUIR RUA
-// ===============================
-window.excluirRua = async function (ruaId) {
-
-  if (ruaTemPosicoesOcupadas(ruaId)) {
-    if (!confirm('Essa rua possui posições ocupadas. Deseja realmente excluir?')) {
-      return;
-    }
-  } else {
-    if (!confirm('Excluir rua?')) return;
-  }
-
-  try {
-
-    const { error } = await window.supabaseClient
-      .from('ruas')
-      .delete()
-      .eq('id', ruaId);
-
-    if (error) throw error;
-
-    // Remove rua
-    state.ruas = state.ruas.filter(r => r.id !== ruaId);
-
-    // Remove posições vinculadas
-    state.posicoes = state.posicoes.filter(p => p.rua_id !== ruaId);
-
-    renderMapa();
-
-  } catch (err) {
-    console.error('Erro ao excluir rua:', err);
-    alert('Erro ao excluir rua');
-  }
-};
-
-// ===============================
-// RENDER MAPA (ATUALIZADO E BLINDADO)
-// ===============================
-window.renderMapa = function () {
-
-  const mapa = document.getElementById('mapa');
+  const mapa = document.getElementById("mapa");
   if (!mapa) return;
 
-  if (!state?.areas || !state?.ruas || !state?.posicoes) {
-    console.warn('Estado ainda não carregado');
+  mapa.innerHTML = "";
+
+  if (!state.areas || state.areas.length === 0) {
+    mapa.innerHTML = "<p>Nenhuma área cadastrada.</p>";
     return;
   }
-
-  mapa.innerHTML = '';
 
   state.areas.forEach(area => {
 
-    const areaDiv = document.createElement('div');
-    areaDiv.className = 'area';
+    const areaDiv = document.createElement("div");
+    areaDiv.className = "area";
 
-    areaDiv.innerHTML = `
-      <div class="area-header">
-        <strong>${area.nome}</strong>
-        <button class="danger" onclick="excluirArea('${area.id}')">
-          Excluir Área
-        </button>
-      </div>
-    `;
+    const titulo = document.createElement("h2");
+    titulo.textContent = area.nome || "Área sem nome";
+    areaDiv.appendChild(titulo);
 
-    const ruasDaArea = state.ruas.filter(r => r.area_id === area.id);
+    if (!area.ruas || area.ruas.length === 0) {
+      const vazio = document.createElement("p");
+      vazio.textContent = "Sem ruas cadastradas";
+      areaDiv.appendChild(vazio);
+      mapa.appendChild(areaDiv);
+      return;
+    }
 
-    ruasDaArea.forEach(rua => {
+    area.ruas.forEach(rua => {
 
-      const ruaDiv = document.createElement('div');
-      ruaDiv.className = 'rua';
+      const ruaDiv = document.createElement("div");
+      ruaDiv.className = "rua";
 
-      ruaDiv.innerHTML = `
-        <div class="rua-header">
-          Rua ${rua.nome}
-          <button class="danger" onclick="excluirRua('${rua.id}')">
-            Excluir Rua
-          </button>
-        </div>
-      `;
+      const nomeRua = document.createElement("h3");
+      nomeRua.textContent = rua.nome || "Rua sem nome";
+      ruaDiv.appendChild(nomeRua);
 
-      const posicoesDaRua = state.posicoes
-        .filter(p => p.rua_id === rua.id)
-        .sort((a, b) => a.numero - b.numero);
+      const grid = document.createElement("div");
+      grid.className = "grid-posicoes";
 
-      const grid = document.createElement('div');
-      grid.className = 'posicoes';
+      if (!rua.posicoes || rua.posicoes.length === 0) {
+        const vazioRua = document.createElement("p");
+        vazioRua.textContent = "Sem posições";
+        ruaDiv.appendChild(vazioRua);
+        areaDiv.appendChild(ruaDiv);
+        return;
+      }
 
-      posicoesDaRua.forEach(pos => {
+      rua.posicoes.forEach(pos => {
 
-        const posDiv = document.createElement('div');
-        posDiv.className = 'posicao';
-        posDiv.textContent = pos.numero;
+        const posDiv = document.createElement("div");
+        posDiv.className = "posicao";
 
-        // 🔥 RESET VISUAL (EVITA BUG)
-        posDiv.style.backgroundColor = '';
-        posDiv.style.color = '';
-        posDiv.classList.remove('ocupada', 'livre', 'highlight');
+        posDiv.textContent = pos.nome || pos.codigo || "P";
 
+        // =========================
+        // STATUS VISUAL
+        // =========================
         if (pos.ocupada) {
-
-          const lote = state.lotes?.find(l => l.id === pos.lote_id);
-
-          posDiv.classList.add('ocupada');
-
-          if (lote?.cor) {
-            posDiv.style.backgroundColor = lote.cor;
-            posDiv.style.color = '#fff';
-          }
-
-          posDiv.title = `
-          Lote: ${lote?.nome || '-'}
-          RZ: ${pos.rz || '-'}
-          Volume: ${pos.volume || '-'}
-          `;
-
+          posDiv.classList.add("ocupada");
         } else {
-          posDiv.classList.add('livre');
+          posDiv.classList.add("livre");
         }
 
-        // 🔥 AQUI ESTÁ O DESTAQUE DA BUSCA
-        if (pos._highlight === true) {
-          posDiv.classList.add('highlight');
-        }
+        // =========================
+        // CLIQUE
+        // =========================
+        posDiv.addEventListener("click", () => {
 
-        posDiv.onclick = () => {
-          if (typeof abrirModalPorId === "function") {
-            abrirModalPorId(pos.id);
+          if (!window.abrirModalPorId) {
+            console.error("abrirModalPorId não carregado");
+            return;
           }
-        };
+
+          window.abrirModalPorId(pos.id);
+        });
 
         grid.appendChild(posDiv);
       });
@@ -286,15 +107,6 @@ window.renderMapa = function () {
       areaDiv.appendChild(ruaDiv);
     });
 
-    const btnRua = document.createElement('button');
-    btnRua.textContent = 'Adicionar Rua';
-    btnRua.onclick = () => criarRua(area.id);
-
-    areaDiv.appendChild(btnRua);
     mapa.appendChild(areaDiv);
   });
-
-  if (typeof atualizarDashboard === 'function') {
-    atualizarDashboard();
-  }
 };
