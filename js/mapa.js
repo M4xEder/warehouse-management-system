@@ -2,22 +2,23 @@
 // MAPA.JS — ENTERPRISE STABLE UUID
 // ===============================
 
+// --------------------------------------------------
+// INICIALIZAÇÃO
+// --------------------------------------------------
 document.addEventListener("DOMContentLoaded", () => {
-  inicializarMapa();
-});
 
-// --------------------------------------------------
-// INICIALIZAR MAPA
-// --------------------------------------------------
-function inicializarMapa() {
+  console.log("🗺️ Inicializando mapa...");
 
   if (!window.state) {
-    console.error("State não carregado");
+    console.error("❌ State não encontrado.");
     return;
   }
 
-  renderMapa();
-}
+  if (typeof renderMapa !== "function") {
+    console.warn("⚠ renderMapa ainda não existe.");
+  }
+
+});
 
 // --------------------------------------------------
 // RENDER MAPA
@@ -25,66 +26,88 @@ function inicializarMapa() {
 window.renderMapa = function () {
 
   const mapa = document.getElementById("mapa");
-  if (!mapa) return;
 
-  mapa.innerHTML = "";
-
-  if (!state.areas || state.areas.length === 0) {
-    mapa.innerHTML = "<p>Nenhuma área cadastrada.</p>";
+  if (!mapa) {
+    console.error("❌ Elemento #mapa não encontrado no HTML");
     return;
   }
 
+  mapa.innerHTML = "";
+
+  // ======================================
+  // SEM ÁREAS
+  // ======================================
+  if (!state.areas || state.areas.length === 0) {
+
+    const aviso = document.createElement("p");
+    aviso.textContent = "Nenhuma área cadastrada.";
+
+    mapa.appendChild(aviso);
+    return;
+  }
+
+  // ======================================
+  // LOOP ÁREAS
+  // ======================================
   state.areas.forEach(area => {
 
     const areaDiv = document.createElement("div");
     areaDiv.className = "area";
 
-    const header = document.createElement("div");
-    header.className = "area-header";
-    header.textContent = area.nome || "Área";
-    areaDiv.appendChild(header);
+    const areaTitulo = document.createElement("h2");
+    areaTitulo.textContent = area.nome || "Área sem nome";
 
-    // BUSCAR RUAS DA ÁREA
-    const ruasDaArea = state.ruas.filter(r =>
-      String(r.area_id) === String(area.id)
+    areaDiv.appendChild(areaTitulo);
+
+    // BUSCA RUAS DA ÁREA
+    const ruasDaArea = state.ruas.filter(rua =>
+      String(rua.area_id) === String(area.id)
     );
 
     if (ruasDaArea.length === 0) {
 
       const vazio = document.createElement("p");
       vazio.textContent = "Sem ruas cadastradas";
+
       areaDiv.appendChild(vazio);
       mapa.appendChild(areaDiv);
       return;
     }
 
+    // ======================================
+    // LOOP RUAS
+    // ======================================
     ruasDaArea.forEach(rua => {
 
       const ruaDiv = document.createElement("div");
       ruaDiv.className = "rua";
 
-      const ruaHeader = document.createElement("div");
-      ruaHeader.className = "rua-header";
-      ruaHeader.textContent = rua.nome || "Rua";
-      ruaDiv.appendChild(ruaHeader);
+      const ruaTitulo = document.createElement("h3");
+      ruaTitulo.textContent = rua.nome || "Rua";
 
-      const posContainer = document.createElement("div");
-      posContainer.className = "posicoes";
+      ruaDiv.appendChild(ruaTitulo);
 
-      // BUSCAR POSIÇÕES DA RUA
+      const grid = document.createElement("div");
+      grid.className = "grid-posicoes";
+
+      // BUSCA POSIÇÕES DA RUA
       const posicoesDaRua = state.posicoes
-        .filter(p => String(p.rua_id) === String(rua.id))
-        .sort((a,b) => Number(a.numero) - Number(b.numero));
+        .filter(pos => String(pos.rua_id) === String(rua.id))
+        .sort((a, b) => Number(a.numero) - Number(b.numero));
 
       if (posicoesDaRua.length === 0) {
 
-        const vazio = document.createElement("p");
-        vazio.textContent = "Sem posições";
-        ruaDiv.appendChild(vazio);
+        const vazioRua = document.createElement("p");
+        vazioRua.textContent = "Sem posições";
+
+        ruaDiv.appendChild(vazioRua);
         areaDiv.appendChild(ruaDiv);
         return;
       }
 
+      // ======================================
+      // LOOP POSIÇÕES
+      // ======================================
       posicoesDaRua.forEach(pos => {
 
         const posDiv = document.createElement("div");
@@ -92,29 +115,41 @@ window.renderMapa = function () {
 
         posDiv.textContent = pos.numero || "P";
 
-        // STATUS VISUAL
+        // -----------------------
+        // STATUS
+        // -----------------------
         if (pos.ocupada) {
           posDiv.classList.add("ocupada");
+        } else {
+          posDiv.classList.add("livre");
         }
 
+        // -----------------------
         // CLIQUE
+        // -----------------------
         posDiv.addEventListener("click", () => {
 
           if (!window.abrirModalPorId) {
-            console.error("Função abrirModalPorId não carregada");
+            console.error("❌ abrirModalPorId não encontrado.");
             return;
           }
 
           window.abrirModalPorId(pos.id);
         });
 
-        posContainer.appendChild(posDiv);
+        grid.appendChild(posDiv);
+
       });
 
-      ruaDiv.appendChild(posContainer);
+      ruaDiv.appendChild(grid);
       areaDiv.appendChild(ruaDiv);
+
     });
 
     mapa.appendChild(areaDiv);
+
   });
+
+  console.log("✅ Mapa renderizado");
+
 };
