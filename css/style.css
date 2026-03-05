@@ -58,6 +58,7 @@ input, select {
   border: 1px solid #d1d5db;
   margin: 6px 0;
   font-size: 14px;
+  width: 100%;
 }
 
 /* ===============================
@@ -158,6 +159,9 @@ input, select {
   border-radius: 10px;
 }
 
+/* ===============================
+   POSIÇÃO INDIVIDUAL
+================================ */
 .posicao {
   min-width: 38px;
   height: 38px;
@@ -178,10 +182,22 @@ input, select {
   box-shadow: 0 5px 12px rgba(0,0,0,0.2);
 }
 
+/* LIVRE */
+.posicao.livre {
+  background: #e5e7eb;
+}
+
+/* OCUPADA */
 .posicao.ocupada {
   background: #ef4444;
   color: #fff;
   border: 2px solid #000;
+}
+
+/* BUSCA / HIGHLIGHT */
+.posicao.highlight {
+  outline: 3px solid #2563eb;
+  transform: scale(1.15);
 }
 
 /* ===============================
@@ -211,7 +227,7 @@ input, select {
   transform: translateY(-3px);
 }
 
-/* STATUS POR BORDA */
+/* STATUS */
 .lote-ativo {
   border-left: 6px solid #3498db;
 }
@@ -232,7 +248,7 @@ input, select {
   padding-bottom: 6px;
 }
 
-/* RESUMO DO LOTE */
+/* RESUMO */
 .resumo-lote {
   margin-bottom: 10px;
 }
@@ -257,7 +273,7 @@ input, select {
 }
 
 /* ===============================
-   RESUMO GERAL (TOP)
+   RESUMO GERAL
 ================================ */
 .dashboard-resumo {
   display: flex;
@@ -306,6 +322,11 @@ input, select {
   width: 400px;
   max-width: 95%;
   box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+}
+
+.modal-content label {
+  display: block;
+  margin-bottom: 10px;
 }
 
 .modal-content .acoes {
@@ -364,8 +385,9 @@ input, select {
   }
 
   .posicao {
-    width: 28px;
+    min-width: 28px;
     height: 28px;
+    font-size: 10px;
   }
 
   .modal-content {
