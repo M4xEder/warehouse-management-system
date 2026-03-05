@@ -1,5 +1,5 @@
 // ===============================
-// MAPA.JS — ENTERPRISE STABLE
+// MAPA.JS — ENTERPRISE STABLE UUID
 // ===============================
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -16,13 +16,13 @@ function inicializarMapa() {
     return;
   }
 
-  renderizarMapa();
+  renderMapa();
 }
 
 // --------------------------------------------------
-// RENDERIZAR MAPA
+// RENDER MAPA
 // --------------------------------------------------
-window.renderizarMapa = function () {
+window.renderMapa = function () {
 
   const mapa = document.getElementById("mapa");
   if (!mapa) return;
@@ -39,11 +39,18 @@ window.renderizarMapa = function () {
     const areaDiv = document.createElement("div");
     areaDiv.className = "area";
 
-    const titulo = document.createElement("h2");
-    titulo.textContent = area.nome || "Área sem nome";
-    areaDiv.appendChild(titulo);
+    const header = document.createElement("div");
+    header.className = "area-header";
+    header.textContent = area.nome || "Área";
+    areaDiv.appendChild(header);
 
-    if (!area.ruas || area.ruas.length === 0) {
+    // BUSCAR RUAS DA ÁREA
+    const ruasDaArea = state.ruas.filter(r =>
+      String(r.area_id) === String(area.id)
+    );
+
+    if (ruasDaArea.length === 0) {
+
       const vazio = document.createElement("p");
       vazio.textContent = "Sem ruas cadastradas";
       areaDiv.appendChild(vazio);
@@ -51,59 +58,60 @@ window.renderizarMapa = function () {
       return;
     }
 
-    area.ruas.forEach(rua => {
+    ruasDaArea.forEach(rua => {
 
       const ruaDiv = document.createElement("div");
       ruaDiv.className = "rua";
 
-      const nomeRua = document.createElement("h3");
-      nomeRua.textContent = rua.nome || "Rua sem nome";
-      ruaDiv.appendChild(nomeRua);
+      const ruaHeader = document.createElement("div");
+      ruaHeader.className = "rua-header";
+      ruaHeader.textContent = rua.nome || "Rua";
+      ruaDiv.appendChild(ruaHeader);
 
-      const grid = document.createElement("div");
-      grid.className = "grid-posicoes";
+      const posContainer = document.createElement("div");
+      posContainer.className = "posicoes";
 
-      if (!rua.posicoes || rua.posicoes.length === 0) {
-        const vazioRua = document.createElement("p");
-        vazioRua.textContent = "Sem posições";
-        ruaDiv.appendChild(vazioRua);
+      // BUSCAR POSIÇÕES DA RUA
+      const posicoesDaRua = state.posicoes
+        .filter(p => String(p.rua_id) === String(rua.id))
+        .sort((a,b) => Number(a.numero) - Number(b.numero));
+
+      if (posicoesDaRua.length === 0) {
+
+        const vazio = document.createElement("p");
+        vazio.textContent = "Sem posições";
+        ruaDiv.appendChild(vazio);
         areaDiv.appendChild(ruaDiv);
         return;
       }
 
-      rua.posicoes.forEach(pos => {
+      posicoesDaRua.forEach(pos => {
 
         const posDiv = document.createElement("div");
         posDiv.className = "posicao";
 
-        posDiv.textContent = pos.nome || pos.codigo || "P";
+        posDiv.textContent = pos.numero || "P";
 
-        // =========================
         // STATUS VISUAL
-        // =========================
         if (pos.ocupada) {
           posDiv.classList.add("ocupada");
-        } else {
-          posDiv.classList.add("livre");
         }
 
-        // =========================
         // CLIQUE
-        // =========================
         posDiv.addEventListener("click", () => {
 
           if (!window.abrirModalPorId) {
-            console.error("abrirModalPorId não carregado");
+            console.error("Função abrirModalPorId não carregada");
             return;
           }
 
           window.abrirModalPorId(pos.id);
         });
 
-        grid.appendChild(posDiv);
+        posContainer.appendChild(posDiv);
       });
 
-      ruaDiv.appendChild(grid);
+      ruaDiv.appendChild(posContainer);
       areaDiv.appendChild(ruaDiv);
     });
 
