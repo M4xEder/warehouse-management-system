@@ -1,40 +1,61 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Gerenciamento de Gaylords</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- CSS -->
-  <link rel="stylesheet" href="css/style.css">
+<meta charset="UTF-8">
+<title>Gerenciamento de Gaylords</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- ========================= -->
-  <!-- SUPABASE -->
-  <!-- ========================= -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+<!-- ========================= -->
+<!-- CSS -->
+<!-- ========================= -->
+<link rel="stylesheet" href="css/style.css">
 
-  <!-- CONEXÃO -->
-  <script src="js/supabase.js" defer></script>
+<!-- ========================= -->
+<!-- SUPABASE -->
+<!-- ========================= -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 
-  <!-- BASE -->
-  <script src="js/model.js" defer></script>
-  <script src="js/state.js" defer></script>
-  <script src="js/utils.js" defer></script>
+<!-- ========================= -->
+<!-- CONEXÃO BANCO -->
+<!-- ========================= -->
+<script src="js/supabase.js" defer></script>
 
-  <!-- MÓDULOS -->
-  <script src="js/lotes.js" defer></script>
-  <script src="js/mapa.js" defer></script>
-  <script src="js/modal.js" defer></script>
-<!--   <script src="js/expedicao.js" defer></script> -->
-  <script src="js/busca.js" defer></script>
-  <script src="js/dashboard.js" defer></script>
+<!-- ========================= -->
+<!-- BASE DO SISTEMA -->
+<!-- ========================= -->
+<script src="js/model.js" defer></script>
+<script src="js/state.js" defer></script>
 
-  <!-- INTERFACE -->
-  <script src="js/header.js" defer></script>
-  <script src="js/login.js" defer></script>
+<!-- ========================= -->
+<!-- UTILIDADES -->
+<!-- ========================= -->
+<script src="js/utils.js" defer></script>
 
-  <!-- INICIALIZAÇÃO -->
-  <script src="js/main.js" defer></script>
+<!-- ========================= -->
+<!-- MÓDULOS PRINCIPAIS -->
+<!-- ========================= -->
+<script src="js/lotes.js" defer></script>
+<script src="js/mapa.js" defer></script>
+<script src="js/modal.js" defer></script>
+
+<!-- ========================= -->
+<!-- FUNCIONALIDADES -->
+<!-- ========================= -->
+<script src="js/dashboard.js" defer></script>
+<script src="js/busca.js" defer></script>
+<!-- <script src="js/expedicao.js" defer></script> -->
+
+<!-- ========================= -->
+<!-- INTERFACE -->
+<!-- ========================= -->
+<script src="js/header.js" defer></script>
+<script src="js/login.js" defer></script>
+
+<!-- ========================= -->
+<!-- INICIALIZAÇÃO -->
+<!-- ========================= -->
+<script src="js/main.js" defer></script>
 
 </head>
 
@@ -51,72 +72,99 @@
 <!-- BUSCA -->
 <!-- ========================= -->
 <div class="busca">
-  <input id="buscaInput" placeholder="Buscar por lote ou RZ">
-  <button onclick="buscar()">Buscar</button>
-  <button onclick="limparBusca()">Limpar Destaque</button>
+
+<input 
+id="buscaInput" 
+placeholder="Buscar por lote ou RZ"
+>
+
+<button onclick="buscar()">
+Buscar
+</button>
+
+<button onclick="limparBusca()">
+Limpar Destaque
+</button>
+
 </div>
 
 <!-- ========================= -->
 <!-- CADASTRAR ÁREA -->
 <!-- ========================= -->
 <section class="cadastros">
-  <h2>Cadastrar Área</h2>
-  <input id="areaNome" placeholder="Nome da área">
-  <button onclick="cadastrarArea()">Cadastrar Área</button>
+
+<h2>Cadastrar Área</h2>
+
+<input 
+id="areaNome" 
+placeholder="Nome da área"
+>
+
+<button onclick="cadastrarArea()">
+Cadastrar Área
+</button>
+
 </section>
 
 <!-- ========================= -->
 <!-- CADASTRAR LOTE -->
 <!-- ========================= -->
 <section class="cadastros">
-  <h2>Cadastrar Lote</h2>
 
-  <input id="loteNome" placeholder="Nome do lote">
+<h2>Cadastrar Lote</h2>
 
-  <input 
-    id="loteTotal" 
-    type="number" 
-    min="1"
-    placeholder="Quantidade total"
-  >
+<input 
+id="loteNome" 
+placeholder="Nome do lote"
+>
 
-  <button onclick="cadastrarLote()">Cadastrar Lote</button>
+<input 
+id="loteTotal"
+type="number"
+min="1"
+placeholder="Quantidade total"
+>
+
+<button onclick="cadastrarLote()">
+Cadastrar Lote
+</button>
+
 </section>
 
 <!-- ========================= -->
-<!-- MAPA -->
+<!-- MAPA DO ARMAZÉM -->
 <!-- ========================= -->
 <section id="mapa"></section>
 
 <!-- ========================= -->
-<!-- RESUMO GERAL -->
+<!-- RESUMO DASHBOARD -->
 <!-- ========================= -->
 <section class="dashboard-resumo">
 
-  <div class="card">
-    <h3>Lotes</h3>
-    <span id="resumoLotes">0</span>
-  </div>
+<div class="card">
+<h3>Lotes</h3>
+<span id="resumoLotes">0</span>
+</div>
 
-  <div class="card">
-    <h3>Alocados</h3>
-    <span id="resumoAlocados">0</span>
-  </div>
+<div class="card">
+<h3>Alocados</h3>
+<span id="resumoAlocados">0</span>
+</div>
 
-  <div class="card">
-    <h3>Não Alocados</h3>
-    <span id="resumoNaoAlocados">0</span>
-  </div>
+<div class="card">
+<h3>Não Alocados</h3>
+<span id="resumoNaoAlocados">0</span>
+</div>
 
-  <div class="card">
-    <h3>Expedidos</h3>
-    <span id="resumoExpedidos">0</span>
-  </div>
+<div class="card">
+<h3>Expedidos</h3>
+<span id="resumoExpedidos">0</span>
+</div>
 
-  <div class="card">
-    <h3>Saldo</h3>
-    <span id="resumoSaldo">0</span>
-  </div>
+<div class="card">
+<h3>Saldo</h3>
+<span id="resumoSaldo">0</span>
+</div>
 
 </section>
 
@@ -136,52 +184,83 @@
 <!-- MODAL ENDEREÇAMENTO -->
 <!-- ========================= -->
 <div id="modal" class="modal hidden">
-  <div class="modal-content">
 
-    <h3 id="modalTitulo">Endereçar Gaylord</h3>
+<div class="modal-content">
 
-    <label>Lote:
-      <select id="modalLote"></select>
-    </label>
+<h3 id="modalTitulo">
+Endereçar Gaylord
+</h3>
 
-    <label>Volume:
-      <input id="modalVolume">
-    </label>
+<label>
+Lote:
+<select id="modalLote"></select>
+</label>
 
-    <label>RZ:
-      <input id="modalRz">
-    </label>
+<label>
+Volume:
+<input id="modalVolume">
+</label>
 
-    <div class="acoes">
-      <button onclick="confirmarEndereco()">Salvar</button>
-      <button onclick="removerGaylord()">Remover</button>
-      <button onclick="fecharModal()">Cancelar</button>
-    </div>
+<label>
+RZ:
+<input id="modalRz">
+</label>
 
-  </div>
+<div class="acoes">
+
+<button onclick="confirmarEndereco()">
+Salvar
+</button>
+
+<button onclick="removerGaylord()">
+Remover
+</button>
+
+<button onclick="fecharModal()">
+Cancelar
+</button>
+
+</div>
+
+</div>
 </div>
 
 <!-- ========================= -->
 <!-- MODAL EXPEDIÇÃO -->
 <!-- ========================= -->
 <div id="modalExpedicao" class="modal hidden">
-  <div class="modal-content" style="width:500px; max-height:80vh; overflow:auto">
 
-    <h3>Expedir Gaylords</h3>
+<div class="modal-content" style="width:500px; max-height:80vh; overflow:auto">
 
-    <div style="margin-bottom:10px;">
-      <button onclick="selecionarTodosGaylords()">Selecionar todos</button>
-      <button onclick="desmarcarTodosGaylords()">Desmarcar todos</button>
-    </div>
+<h3>Expedir Gaylords</h3>
 
-    <div id="listaExpedicao"></div>
+<div style="margin-bottom:10px;">
 
-    <div class="acoes">
-      <button onclick="confirmarExpedicao()">Confirmar</button>
-      <button onclick="fecharModalExpedicao()">Cancelar</button>
-    </div>
+<button onclick="selecionarTodosGaylords()">
+Selecionar todos
+</button>
 
-  </div>
+<button onclick="desmarcarTodosGaylords()">
+Desmarcar todos
+</button>
+
+</div>
+
+<div id="listaExpedicao"></div>
+
+<div class="acoes">
+
+<button onclick="confirmarExpedicao()">
+Confirmar
+</button>
+
+<button onclick="fecharModalExpedicao()">
+Cancelar
+</button>
+
+</div>
+
+</div>
 </div>
 
 </body>
