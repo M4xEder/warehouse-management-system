@@ -1,141 +1,156 @@
 // ===============================
-// MODAL.JS — SUPABASE ENTERPRISE REALTIME
+// MODAL.JS — ENDEREÇAMENTO
 // ===============================
 
-let modalContext = {
-  posicaoId: null,
-  salvando: false
-};
+let posicaoAtualId = null;
 
-// --------------------------------------------------
+
+// ===============================
 // ABRIR MODAL
-// --------------------------------------------------
-window.abrirModalPorId = function (posicaoId) {
+// ===============================
+window.abrirModalPorId = function (posId) {
 
-  if (!posicaoId) return alert("ID inválido");
+  const pos = getPosicaoById(posId);
 
-  const pos = state.posicoes.find(p =>
-    String(p.id) === String(posicaoId)
-  );
+  if (!pos) {
+    console.error("Posição não encontrada");
+    return;
+  }
 
-  if (!pos) return alert("Posição não encontrada");
-
-  modalContext = { posicaoId, salvando: false };
+  posicaoAtualId = pos.id;
 
   const modal = document.getElementById("modal");
-  const select = document.getElementById("modalLote");
-  const inputRz = document.getElementById("modalRz");
-  const inputVolume = document.getElementById("modalVolume");
+  const selectLote = document.getElementById("modalLote");
+  const volumeInput = document.getElementById("modalVolume");
+  const rzInput = document.getElementById("modalRz");
 
-  select.innerHTML = '<option value="">Selecione um lote</option>';
+  if (!modal) {
+    console.error("Modal não encontrado");
+    return;
+  }
+
+  // limpar campos
+  volumeInput.value = "";
+  rzInput.value = "";
+
+  // carregar lotes
+  selectLote.innerHTML = "";
 
   state.lotes.forEach(lote => {
 
-    const saldo = calcularSaldoLote(lote.id);
-    if (saldo <= 0 && String(lote.id) !== String(pos.lote_id)) return;
-
     const opt = document.createElement("option");
+
     opt.value = lote.id;
-    opt.textContent = `${lote.nome || "Sem nome"} (Saldo: ${saldo})`;
-    select.appendChild(opt);
+    opt.textContent = lote.nome;
+
+    selectLote.appendChild(opt);
+
   });
 
-  select.value = pos.lote_id || "";
-  inputRz.value = pos.rz || "";
-  inputVolume.value = pos.volume || "";
+  // se posição já ocupada preencher dados
+  if (pos.ocupada) {
+
+    selectLote.value = pos.lote_id || "";
+    volumeInput.value = pos.volume || "";
+    rzInput.value = pos.rz || "";
+
+  }
 
   modal.classList.remove("hidden");
+
 };
 
-// --------------------------------------------------
-// CONFIRMAR ENDEREÇAMENTO
-// --------------------------------------------------
+
+
+// ===============================
+// FECHAR MODAL
+// ===============================
+window.fecharModal = function () {
+
+  const modal = document.getElementById("modal");
+
+  if (modal) {
+    modal.classList.add("hidden");
+  }
+
+  posicaoAtualId = null;
+
+};
+
+
+
+// ===============================
+// CONFIRMAR ENDEREÇO
+// ===============================
 window.confirmarEndereco = async function () {
 
-  if (modalContext.salvando) return;
-  modalContext.salvando = true;
+  if (!posicaoAtualId) return;
+
+  const loteId = document.getElementById("modalLote").value;
+  const volume = document.getElementById("modalVolume").value;
+  const rz = document.getElementById("modalRz").value;
 
   try {
 
-    const { posicaoId } = modalContext;
-
-    const select = document.getElementById("modalLote");
-    const inputRz = document.getElementById("modalRz");
-    const inputVolume = document.getElementById("modalVolume");
-
-    const loteId = select.value;
-    const rz = inputRz.value.trim();
-    const volume = inputVolume.value.trim();
-
-    if (!loteId) {
-      alert("Selecione um lote");
-      modalContext.salvando = false;
-      return;
-    }
-
-    if (!rz) {
-      alert("RZ obrigatório");
-      modalContext.salvando = false;
-      return;
-    }
-
-    const { error } = await supabaseClient
+    const { error } = await window.supabaseClient
       .from("posicoes")
       .update({
-        lote_id: String(loteId),
-        rz,
-        volume: volume || null,
-        ocupada: true
+        ocupada: true,
+        lote_id: loteId,
+        volume: volume,
+        rz: rz
       })
-      .eq("id", String(posicaoId));
+      .eq("id", posicaoAtualId);
 
     if (error) throw error;
 
     fecharModal();
 
+    await carregarSistema();
+
   } catch (err) {
-    console.error("Erro confirmarEndereco:", err);
-    alert("Erro ao salvar no banco.");
+
+    console.error("Erro ao endereçar:", err);
+    alert("Erro ao salvar.");
+
   }
 
-  modalContext.salvando = false;
 };
 
-// --------------------------------------------------
+
+
+// ===============================
 // REMOVER GAYLORD
-// --------------------------------------------------
+// ===============================
 window.removerGaylord = async function () {
+
+  if (!posicaoAtualId) return;
 
   if (!confirm("Remover gaylord desta posição?")) return;
 
   try {
 
-    const { posicaoId } = modalContext;
-
-    const { error } = await supabaseClient
+    const { error } = await window.supabaseClient
       .from("posicoes")
       .update({
+        ocupada: false,
         lote_id: null,
-        rz: null,
         volume: null,
-        ocupada: false
+        rz: null
       })
-      .eq("id", String(posicaoId));
+      .eq("id", posicaoAtualId);
 
     if (error) throw error;
 
     fecharModal();
 
-  } catch (err) {
-    console.error("Erro removerGaylord:", err);
-    alert("Erro ao remover.");
-  }
-};
+    await carregarSistema();
 
-// --------------------------------------------------
-// FECHAR MODAL
-// --------------------------------------------------
-window.fecharModal = function () {
-  const modal = document.getElementById("modal");
-  if (modal) modal.classList.add("hidden");
+  } catch (err) {
+
+    console.error("Erro ao remover:", err);
+    alert("Erro ao remover.");
+
+  }
+
 };
