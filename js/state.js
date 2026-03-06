@@ -2,6 +2,7 @@
 // STATE.JS — ENTERPRISE DEFINITIVO ULTRA BLINDADO UUID
 // ======================================================
 
+
 // ======================================
 // NORMALIZADOR GLOBAL DE ID
 // ======================================
@@ -10,6 +11,7 @@ function idEquals(a, b) {
 }
 
 function normalizeId(obj) {
+
   if (!obj) return obj;
 
   if (obj.id !== undefined) obj.id = String(obj.id);
@@ -21,20 +23,25 @@ function normalizeId(obj) {
   return obj;
 }
 
+
 // ======================================
 // ESTADO GLOBAL
 // ======================================
 window.state = {
+
   areas: [],
   ruas: [],
   posicoes: [],
   lotes: [],
   historico_expedidos: [],
+
   carregando: false,
   realtimeAtivo: false
+
 };
 
 let realtimeChannel = null;
+
 
 // ======================================
 // CARREGAR SISTEMA COMPLETO
@@ -67,6 +74,7 @@ window.carregarSistema = async function () {
     if (lotesRes.error) throw lotesRes.error;
     if (histRes.error) throw histRes.error;
 
+    // NORMALIZA IDs
     state.areas = (areasRes.data || []).map(normalizeId);
     state.ruas = (ruasRes.data || []).map(normalizeId);
     state.posicoes = (posRes.data || []).map(normalizeId);
@@ -75,9 +83,11 @@ window.carregarSistema = async function () {
 
     console.log("✅ Sistema carregado enterprise UUID");
 
+    // RENDER
     if (typeof renderMapa === "function") renderMapa();
     if (typeof renderDashboard === "function") renderDashboard();
 
+    // REALTIME
     if (!state.realtimeAtivo) iniciarRealtime();
 
   } catch (err) {
@@ -86,9 +96,13 @@ window.carregarSistema = async function () {
     alert("Erro ao carregar dados do banco.");
 
   } finally {
+
     state.carregando = false;
+
   }
+
 };
+
 
 // ======================================
 // REALTIME GLOBAL ENTERPRISE
@@ -107,6 +121,7 @@ window.iniciarRealtime = function () {
     }, payload => {
 
       const tabela = payload.table;
+
       handleRealtimeChange(tabela, payload);
 
     })
@@ -114,12 +129,16 @@ window.iniciarRealtime = function () {
     .subscribe(status => {
 
       if (status === 'SUBSCRIBED') {
+
         console.log("🔥 Realtime conectado enterprise");
         state.realtimeAtivo = true;
+
       }
 
     });
+
 };
+
 
 // ======================================
 // PROCESSADOR REALTIME UUID SAFE
@@ -129,8 +148,10 @@ window.handleRealtimeChange = function (table, payload) {
   if (!state[table]) return;
 
   const evento = payload.eventType;
+
   const novo = normalizeId(payload.new);
   const antigo = normalizeId(payload.old);
+
 
   // INSERT
   if (evento === 'INSERT') {
@@ -139,8 +160,12 @@ window.handleRealtimeChange = function (table, payload) {
       idEquals(item.id, novo.id)
     );
 
-    if (!existe) state[table].push(novo);
+    if (!existe) {
+      state[table].push(novo);
+    }
+
   }
+
 
   // UPDATE
   if (evento === 'UPDATE') {
@@ -150,9 +175,16 @@ window.handleRealtimeChange = function (table, payload) {
     );
 
     if (index !== -1) {
-      state[table][index] = { ...state[table][index], ...novo };
+
+      state[table][index] = {
+        ...state[table][index],
+        ...novo
+      };
+
     }
+
   }
+
 
   // DELETE
   if (evento === 'DELETE') {
@@ -160,49 +192,93 @@ window.handleRealtimeChange = function (table, payload) {
     state[table] = state[table].filter(item =>
       !idEquals(item.id, antigo.id)
     );
+
   }
 
-  // 🔥 RENDER INTELIGENTE
-  if (table === 'posicoes' && typeof renderMapa === "function") {
-    renderMapa();
-  }
 
+  // RENDER MAPA
   if (
-    (table === 'lotes' || table === 'historico_expedidos') &&
-    typeof renderDashboard === "function"
+    table === 'areas' ||
+    table === 'ruas' ||
+    table === 'posicoes'
   ) {
-    renderDashboard();
+    if (typeof renderMapa === "function") {
+      renderMapa();
+    }
   }
+
+
+  // RENDER DASHBOARD
+  if (
+    table === 'lotes' ||
+    table === 'historico_expedidos'
+  ) {
+    if (typeof renderDashboard === "function") {
+      renderDashboard();
+    }
+  }
+
 };
+
 
 // ======================================
 // GETTERS UUID SAFE
 // ======================================
-window.getAreaById = id =>
-  state.areas.find(a => idEquals(a.id, id));
+window.getAreaById = function (id) {
 
-window.getRuaById = id =>
-  state.ruas.find(r => idEquals(r.id, id));
+  return state.areas.find(a =>
+    idEquals(a.id, id)
+  );
 
-window.getPosicaoById = id =>
-  state.posicoes.find(p => idEquals(p.id, id));
+};
 
-window.getLoteById = id =>
-  state.lotes.find(l => idEquals(l.id, id));
+window.getRuaById = function (id) {
+
+  return state.ruas.find(r =>
+    idEquals(r.id, id)
+  );
+
+};
+
+window.getPosicaoById = function (id) {
+
+  return state.posicoes.find(p =>
+    idEquals(p.id, id)
+  );
+
+};
+
+window.getLoteById = function (id) {
+
+  return state.lotes.find(l =>
+    idEquals(l.id, id)
+  );
+
+};
+
 
 // ======================================
 // VERIFICAÇÕES
 // ======================================
-window.areaTemRuas = areaId =>
-  state.ruas.some(r => idEquals(r.area_id, areaId));
+window.areaTemRuas = function (areaId) {
 
-window.ruaTemPosicoesOcupadas = ruaId =>
-  state.posicoes.some(p =>
+  return state.ruas.some(r =>
+    idEquals(r.area_id, areaId)
+  );
+
+};
+
+window.ruaTemPosicoesOcupadas = function (ruaId) {
+
+  return state.posicoes.some(p =>
     idEquals(p.rua_id, ruaId) && p.ocupada === true
   );
 
+};
+
+
 // ======================================
-// CONTADORES OFICIAIS
+// CONTADORES
 // ======================================
 window.contarGaylordsDoLote = function (loteId) {
 
@@ -212,6 +288,7 @@ window.contarGaylordsDoLote = function (loteId) {
     p.ocupada === true &&
     idEquals(p.lote_id, loteId)
   ).length;
+
 };
 
 window.totalExpedidoDoLote = function (loteId) {
@@ -221,7 +298,9 @@ window.totalExpedidoDoLote = function (loteId) {
   return state.historico_expedidos
     .filter(h => idEquals(h.lote_id, loteId))
     .reduce((total, h) => total + (h.quantidade || 0), 0);
+
 };
+
 
 // ======================================
 // RESET CONTROLADO
@@ -236,9 +315,26 @@ window.resetState = function () {
   state.realtimeAtivo = false;
 
   if (realtimeChannel) {
+
     window.supabaseClient.removeChannel(realtimeChannel);
     realtimeChannel = null;
+
   }
 
   console.log("🔄 Estado resetado com segurança");
+
 };
+
+
+// ======================================
+// INICIALIZAÇÃO AUTOMÁTICA
+// ======================================
+document.addEventListener("DOMContentLoaded", () => {
+
+  if (typeof carregarSistema === "function") {
+
+    carregarSistema();
+
+  }
+
+});
