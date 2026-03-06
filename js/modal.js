@@ -2,39 +2,35 @@
 // MODAL.JS — ENDEREÇAMENTO
 // ===============================
 
-let posicaoAtualId = null;
+let posicaoAtual = null;
 
 
-// ===============================
+// ========================================
 // ABRIR MODAL
-// ===============================
+// ========================================
 window.abrirModalPorId = function (posId) {
 
-  const pos = getPosicaoById(posId);
+  const pos = state.posicoes.find(p => String(p.id) === String(posId));
 
   if (!pos) {
     console.error("Posição não encontrada");
     return;
   }
 
-  posicaoAtualId = pos.id;
+  posicaoAtual = pos;
 
   const modal = document.getElementById("modal");
-  const selectLote = document.getElementById("modalLote");
+  const loteSelect = document.getElementById("modalLote");
   const volumeInput = document.getElementById("modalVolume");
   const rzInput = document.getElementById("modalRz");
 
-  if (!modal) {
-    console.error("Modal não encontrado");
-    return;
-  }
+  modal.classList.remove("hidden");
 
-  // limpar campos
-  volumeInput.value = "";
-  rzInput.value = "";
 
-  // carregar lotes
-  selectLote.innerHTML = "";
+  // ===============================
+  // CARREGAR LOTES
+  // ===============================
+  loteSelect.innerHTML = "";
 
   state.lotes.forEach(lote => {
 
@@ -43,52 +39,97 @@ window.abrirModalPorId = function (posId) {
     opt.value = lote.id;
     opt.textContent = lote.nome;
 
-    selectLote.appendChild(opt);
+    loteSelect.appendChild(opt);
 
   });
 
-  // se posição já ocupada preencher dados
+
+  // ===============================
+  // POSIÇÃO OCUPADA
+  // ===============================
   if (pos.ocupada) {
 
-    selectLote.value = pos.lote_id || "";
+    loteSelect.value = pos.lote_id || "";
     volumeInput.value = pos.volume || "";
     rzInput.value = pos.rz || "";
 
-  }
+    loteSelect.disabled = true;
+    volumeInput.disabled = true;
+    rzInput.disabled = true;
 
-  modal.classList.remove("hidden");
+  } else {
+
+    volumeInput.value = "";
+    rzInput.value = "";
+
+    loteSelect.disabled = false;
+    volumeInput.disabled = false;
+    rzInput.disabled = false;
+
+  }
 
 };
 
 
 
-// ===============================
+// ========================================
 // FECHAR MODAL
-// ===============================
+// ========================================
 window.fecharModal = function () {
 
   const modal = document.getElementById("modal");
 
-  if (modal) {
-    modal.classList.add("hidden");
-  }
+  modal.classList.add("hidden");
 
-  posicaoAtualId = null;
+  posicaoAtual = null;
 
 };
 
 
 
-// ===============================
+// ========================================
 // CONFIRMAR ENDEREÇO
-// ===============================
+// ========================================
 window.confirmarEndereco = async function () {
 
-  if (!posicaoAtualId) return;
+  if (!posicaoAtual) return;
+
+  if (posicaoAtual.ocupada) {
+
+    alert("Esta posição já está ocupada.\nRemova o gaylord para alterar.");
+
+    return;
+  }
 
   const loteId = document.getElementById("modalLote").value;
   const volume = document.getElementById("modalVolume").value;
   const rz = document.getElementById("modalRz").value;
+
+
+  // ====================================
+  // VALIDAÇÕES OBRIGATÓRIAS
+  // ====================================
+  if (!loteId) {
+
+    alert("Selecione um lote.");
+    return;
+
+  }
+
+  if (!volume) {
+
+    alert("Volume é obrigatório.");
+    return;
+
+  }
+
+  if (!rz) {
+
+    alert("RZ é obrigatória.");
+    return;
+
+  }
+
 
   try {
 
@@ -100,18 +141,16 @@ window.confirmarEndereco = async function () {
         volume: volume,
         rz: rz
       })
-      .eq("id", posicaoAtualId);
+      .eq("id", posicaoAtual.id);
 
     if (error) throw error;
 
     fecharModal();
 
-    await carregarSistema();
-
   } catch (err) {
 
-    console.error("Erro ao endereçar:", err);
-    alert("Erro ao salvar.");
+    console.error(err);
+    alert("Erro ao salvar endereço.");
 
   }
 
@@ -119,12 +158,12 @@ window.confirmarEndereco = async function () {
 
 
 
-// ===============================
+// ========================================
 // REMOVER GAYLORD
-// ===============================
+// ========================================
 window.removerGaylord = async function () {
 
-  if (!posicaoAtualId) return;
+  if (!posicaoAtual) return;
 
   if (!confirm("Remover gaylord desta posição?")) return;
 
@@ -138,17 +177,15 @@ window.removerGaylord = async function () {
         volume: null,
         rz: null
       })
-      .eq("id", posicaoAtualId);
+      .eq("id", posicaoAtual.id);
 
     if (error) throw error;
 
     fecharModal();
 
-    await carregarSistema();
-
   } catch (err) {
 
-    console.error("Erro ao remover:", err);
+    console.error(err);
     alert("Erro ao remover.");
 
   }
