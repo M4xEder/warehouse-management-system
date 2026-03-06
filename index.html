@@ -14,48 +14,49 @@
 <!-- ========================= -->
 <!-- SUPABASE -->
 <!-- ========================= -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 
 <!-- ========================= -->
 <!-- BANCO -->
 <!-- ========================= -->
-<script src="js/supabase.js"></script>
+<script src="js/supabase.js" defer></script>
 
 <!-- ========================= -->
 <!-- BASE DO SISTEMA -->
 <!-- ========================= -->
-<script src="js/model.js"></script>
-<script src="js/state.js"></script>
+<script src="js/model.js" defer></script>
+<script src="js/state.js" defer></script>
 
 <!-- ========================= -->
 <!-- UTILIDADES -->
 <!-- ========================= -->
-<script src="js/utils.js"></script>
+<script src="js/utils.js" defer></script>
 
 <!-- ========================= -->
 <!-- MÓDULOS PRINCIPAIS -->
 <!-- ========================= -->
-<script src="js/areas.js"></script>
-<script src="js/lotes.js"></script>
-<script src="js/mapa.js"></script>
-<script src="js/modal.js"></script>
+<script src="js/areas.js" defer></script>
+<script src="js/ruas.js" defer></script>
+<script src="js/lotes.js" defer></script>
+<script src="js/mapa.js" defer></script>
+<script src="js/modal.js" defer></script>
 
 <!-- ========================= -->
 <!-- FUNCIONALIDADES -->
 <!-- ========================= -->
-<script src="js/dashboard.js"></script>
-<script src="js/busca.js"></script>
+<script src="js/dashboard.js" defer></script>
+<script src="js/busca.js" defer></script>
 
 <!-- ========================= -->
 <!-- INTERFACE -->
 <!-- ========================= -->
-<script src="js/header.js"></script>
-<script src="js/login.js"></script>
+<script src="js/header.js" defer></script>
+<script src="js/login.js" defer></script>
 
 <!-- ========================= -->
 <!-- INICIALIZAÇÃO -->
 <!-- ========================= -->
-<script src="js/main.js"></script>
+<script src="js/main.js" defer></script>
 
 </head>
 
@@ -84,7 +85,9 @@
 
 <input id="areaNome" placeholder="Nome da área">
 
-<button onclick="criarArea()">Cadastrar Área</button>
+<button onclick="criarArea()">
+Cadastrar Área
+</button>
 
 </section>
 
@@ -101,7 +104,9 @@ type="number"
 min="1"
 placeholder="Quantidade total">
 
-<button onclick="cadastrarLote()">Cadastrar Lote</button>
+<button onclick="cadastrarLote()">
+Cadastrar Lote
+</button>
 
 </section>
 
