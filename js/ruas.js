@@ -4,21 +4,28 @@
 
 
 // ===============================
-// CARREGAR RUAS
+// CARREGAR RUAS DO BANCO
 // ===============================
 window.carregarRuasDoBanco = async function () {
 
-  const { data, error } = await window.supabaseClient
-    .from('ruas')
-    .select('*')
-    .order('created_at', { ascending: true });
+  try {
 
-  if (error) {
-    console.error('Erro ao buscar ruas:', error);
-    return;
+    const { data, error } = await window.supabaseClient
+      .from('ruas')
+      .select('*')
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+
+    state.ruas = data || [];
+
+  } catch (err) {
+
+    console.error('Erro ao buscar ruas:', err);
+    state.ruas = [];
+
   }
 
-  state.ruas = data || [];
 };
 
 
@@ -31,7 +38,10 @@ window.criarRua = async function (areaId) {
   const nome = prompt('Nome da rua');
   if (!nome) return;
 
-  const quantidade = Number(prompt('Quantas posições essa rua terá?'));
+  const quantidade = Number(
+    prompt('Quantas posições essa rua terá?')
+  );
+
   if (!quantidade || quantidade <= 0) {
     alert('Quantidade inválida.');
     return;
@@ -39,12 +49,14 @@ window.criarRua = async function (areaId) {
 
   try {
 
-    // 🔹 1️⃣ Criar rua
+    // ===============================
+    // 1️⃣ CRIAR RUA
+    // ===============================
     const { data: novaRua, error: erroRua } =
       await window.supabaseClient
         .from('ruas')
         .insert([{
-          nome,
+          nome: nome,
           area_id: areaId,
           quantidade_posicoes: quantidade
         }])
@@ -53,15 +65,20 @@ window.criarRua = async function (areaId) {
 
     if (erroRua) throw erroRua;
 
-    // 🔹 2️⃣ Criar posições vinculadas
+
+    // ===============================
+    // 2️⃣ CRIAR POSIÇÕES AUTOMÁTICAS
+    // ===============================
     const posicoes = [];
 
     for (let i = 1; i <= quantidade; i++) {
+
       posicoes.push({
         rua_id: novaRua.id,
         numero: i,
         ocupada: false
       });
+
     }
 
     const { error: erroPosicoes } =
@@ -71,21 +88,27 @@ window.criarRua = async function (areaId) {
 
     if (erroPosicoes) throw erroPosicoes;
 
+
+    // ===============================
+    // 3️⃣ ATUALIZAR SISTEMA
+    // ===============================
     alert('Rua criada com sucesso!');
 
-    await carregarRuasDoBanco();
-    renderMapa();
+    await carregarSistema();
 
   } catch (err) {
+
     console.error('Erro ao criar rua:', err);
     alert('Erro ao criar rua.');
+
   }
+
 };
 
 
 
 // ===============================
-// EXCLUIR RUA (CASCADE NAS POSIÇÕES)
+// EXCLUIR RUA
 // ===============================
 window.excluirRua = async function (ruaId) {
 
@@ -93,18 +116,36 @@ window.excluirRua = async function (ruaId) {
 
   try {
 
-    const { error } = await window.supabaseClient
-      .from('ruas')
-      .delete()
-      .eq('id', ruaId);
+    const { error } =
+      await window.supabaseClient
+        .from('ruas')
+        .delete()
+        .eq('id', ruaId);
 
     if (error) throw error;
 
-    await carregarRuasDoBanco();
-    renderMapa();
+    await carregarSistema();
 
   } catch (err) {
+
     console.error('Erro ao excluir rua:', err);
     alert('Erro ao excluir rua.');
+
   }
+
+};
+
+
+
+// ===============================
+// BUSCAR RUAS DE UMA ÁREA
+// ===============================
+window.getRuasDaArea = function (areaId) {
+
+  if (!state.ruas) return [];
+
+  return state.ruas.filter(
+    rua => rua.area_id === areaId
+  );
+
 };
