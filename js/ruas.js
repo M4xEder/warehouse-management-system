@@ -1,196 +1,144 @@
 // ===============================
-// MAPA.JS — ENTERPRISE STABLE UUID
+// RUAS.JS — SUPABASE (ENDEREÇAMENTO PROFISSIONAL)
 // ===============================
 
+// ===============================
+// CARREGAR RUAS DO BANCO
+// ===============================
+window.carregarRuasDoBanco = async function () {
 
-// --------------------------------------------------
-// INICIALIZAÇÃO
-// --------------------------------------------------
-document.addEventListener("DOMContentLoaded", () => {
+try {
 
-  console.log("🗺️ Inicializando mapa...");
+const { data, error } = await window.supabaseClient  
+  .from('ruas')  
+  .select('*')  
+  .order('created_at', { ascending: true });  
 
-  if (!window.state) {
-    console.error("❌ State não encontrado.");
-    return;
-  }
+if (error) throw error;  
 
-  renderMapa();
+state.ruas = data || [];
 
-});
+} catch (err) {
 
+console.error('Erro ao buscar ruas:', err);  
+state.ruas = [];
 
-// --------------------------------------------------
-// RENDER MAPA
-// --------------------------------------------------
-window.renderMapa = function () {
+}
 
-  const mapa = document.getElementById("mapa");
+};
 
-  if (!mapa) {
-    console.error("❌ Elemento #mapa não encontrado");
-    return;
-  }
+// ===============================
+// CRIAR RUA + POSIÇÕES AUTOMÁTICAS
+// ===============================
+window.criarRua = async function (areaId) {
 
-  mapa.innerHTML = "";
+const nome = prompt('Nome da rua');
+if (!nome) return;
 
-  if (!state.areas || state.areas.length === 0) {
+const quantidade = Number(
+prompt('Quantas posições essa rua terá?')
+);
 
-    const aviso = document.createElement("p");
-    aviso.textContent = "Nenhuma área cadastrada.";
+if (!quantidade || quantidade <= 0) {
+alert('Quantidade inválida.');
+return;
+}
 
-    mapa.appendChild(aviso);
-    return;
-  }
+try {
 
-  // ======================================
-  // LOOP ÁREAS
-  // ======================================
-  state.areas.forEach(area => {
+// ===============================  
+// 1️⃣ CRIAR RUA  
+// ===============================  
+const { data: novaRua, error: erroRua } =  
+  await window.supabaseClient  
+    .from('ruas')  
+    .insert([{  
+      nome: nome,  
+      area_id: areaId,  
+      quantidade_posicoes: quantidade  
+    }])  
+    .select()  
+    .single();  
 
-    const areaDiv = document.createElement("div");
-    areaDiv.className = "area";
+if (erroRua) throw erroRua;  
 
 
-    // -------------------------------
-    // CABEÇALHO DA ÁREA
-    // -------------------------------
-    const header = document.createElement("div");
-    header.className = "area-header";
+// ===============================  
+// 2️⃣ CRIAR POSIÇÕES AUTOMÁTICAS  
+// ===============================  
+const posicoes = [];  
 
-    const titulo = document.createElement("h2");
-    titulo.textContent = area.nome;
+for (let i = 1; i <= quantidade; i++) {  
 
-    const controles = document.createElement("div");
+  posicoes.push({  
+    rua_id: novaRua.id,  
+    numero: i,  
+    ocupada: false  
+  });  
 
+}  
 
-    // BOTÃO CRIAR RUA
-    const btnRua = document.createElement("button");
-    btnRua.textContent = "➕ Rua";
-    btnRua.onclick = () => criarRua(area.id);
+const { error: erroPosicoes } =  
+  await window.supabaseClient  
+    .from('posicoes')  
+    .insert(posicoes);  
 
+if (erroPosicoes) throw erroPosicoes;  
 
-    // BOTÃO EXCLUIR ÁREA
-    const btnExcluir = document.createElement("button");
-    btnExcluir.textContent = "🗑 Área";
-    btnExcluir.onclick = () => excluirArea(area.id);
 
+// ===============================  
+// 3️⃣ ATUALIZAR SISTEMA  
+// ===============================  
+alert('Rua criada com sucesso!');  
 
-    controles.appendChild(btnRua);
-    controles.appendChild(btnExcluir);
+await carregarSistema();
 
-    header.appendChild(titulo);
-    header.appendChild(controles);
+} catch (err) {
 
-    areaDiv.appendChild(header);
+console.error('Erro ao criar rua:', err);  
+alert('Erro ao criar rua.');
 
+}
 
-    // ======================================
-    // RUAS DA ÁREA
-    // ======================================
-    const ruasDaArea = state.ruas.filter(
-      rua => String(rua.area_id) === String(area.id)
-    );
+};
 
-    if (ruasDaArea.length === 0) {
+// ===============================
+// EXCLUIR RUA
+// ===============================
+window.excluirRua = async function (ruaId) {
 
-      const vazio = document.createElement("p");
-      vazio.textContent = "Sem ruas cadastradas.";
+if (!confirm('Excluir rua? Isso removerá todas as posições dela.')) return;
 
-      areaDiv.appendChild(vazio);
-      mapa.appendChild(areaDiv);
-      return;
-    }
+try {
 
+const { error } =  
+  await window.supabaseClient  
+    .from('ruas')  
+    .delete()  
+    .eq('id', ruaId);  
 
-    // ======================================
-    // LOOP RUAS
-    // ======================================
-    ruasDaArea.forEach(rua => {
+if (error) throw error;  
 
-      const ruaDiv = document.createElement("div");
-      ruaDiv.className = "rua";
+await carregarSistema();
 
+} catch (err) {
 
-      // -------------------------------
-      // CABEÇALHO DA RUA
-      // -------------------------------
-      const ruaHeader = document.createElement("div");
-      ruaHeader.className = "rua-header";
+console.error('Erro ao excluir rua:', err);  
+alert('Erro ao excluir rua.');
 
+}
 
-      const ruaTitulo = document.createElement("h3");
-      ruaTitulo.textContent =
-        rua.nome + " (" + rua.quantidade_posicoes + " posições)";
+};
 
+// ===============================
+// BUSCAR RUAS DE UMA ÁREA
+// ===============================
+window.getRuasDaArea = function (areaId) {
 
-      const ruaControls = document.createElement("div");
+if (!state.ruas) return [];
 
-      const btnExcluirRua = document.createElement("button");
-      btnExcluirRua.textContent = "🗑";
-      btnExcluirRua.onclick = () => excluirRua(rua.id);
-
-
-      ruaControls.appendChild(btnExcluirRua);
-
-      ruaHeader.appendChild(ruaTitulo);
-      ruaHeader.appendChild(ruaControls);
-
-      ruaDiv.appendChild(ruaHeader);
-
-
-      // -------------------------------
-      // GRID POSIÇÕES
-      // -------------------------------
-      const grid = document.createElement("div");
-      grid.className = "grid-posicoes";
-
-
-      const posicoes = state.posicoes
-        .filter(p => String(p.rua_id) === String(rua.id))
-        .sort((a, b) => a.numero - b.numero);
-
-
-      posicoes.forEach(pos => {
-
-        const posDiv = document.createElement("div");
-        posDiv.className = "posicao";
-
-        posDiv.textContent = pos.numero;
-
-        if (pos.ocupada) {
-          posDiv.classList.add("ocupada");
-        } else {
-          posDiv.classList.add("livre");
-        }
-
-
-        // CLICK ABRIR MODAL
-        posDiv.onclick = () => {
-
-          if (!window.abrirModalPorId) {
-            console.error("❌ abrirModalPorId não encontrado");
-            return;
-          }
-
-          abrirModalPorId(pos.id);
-        };
-
-        grid.appendChild(posDiv);
-
-      });
-
-
-      ruaDiv.appendChild(grid);
-      areaDiv.appendChild(ruaDiv);
-
-    });
-
-
-    mapa.appendChild(areaDiv);
-
-  });
-
-  console.log("✅ mapa renderizado");
+return state.ruas.filter(
+rua => rua.area_id === areaId
+);
 
 };
