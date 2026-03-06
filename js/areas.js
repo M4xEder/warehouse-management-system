@@ -1,89 +1,192 @@
 // ===============================
-// AREAS.JS — GERENCIAMENTO DE ÁREAS
+// AREAS.JS — CONTROLE DE ÁREAS
 // ===============================
 
-// -------------------------------
-// CRIAR ÁREA
-// -------------------------------
-window.cadastrarArea = function () {
 
-  const nome = prompt("Nome da área:");
+// ===============================
+// CARREGAR ÁREAS DO BANCO
+// ===============================
+window.carregarAreasDoBanco = async function () {
 
-  if (!nome) return;
+  try {
 
-  const novaArea = {
-    nome: nome,
-    ruas: []
-  };
+    const { data, error } = await window.supabaseClient
+      .from("areas")
+      .select("*")
+      .order("created_at", { ascending: true });
 
-  state.areas.push(novaArea);
+    if (error) throw error;
 
-  saveState();
+    state.areas = data || [];
 
-  renderMapa();
-};
+  } catch (err) {
 
-
-// -------------------------------
-// CRIAR RUA
-// -------------------------------
-window.criarRua = function (areaIndex) {
-
-  const nomeRua = prompt("Nome da rua:");
-
-  if (!nomeRua) return;
-
-  const novaRua = {
-    nome: nomeRua,
-    posicoes: []
-  };
-
-  // gerar posições padrão
-  for (let i = 1; i <= 10; i++) {
-
-    novaRua.posicoes.push({
-      codigo: nomeRua + "-" + i,
-      ocupado: false,
-      lote: null
-    });
+    console.error("Erro ao carregar áreas:", err);
+    state.areas = [];
 
   }
 
-  state.areas[areaIndex].ruas.push(novaRua);
-
-  saveState();
-
-  renderMapa();
 };
 
 
-// -------------------------------
+
+// ===============================
+// BUSCAR ÁREA POR ID
+// ===============================
+window.buscarAreaPorId = function (areaId) {
+
+  if (!state.areas) return null;
+
+  return state.areas.find(
+    area => String(area.id) === String(areaId)
+  );
+
+};
+
+
+
+// ===============================
+// CRIAR ÁREA
+// ===============================
+window.criarArea = async function () {
+
+  const input = document.getElementById("areaNome");
+
+  if (!input) return;
+
+  const nome = input.value.trim();
+
+  if (!nome) {
+
+    alert("Digite o nome da área");
+    return;
+
+  }
+
+  try {
+
+    // 🔎 Verificar duplicidade
+    const { data: existentes } =
+      await window.supabaseClient
+        .from("areas")
+        .select("id")
+        .eq("nome", nome);
+
+    if (existentes && existentes.length > 0) {
+
+      alert("Já existe uma área com esse nome.");
+      return;
+
+    }
+
+    // ➕ Criar área
+    const { error } =
+      await window.supabaseClient
+        .from("areas")
+        .insert([{ nome }]);
+
+    if (error) throw error;
+
+    input.value = "";
+
+    // 🔄 Atualiza sistema
+    if (typeof carregarSistema === "function") {
+      await carregarSistema();
+    }
+
+    console.log("Área criada com sucesso");
+
+  } catch (err) {
+
+    console.error("Erro ao criar área:", err);
+    alert("Erro ao criar área");
+
+  }
+
+};
+
+
+
+// ===============================
 // EXCLUIR ÁREA
-// -------------------------------
-window.excluirArea = function (areaIndex) {
+// ===============================
+window.excluirArea = async function (areaId) {
 
-  if (!confirm("Deseja excluir esta área?")) return;
+  const area = buscarAreaPorId(areaId);
 
-  state.areas.splice(areaIndex, 1);
+  if (!area) {
 
-  saveState();
+    alert("Área não encontrada");
+    return;
 
-  renderMapa();
+  }
+
+  if (!confirm(`Excluir área "${area.nome}"?`)) {
+    return;
+  }
+
+  try {
+
+    const { error } =
+      await window.supabaseClient
+        .from("areas")
+        .delete()
+        .eq("id", areaId);
+
+    if (error) throw error;
+
+    await carregarSistema();
+
+    console.log("Área excluída");
+
+  } catch (err) {
+
+    console.error("Erro ao excluir área:", err);
+    alert("Erro ao excluir área");
+
+  }
 
 };
 
 
-// -------------------------------
-// EXCLUIR RUA
-// -------------------------------
-window.excluirRua = function (areaIndex, ruaIndex) {
 
-  if (!confirm("Deseja excluir esta rua?")) return;
+// ===============================
+// EDITAR ÁREA
+// ===============================
+window.editarArea = async function (areaId) {
 
-  state.areas[areaIndex].ruas.splice(ruaIndex, 1);
+  const area = buscarAreaPorId(areaId);
 
-  saveState();
+  if (!area) return;
 
-  renderMapa();
+  const novoNome = prompt(
+    "Novo nome da área:",
+    area.nome
+  );
+
+  if (!novoNome || !novoNome.trim()) return;
+
+  try {
+
+    const { error } =
+      await window.supabaseClient
+        .from("areas")
+        .update({
+          nome: novoNome.trim()
+        })
+        .eq("id", areaId);
+
+    if (error) throw error;
+
+    await carregarSistema();
+
+    console.log("Área atualizada");
+
+  } catch (err) {
+
+    console.error("Erro ao editar área:", err);
+    alert("Erro ao editar área");
+
+  }
 
 };
