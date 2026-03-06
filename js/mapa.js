@@ -1,40 +1,42 @@
-// ===============================
-// MAPA.JS — RENDERIZAÇÃO DO ARMAZÉM
-// ===============================
+// ==============================================
+// MAPA.JS — RENDERIZAÇÃO DO ARMAZÉM (PRO)
+// ==============================================
 
 
-// ===============================
-// CORES DOS LOTES
-// ===============================
-const coresLotes = [
-  "#3498db",
-  "#2ecc71",
-  "#e67e22",
-  "#9b59b6",
-  "#e74c3c",
-  "#1abc9c",
-  "#f1c40f",
-  "#34495e"
-];
+// ------------------------------------------------
+// GERADOR DE COR POR LOTE
+// ------------------------------------------------
+function corDoLote(loteId) {
 
-window.getCorDoLote = function (loteId) {
+  if (!loteId) return "#e5e7eb";
 
-  if (!loteId) return "#bdc3c7";
+  const cores = [
+    "#60a5fa",
+    "#34d399",
+    "#fbbf24",
+    "#f87171",
+    "#a78bfa",
+    "#fb923c",
+    "#22c55e",
+    "#06b6d4",
+    "#f472b6"
+  ];
 
-  const index = state.lotes.findIndex(
-    l => String(l.id) === String(loteId)
-  );
+  const index =
+    Math.abs(
+      String(loteId)
+        .split("")
+        .reduce((a, b) => a + b.charCodeAt(0), 0)
+    ) % cores.length;
 
-  if (index === -1) return "#95a5a6";
-
-  return coresLotes[index % coresLotes.length];
-};
+  return cores[index];
+}
 
 
 
-// --------------------------------------------------
+// ------------------------------------------------
 // RENDER MAPA
-// --------------------------------------------------
+// ------------------------------------------------
 window.renderMapa = function () {
 
   const mapa = document.getElementById("mapa");
@@ -47,9 +49,6 @@ window.renderMapa = function () {
   mapa.innerHTML = "";
 
 
-  // ==================================================
-  // SEM ÁREAS
-  // ==================================================
   if (!state.areas || state.areas.length === 0) {
 
     const aviso = document.createElement("p");
@@ -61,25 +60,22 @@ window.renderMapa = function () {
   }
 
 
-
-  // ==================================================
-  // LOOP DE ÁREAS
-  // ==================================================
+  // ============================================
+  // LOOP ÁREAS
+  // ============================================
   state.areas.forEach(area => {
 
     const areaDiv = document.createElement("div");
     areaDiv.className = "area";
 
 
-    // --------------------------------------------------
-    // HEADER DA ÁREA
-    // --------------------------------------------------
-    const headerArea = document.createElement("div");
-    headerArea.className = "area-header";
+    // HEADER ÁREA
+    const header = document.createElement("div");
+    header.className = "area-header";
 
 
-    const tituloArea = document.createElement("h2");
-    tituloArea.textContent = area.nome;
+    const titulo = document.createElement("h2");
+    titulo.textContent = area.nome;
 
 
     // BOTÃO CRIAR RUA
@@ -88,12 +84,15 @@ window.renderMapa = function () {
 
     btnCriarRua.onclick = () => {
 
-      if (!window.criarRua) {
-        alert("Função criarRua não encontrada.");
-        return;
-      }
+      if (window.criarRua) {
 
-      window.criarRua(area.id);
+        window.criarRua(area.id);
+
+      } else {
+
+        alert("Função criarRua não encontrada.");
+
+      }
 
     };
 
@@ -104,33 +103,35 @@ window.renderMapa = function () {
 
     btnExcluirArea.onclick = () => {
 
-      if (!window.excluirArea) {
-        alert("Função excluirArea não encontrada.");
-        return;
-      }
+      if (window.excluirArea) {
 
-      window.excluirArea(area.id);
+        window.excluirArea(area.id);
+
+      } else {
+
+        alert("Função excluirArea não encontrada.");
+
+      }
 
     };
 
 
-    headerArea.appendChild(tituloArea);
-    headerArea.appendChild(btnCriarRua);
-    headerArea.appendChild(btnExcluirArea);
+    header.appendChild(titulo);
+    header.appendChild(btnCriarRua);
+    header.appendChild(btnExcluirArea);
 
-    areaDiv.appendChild(headerArea);
+    areaDiv.appendChild(header);
 
 
-
-    // ==================================================
+    // ============================================
     // RUAS DA ÁREA
-    // ==================================================
-    const ruasDaArea = state.ruas
-      ? state.ruas.filter(r => String(r.area_id) === String(area.id))
-      : [];
+    // ============================================
+    const ruas = state.ruas.filter(
+      r => String(r.area_id) === String(area.id)
+    );
 
 
-    if (ruasDaArea.length === 0) {
+    if (ruas.length === 0) {
 
       const vazio = document.createElement("p");
       vazio.textContent = "Nenhuma rua cadastrada.";
@@ -139,22 +140,20 @@ window.renderMapa = function () {
       mapa.appendChild(areaDiv);
 
       return;
+
     }
 
 
-
-    // ==================================================
-    // LOOP DE RUAS
-    // ==================================================
-    ruasDaArea.forEach(rua => {
+    // ============================================
+    // LOOP RUAS
+    // ============================================
+    ruas.forEach(rua => {
 
       const ruaDiv = document.createElement("div");
       ruaDiv.className = "rua";
 
 
-      // --------------------------------------------------
-      // HEADER DA RUA
-      // --------------------------------------------------
+      // HEADER RUA
       const ruaHeader = document.createElement("div");
       ruaHeader.className = "rua-header";
 
@@ -171,12 +170,15 @@ window.renderMapa = function () {
 
       btnExcluirRua.onclick = () => {
 
-        if (!window.excluirRua) {
-          alert("Função excluirRua não encontrada.");
-          return;
-        }
+        if (window.excluirRua) {
 
-        window.excluirRua(rua.id);
+          window.excluirRua(rua.id);
+
+        } else {
+
+          alert("Função excluirRua não encontrada.");
+
+        }
 
       };
 
@@ -187,22 +189,17 @@ window.renderMapa = function () {
       ruaDiv.appendChild(ruaHeader);
 
 
-
-      // --------------------------------------------------
-      // GRID DE POSIÇÕES
-      // --------------------------------------------------
+      // GRID POSIÇÕES
       const grid = document.createElement("div");
       grid.className = "grid-posicoes";
 
 
-      const posicoesDaRua = state.posicoes
-        ? state.posicoes
-            .filter(p => String(p.rua_id) === String(rua.id))
-            .sort((a, b) => a.numero - b.numero)
-        : [];
+      const posicoes = state.posicoes
+        .filter(p => String(p.rua_id) === String(rua.id))
+        .sort((a, b) => a.numero - b.numero);
 
 
-      if (posicoesDaRua.length === 0) {
+      if (posicoes.length === 0) {
 
         const aviso = document.createElement("p");
         aviso.textContent = "Sem posições.";
@@ -215,11 +212,10 @@ window.renderMapa = function () {
       }
 
 
-
-      // ==================================================
+      // ============================================
       // LOOP POSIÇÕES
-      // ==================================================
-      posicoesDaRua.forEach(pos => {
+      // ============================================
+      posicoes.forEach(pos => {
 
         const posDiv = document.createElement("div");
 
@@ -228,41 +224,60 @@ window.renderMapa = function () {
         posDiv.textContent = pos.numero;
 
 
-        // =========================================
-        // STATUS VISUAL + COR DO LOTE
-        // =========================================
+        // ======================================
+        // STATUS VISUAL
+        // ======================================
         if (pos.ocupada) {
 
           posDiv.classList.add("ocupada");
 
-          const cor = getCorDoLote(pos.lote_id);
+          posDiv.style.background =
+            corDoLote(pos.lote_id);
 
-          posDiv.style.backgroundColor = cor;
-          posDiv.style.color = "#fff";
 
-        } else {
+          // TOOLTIP
+          const lote = state.lotes.find(
+            l => String(l.id) === String(pos.lote_id)
+          );
+
+          posDiv.title =
+            `Lote: ${lote?.nome || ""}\n` +
+            `Volume: ${pos.volume || ""}\n` +
+            `RZ: ${pos.rz || ""}`;
+
+        }
+        else {
 
           posDiv.classList.add("livre");
-
-          posDiv.style.backgroundColor = "#ecf0f1";
 
         }
 
 
+        // ======================================
+        // HIGHLIGHT BUSCA
+        // ======================================
+        if (pos._highlight) {
 
-        // =========================================
+          posDiv.style.border = "3px solid red";
+          posDiv.style.boxShadow = "0 0 10px red";
+
+        }
+
+
+        // ======================================
         // CLIQUE NA POSIÇÃO
-        // =========================================
+        // ======================================
         posDiv.onclick = () => {
 
-          if (!window.abrirModalPorId) {
+          if (window.abrirModalPorId) {
+
+            window.abrirModalPorId(pos.id);
+
+          } else {
 
             console.error("Função abrirModalPorId não encontrada.");
-            return;
 
           }
-
-          window.abrirModalPorId(pos.id);
 
         };
 
@@ -282,6 +297,7 @@ window.renderMapa = function () {
 
   });
 
-  console.log("Mapa renderizado com cores por lote.");
+
+  console.log("Mapa renderizado.");
 
 };
