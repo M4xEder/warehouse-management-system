@@ -3,6 +3,35 @@
 // ===============================
 
 
+// ===============================
+// CORES DOS LOTES
+// ===============================
+const coresLotes = [
+  "#3498db",
+  "#2ecc71",
+  "#e67e22",
+  "#9b59b6",
+  "#e74c3c",
+  "#1abc9c",
+  "#f1c40f",
+  "#34495e"
+];
+
+window.getCorDoLote = function (loteId) {
+
+  if (!loteId) return "#bdc3c7";
+
+  const index = state.lotes.findIndex(
+    l => String(l.id) === String(loteId)
+  );
+
+  if (index === -1) return "#95a5a6";
+
+  return coresLotes[index % coresLotes.length];
+};
+
+
+
 // --------------------------------------------------
 // RENDER MAPA
 // --------------------------------------------------
@@ -17,19 +46,20 @@ window.renderMapa = function () {
 
   mapa.innerHTML = "";
 
-  if (!window.state) {
-    console.error("State não carregado.");
-    return;
-  }
 
+  // ==================================================
+  // SEM ÁREAS
+  // ==================================================
   if (!state.areas || state.areas.length === 0) {
 
     const aviso = document.createElement("p");
     aviso.textContent = "Nenhuma área cadastrada.";
 
     mapa.appendChild(aviso);
+
     return;
   }
+
 
 
   // ==================================================
@@ -58,7 +88,7 @@ window.renderMapa = function () {
 
     btnCriarRua.onclick = () => {
 
-      if (typeof window.criarRua !== "function") {
+      if (!window.criarRua) {
         alert("Função criarRua não encontrada.");
         return;
       }
@@ -74,7 +104,7 @@ window.renderMapa = function () {
 
     btnExcluirArea.onclick = () => {
 
-      if (typeof window.excluirArea !== "function") {
+      if (!window.excluirArea) {
         alert("Função excluirArea não encontrada.");
         return;
       }
@@ -91,12 +121,13 @@ window.renderMapa = function () {
     areaDiv.appendChild(headerArea);
 
 
+
     // ==================================================
     // RUAS DA ÁREA
     // ==================================================
-    const ruasDaArea = (state.ruas || []).filter(
-      r => String(r.area_id) === String(area.id)
-    );
+    const ruasDaArea = state.ruas
+      ? state.ruas.filter(r => String(r.area_id) === String(area.id))
+      : [];
 
 
     if (ruasDaArea.length === 0) {
@@ -109,6 +140,7 @@ window.renderMapa = function () {
 
       return;
     }
+
 
 
     // ==================================================
@@ -139,7 +171,7 @@ window.renderMapa = function () {
 
       btnExcluirRua.onclick = () => {
 
-        if (typeof window.excluirRua !== "function") {
+        if (!window.excluirRua) {
           alert("Função excluirRua não encontrada.");
           return;
         }
@@ -155,6 +187,7 @@ window.renderMapa = function () {
       ruaDiv.appendChild(ruaHeader);
 
 
+
       // --------------------------------------------------
       // GRID DE POSIÇÕES
       // --------------------------------------------------
@@ -162,9 +195,11 @@ window.renderMapa = function () {
       grid.className = "grid-posicoes";
 
 
-      const posicoesDaRua = (state.posicoes || [])
-        .filter(p => String(p.rua_id) === String(rua.id))
-        .sort((a, b) => Number(a.numero) - Number(b.numero));
+      const posicoesDaRua = state.posicoes
+        ? state.posicoes
+            .filter(p => String(p.rua_id) === String(rua.id))
+            .sort((a, b) => a.numero - b.numero)
+        : [];
 
 
       if (posicoesDaRua.length === 0) {
@@ -176,7 +211,9 @@ window.renderMapa = function () {
         areaDiv.appendChild(ruaDiv);
 
         return;
+
       }
+
 
 
       // ==================================================
@@ -185,33 +222,49 @@ window.renderMapa = function () {
       posicoesDaRua.forEach(pos => {
 
         const posDiv = document.createElement("div");
+
         posDiv.className = "posicao";
 
-        posDiv.textContent = pos.numero || "-";
+        posDiv.textContent = pos.numero;
 
 
-        // STATUS VISUAL
+        // =========================================
+        // STATUS VISUAL + COR DO LOTE
+        // =========================================
         if (pos.ocupada) {
+
           posDiv.classList.add("ocupada");
+
+          const cor = getCorDoLote(pos.lote_id);
+
+          posDiv.style.backgroundColor = cor;
+          posDiv.style.color = "#fff";
+
         } else {
+
           posDiv.classList.add("livre");
+
+          posDiv.style.backgroundColor = "#ecf0f1";
+
         }
 
 
-        // CLIQUE NA POSIÇÃO
-        posDiv.addEventListener("click", () => {
 
-          if (typeof window.abrirModalPorId !== "function") {
+        // =========================================
+        // CLIQUE NA POSIÇÃO
+        // =========================================
+        posDiv.onclick = () => {
+
+          if (!window.abrirModalPorId) {
 
             console.error("Função abrirModalPorId não encontrada.");
-            alert("Erro: modal não carregado.");
-
             return;
+
           }
 
           window.abrirModalPorId(pos.id);
 
-        });
+        };
 
 
         grid.appendChild(posDiv);
@@ -229,6 +282,6 @@ window.renderMapa = function () {
 
   });
 
-  console.log("Mapa renderizado com sucesso.");
+  console.log("Mapa renderizado com cores por lote.");
 
 };
