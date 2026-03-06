@@ -14,131 +14,101 @@
 <!-- ========================= -->
 <!-- SUPABASE -->
 <!-- ========================= -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <!-- ========================= -->
-<!-- CONEXÃO BANCO -->
+<!-- BANCO -->
 <!-- ========================= -->
-<script src="js/supabase.js" defer></script>
+<script src="js/supabase.js"></script>
 
 <!-- ========================= -->
 <!-- BASE DO SISTEMA -->
 <!-- ========================= -->
-<script src="js/model.js" defer></script>
-<script src="js/state.js" defer></script>
+<script src="js/model.js"></script>
+<script src="js/state.js"></script>
 
 <!-- ========================= -->
 <!-- UTILIDADES -->
 <!-- ========================= -->
-<script src="js/utils.js" defer></script>
+<script src="js/utils.js"></script>
 
 <!-- ========================= -->
 <!-- MÓDULOS PRINCIPAIS -->
 <!-- ========================= -->
-<script src="js/areas.js" defer></script>
-<script src="js/lotes.js" defer></script>
-<script src="js/mapa.js" defer></script>
-<script src="js/modal.js" defer></script>
+<script src="js/areas.js"></script>
+<script src="js/lotes.js"></script>
+<script src="js/mapa.js"></script>
+<script src="js/modal.js"></script>
 
 <!-- ========================= -->
 <!-- FUNCIONALIDADES -->
 <!-- ========================= -->
-<script src="js/dashboard.js" defer></script>
-<script src="js/busca.js" defer></script>
+<script src="js/dashboard.js"></script>
+<script src="js/busca.js"></script>
 
 <!-- ========================= -->
 <!-- INTERFACE -->
 <!-- ========================= -->
-<script src="js/header.js" defer></script>
-<script src="js/login.js" defer></script>
+<script src="js/header.js"></script>
+<script src="js/login.js"></script>
 
 <!-- ========================= -->
 <!-- INICIALIZAÇÃO -->
 <!-- ========================= -->
-<script src="js/main.js" defer></script>
+<script src="js/main.js"></script>
 
 </head>
 
 <body>
 
-<!-- ========================= -->
-<!-- HEADER DINÂMICO -->
-<!-- ========================= -->
+<!-- HEADER -->
 <div id="header-container"></div>
 
 <h1>Gerenciamento de Gaylords</h1>
 
-<!-- ========================= -->
 <!-- BUSCA -->
-<!-- ========================= -->
 <div class="busca">
 
-<input 
-id="buscaInput" 
-placeholder="Buscar por lote ou RZ"
->
+<input id="buscaInput" placeholder="Buscar por lote ou RZ">
 
-<button onclick="buscar()">
-Buscar
-</button>
+<button onclick="buscar()">Buscar</button>
 
-<button onclick="limparBusca()">
-Limpar Destaque
-</button>
+<button onclick="limparBusca()">Limpar Destaque</button>
 
 </div>
 
-<!-- ========================= -->
-<!-- CADASTRAR ÁREA -->
-<!-- ========================= -->
+<!-- CADASTRAR AREA -->
 <section class="cadastros">
 
 <h2>Cadastrar Área</h2>
 
-<input 
-id="areaNome" 
-placeholder="Nome da área"
->
+<input id="areaNome" placeholder="Nome da área">
 
-<button onclick="criarArea()">
-Cadastrar Área
-</button>
+<button onclick="criarArea()">Cadastrar Área</button>
 
 </section>
 
-<!-- ========================= -->
 <!-- CADASTRAR LOTE -->
-<!-- ========================= -->
 <section class="cadastros">
 
 <h2>Cadastrar Lote</h2>
 
-<input 
-id="loteNome" 
-placeholder="Nome do lote"
->
+<input id="loteNome" placeholder="Nome do lote">
 
-<input 
+<input
 id="loteTotal"
 type="number"
 min="1"
-placeholder="Quantidade total"
->
+placeholder="Quantidade total">
 
-<button onclick="cadastrarLote()">
-Cadastrar Lote
-</button>
+<button onclick="cadastrarLote()">Cadastrar Lote</button>
 
 </section>
 
-<!-- ========================= -->
-<!-- MAPA DO ARMAZÉM -->
-<!-- ========================= -->
+<!-- MAPA -->
 <section id="mapa"></section>
 
-<!-- ========================= -->
-<!-- RESUMO DASHBOARD -->
-<!-- ========================= -->
+<!-- DASHBOARD -->
 <section class="dashboard-resumo">
 
 <div class="card">
@@ -168,21 +138,15 @@ Cadastrar Lote
 
 </section>
 
-<!-- ========================= -->
 <!-- LOTES ATIVOS -->
-<!-- ========================= -->
 <h2>Lotes Ativos</h2>
 <div id="lotesAtivos"></div>
 
-<!-- ========================= -->
 <!-- LOTES EXPEDIDOS -->
-<!-- ========================= -->
 <h2>Lotes Expedidos</h2>
 <div id="lotesExpedidos"></div>
 
-<!-- ========================= -->
 <!-- MODAL ENDEREÇAMENTO -->
-<!-- ========================= -->
 <div id="modal" class="modal hidden">
 
 <div class="modal-content">
@@ -192,17 +156,17 @@ Endereçar Gaylord
 </h3>
 
 <label>
-Lote:
+Lote
 <select id="modalLote"></select>
 </label>
 
 <label>
-Volume:
+Volume
 <input id="modalVolume">
 </label>
 
 <label>
-RZ:
+RZ
 <input id="modalRz">
 </label>
 
@@ -225,16 +189,14 @@ Cancelar
 </div>
 </div>
 
-<!-- ========================= -->
 <!-- MODAL EXPEDIÇÃO -->
-<!-- ========================= -->
 <div id="modalExpedicao" class="modal hidden">
 
 <div class="modal-content" style="width:500px; max-height:80vh; overflow:auto">
 
 <h3>Expedir Gaylords</h3>
 
-<div style="margin-bottom:10px;">
+<div style="margin-bottom:10px">
 
 <button onclick="selecionarTodosGaylords()">
 Selecionar todos
