@@ -17,13 +17,17 @@ window.renderMapa = function () {
 
   mapa.innerHTML = "";
 
+  if (!window.state) {
+    console.error("State não carregado.");
+    return;
+  }
+
   if (!state.areas || state.areas.length === 0) {
 
     const aviso = document.createElement("p");
     aviso.textContent = "Nenhuma área cadastrada.";
 
     mapa.appendChild(aviso);
-
     return;
   }
 
@@ -54,7 +58,7 @@ window.renderMapa = function () {
 
     btnCriarRua.onclick = () => {
 
-      if (!window.criarRua) {
+      if (typeof window.criarRua !== "function") {
         alert("Função criarRua não encontrada.");
         return;
       }
@@ -70,7 +74,7 @@ window.renderMapa = function () {
 
     btnExcluirArea.onclick = () => {
 
-      if (!window.excluirArea) {
+      if (typeof window.excluirArea !== "function") {
         alert("Função excluirArea não encontrada.");
         return;
       }
@@ -90,9 +94,9 @@ window.renderMapa = function () {
     // ==================================================
     // RUAS DA ÁREA
     // ==================================================
-    const ruasDaArea = state.ruas
-      ? state.ruas.filter(r => String(r.area_id) === String(area.id))
-      : [];
+    const ruasDaArea = (state.ruas || []).filter(
+      r => String(r.area_id) === String(area.id)
+    );
 
 
     if (ruasDaArea.length === 0) {
@@ -135,7 +139,7 @@ window.renderMapa = function () {
 
       btnExcluirRua.onclick = () => {
 
-        if (!window.excluirRua) {
+        if (typeof window.excluirRua !== "function") {
           alert("Função excluirRua não encontrada.");
           return;
         }
@@ -158,11 +162,9 @@ window.renderMapa = function () {
       grid.className = "grid-posicoes";
 
 
-      const posicoesDaRua = state.posicoes
-        ? state.posicoes
-            .filter(p => String(p.rua_id) === String(rua.id))
-            .sort((a, b) => a.numero - b.numero)
-        : [];
+      const posicoesDaRua = (state.posicoes || [])
+        .filter(p => String(p.rua_id) === String(rua.id))
+        .sort((a, b) => Number(a.numero) - Number(b.numero));
 
 
       if (posicoesDaRua.length === 0) {
@@ -174,7 +176,6 @@ window.renderMapa = function () {
         areaDiv.appendChild(ruaDiv);
 
         return;
-
       }
 
 
@@ -184,37 +185,33 @@ window.renderMapa = function () {
       posicoesDaRua.forEach(pos => {
 
         const posDiv = document.createElement("div");
-
         posDiv.className = "posicao";
 
-        posDiv.textContent = pos.numero;
+        posDiv.textContent = pos.numero || "-";
 
 
         // STATUS VISUAL
         if (pos.ocupada) {
-
           posDiv.classList.add("ocupada");
-
         } else {
-
           posDiv.classList.add("livre");
-
         }
 
 
         // CLIQUE NA POSIÇÃO
-        posDiv.onclick = () => {
+        posDiv.addEventListener("click", () => {
 
-          if (!window.abrirModalPorId) {
+          if (typeof window.abrirModalPorId !== "function") {
 
             console.error("Função abrirModalPorId não encontrada.");
-            return;
+            alert("Erro: modal não carregado.");
 
+            return;
           }
 
           window.abrirModalPorId(pos.id);
 
-        };
+        });
 
 
         grid.appendChild(posDiv);
