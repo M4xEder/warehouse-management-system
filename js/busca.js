@@ -1,8 +1,7 @@
 // =======================================
 // BUSCA.JS
-// Busca e destaque no mapa
-// (LOTE via lote_id + RZ)
-// MODELO ATUAL BLINDADO
+// Busca por LOTE, RZ ou VOLUME
+// Compatível com UUID
 // =======================================
 
 
@@ -11,75 +10,119 @@
 // --------------------------------------------------
 window.limparDestaques = function () {
 
-  if (!state?.posicoes) return;
+  if (!state || !state.posicoes) return;
 
   state.posicoes.forEach(pos => {
     delete pos._highlight;
   });
+
 };
 
 
 
 // --------------------------------------------------
-// BUSCAR (LOTE OU RZ)
+// BUSCAR
 // --------------------------------------------------
 window.buscar = function () {
 
-  const input = document.getElementById('buscaInput');
+  const input = document.getElementById("buscaInput");
+
   if (!input) return;
 
   const termo = input.value?.trim().toLowerCase();
 
   if (!termo) {
-    alert('Informe um lote ou RZ para buscar');
+    alert("Digite um Lote, Volume ou RZ.");
     return;
   }
 
-  if (!state?.posicoes || !state?.lotes) {
-    alert('Dados ainda não carregados');
+  if (!state || !state.posicoes || !state.lotes) {
+    alert("Sistema ainda carregando.");
     return;
   }
 
   let encontrados = 0;
 
+
+  // ======================================
+  // LOOP POSIÇÕES
+  // ======================================
   state.posicoes.forEach(pos => {
 
-    // Só busca posições ocupadas
-    if (!pos?.ocupada) {
-      delete pos._highlight;
-      return;
-    }
+    delete pos._highlight;
 
-    // Busca nome do lote via relacionamento
-    let nomeLote = '';
+    if (!pos.ocupada) return;
+
+
+    // -------------------------------
+    // LOTE
+    // -------------------------------
+    let nomeLote = "";
 
     if (pos.lote_id) {
-      const lote = state.lotes.find(l => l.id === pos.lote_id);
-      nomeLote = lote?.nome?.toLowerCase() || '';
+
+      const lote = state.lotes.find(
+        l => String(l.id) === String(pos.lote_id)
+      );
+
+      nomeLote = lote?.nome?.toLowerCase() || "";
+
     }
 
-    const rz = pos?.rz?.toLowerCase() || '';
 
-    const match =
+    // -------------------------------
+    // RZ
+    // -------------------------------
+    const rz = pos.rz ? String(pos.rz).toLowerCase() : "";
+
+
+    // -------------------------------
+    // VOLUME
+    // -------------------------------
+    const volume = pos.volume
+      ? String(pos.volume).toLowerCase()
+      : "";
+
+
+    // -------------------------------
+    // MATCH
+    // -------------------------------
+    const encontrou =
       nomeLote.includes(termo) ||
-      rz.includes(termo);
+      rz.includes(termo) ||
+      volume.includes(termo);
 
-    if (match) {
+
+    if (encontrou) {
+
       pos._highlight = true;
+
       encontrados++;
-    } else {
-      delete pos._highlight;
+
     }
 
   });
 
+
+  // ======================================
+  // RESULTADO
+  // ======================================
   if (encontrados === 0) {
-    alert('Nenhum resultado encontrado');
+
+    alert("Nenhum resultado encontrado.");
+
   }
 
-  if (typeof renderMapa === 'function') {
+
+  // ======================================
+  // RENDER MAPA
+  // ======================================
+  if (typeof renderMapa === "function") {
+
     renderMapa();
+
   }
+
 };
 
 
@@ -91,10 +134,14 @@ window.limparBusca = function () {
 
   limparDestaques();
 
-  const input = document.getElementById('buscaInput');
-  if (input) input.value = '';
+  const input = document.getElementById("buscaInput");
 
-  if (typeof renderMapa === 'function') {
+  if (input) input.value = "";
+
+  if (typeof renderMapa === "function") {
+
     renderMapa();
+
   }
+
 };
