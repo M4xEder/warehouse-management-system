@@ -258,3 +258,62 @@ window.alterarLote = function(loteId){
   renderDashboard()
 
 }
+
+// ------------------------------------------------
+// EXCLUIR LOTE COM VALIDAÇÃO
+// ------------------------------------------------
+window.excluirLote = function(loteId){
+
+  const lote = state.lotes.find(
+    l => String(l.id) === String(loteId)
+  )
+
+  if(!lote) return
+
+
+  const alocados = state.posicoes.filter(p =>
+    p.ocupada === true &&
+    String(p.lote_id) === String(loteId)
+  ).length
+
+
+  if(alocados > 0){
+
+    alert(
+      "Não é possível excluir o lote.\n" +
+      "Existem gaylords alocados no mapa."
+    )
+
+    return
+  }
+
+
+  const expedidos = state.historicoExpedidos
+    ?.filter(e => String(e.lote_id) === String(loteId))
+    .reduce((s,e)=> s + (Number(e.quantidade)||0),0) || 0
+
+
+  if(expedidos > 0){
+
+    alert(
+      "Não é possível excluir o lote.\n" +
+      "Existem gaylords expedidos."
+    )
+
+    return
+  }
+
+
+  if(!confirm(`Deseja excluir o lote ${lote.nome}?`)) return
+
+
+  // REMOVE DO STATE
+  state.lotes = state.lotes.filter(
+    l => String(l.id) !== String(loteId)
+  )
+
+
+  // ATUALIZA TELA
+  renderDashboard()
+
+}
