@@ -105,8 +105,8 @@ window.renderDashboard = function(){
 
       <div class="acoes">
 
-        <button onclick="expedirLote('${lote.id}')">
-          Expedir
+        <button onclick="abrirModalExpedicao('${lote.id}')">
+        Expedir
         </button>
 
         <button onclick="alterarLote('${lote.id}')">
