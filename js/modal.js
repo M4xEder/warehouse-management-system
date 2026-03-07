@@ -1,14 +1,167 @@
-// ======================================
-// MODAL.JS — ENDEREÇAMENTO
-// ======================================
+// ===============================================
+// MODAL.JS — CONTROLE DE ALOCAÇÃO DE POSIÇÕES
+// ENTERPRISE SAFE
+// ===============================================
 
-let posicaoAtual = null;
+
+// ------------------------------------------------
+// CONTEXTO DO MODAL
+// ------------------------------------------------
+window.modalContext = {
+  posicaoId: null
+};
 
 
-// ======================================
-// ABRIR MODAL
-// ======================================
-window.abrirModalPorId = function (posId) {
+// ------------------------------------------------
+// ABRIR MODAL POR ID DA POSIÇÃO
+// ------------------------------------------------
+window.abrirModalPorId = function (posicaoId) {
+
+  const pos = state.posicoes.find(
+    p => String(p.id) === String(posicaoId)
+  );
+
+  if (!pos) return;
+
+  modalContext.posicaoId = posicaoId;
+
+  const modal = document.getElementById("modal");
+  const loteSelect = document.getElementById("loteSelect");
+  const volumeInput = document.getElementById("volumeInput");
+  const rzInput = document.getElementById("rzInput");
+
+  if (!modal) return;
+
+  modal.classList.remove("hidden");
+
+
+  // ----------------------------------------
+  // LIMPAR CAMPOS
+  // ----------------------------------------
+  loteSelect.innerHTML = "";
+  volumeInput.value = "";
+  rzInput.value = "";
+
+
+  // ----------------------------------------
+  // CARREGAR LOTES
+  // ----------------------------------------
+  state.lotes.forEach(lote => {
+
+    const option = document.createElement("option");
+
+    option.value = lote.id;
+    option.textContent = lote.nome;
+
+    loteSelect.appendChild(option);
+
+  });
+
+
+  // ----------------------------------------
+  // SE POSIÇÃO JÁ ESTÁ OCUPADA
+  // ----------------------------------------
+  if (pos.ocupada) {
+
+    loteSelect.value = pos.lote_id || "";
+    volumeInput.value = pos.volume || "";
+    rzInput.value = pos.rz || "";
+
+    loteSelect.disabled = true;
+    volumeInput.disabled = true;
+    rzInput.disabled = true;
+
+    const info = document.getElementById("infoPosicao");
+
+    if (info) {
+
+      const lote = state.lotes.find(
+        l => String(l.id) === String(pos.lote_id)
+      );
+
+      info.innerHTML = `
+      <p><b>Lote:</b> ${lote?.nome || ""}</p>
+      <p><b>Volume:</b> ${pos.volume}</p>
+      <p><b>RZ:</b> ${pos.rz}</p>
+      `;
+
+    }
+
+  } else {
+
+    loteSelect.disabled = false;
+    volumeInput.disabled = false;
+    rzInput.disabled = false;
+
+  }
+
+};
+
+
+
+// ------------------------------------------------
+// FECHAR MODAL
+// ------------------------------------------------
+window.fecharModal = function () {
+
+  const modal = document.getElementById("modal");
+
+  if (modal) {
+    modal.classList.add("hidden");
+  }
+
+};
+
+
+
+// ------------------------------------------------
+// VALIDAR RZ DUPLICADA NO MESMO LOTE
+// ------------------------------------------------
+function rzDuplicada(loteId, rz, posicaoAtualId) {
+
+  return state.posicoes.some(p => {
+
+    if (!p.ocupada) return false;
+
+    if (String(p.id) === String(posicaoAtualId)) return false;
+
+    return (
+      String(p.lote_id) === String(loteId) &&
+      String(p.rz).toLowerCase() === String(rz).toLowerCase()
+    );
+
+  });
+
+}
+
+
+
+// ------------------------------------------------
+// SALVAR POSIÇÃO
+// ------------------------------------------------
+window.salvarPosicao = async function () {
+
+  const loteId = document.getElementById("loteSelect").value;
+  const volume = document.getElementById("volumeInput").value.trim();
+  const rz = document.getElementById("rzInput").value.trim();
+
+  if (!loteId) {
+    alert("Selecione o lote.");
+    return;
+  }
+
+  if (!volume) {
+    alert("Informe o volume.");
+    return;
+  }
+
+  if (!rz) {
+    alert("Informe a RZ.");
+    return;
+  }
+
+
+  const posId = modalContext.posicaoId;
 
   const pos = state.posicoes.find(
     p => String(p.id) === String(posId)
@@ -16,111 +169,36 @@ window.abrirModalPorId = function (posId) {
 
   if (!pos) return;
 
-  posicaoAtual = pos;
 
-  const modal = document.getElementById("modal");
-  modal.classList.remove("hidden");
-
-  const titulo = document.getElementById("modalTitulo");
-  const selectLote = document.getElementById("modalLote");
-  const volume = document.getElementById("modalVolume");
-  const rz = document.getElementById("modalRz");
-
-  selectLote.innerHTML = "";
-
-
-  // ======================================
-  // POSIÇÃO OCUPADA
-  // ======================================
+  // ----------------------------------------
+  // BLOQUEIO SE JÁ OCUPADA
+  // ----------------------------------------
   if (pos.ocupada) {
 
-    titulo.innerText = "Posição ocupada";
+    alert("Esta posição já está ocupada. Remova para alterar.");
 
-    const lote = state.lotes.find(
-      l => String(l.id) === String(pos.lote_id)
-    );
-
-    selectLote.innerHTML = `<option>${lote?.nome || "Lote"}</option>`;
-
-    volume.value = pos.volume || "";
-    rz.value = pos.rz || "";
-
-    selectLote.disabled = true;
-    volume.disabled = true;
-    rz.disabled = true;
-
-  }
-
-  // ======================================
-  // POSIÇÃO LIVRE
-  // ======================================
-  else {
-
-    titulo.innerText = "Endereçar Gaylord";
-
-    state.lotes.forEach(lote => {
-
-      const opt = document.createElement("option");
-
-      opt.value = lote.id;
-      opt.innerText = lote.nome;
-
-      selectLote.appendChild(opt);
-
-    });
-
-    volume.value = "";
-    rz.value = "";
-
-    selectLote.disabled = false;
-    volume.disabled = false;
-    rz.disabled = false;
-
-  }
-
-};
-
-
-// ======================================
-// FECHAR MODAL
-// ======================================
-window.fecharModal = function () {
-
-  document.getElementById("modal").classList.add("hidden");
-
-  posicaoAtual = null;
-
-};
-
-
-// ======================================
-// CONFIRMAR ENDEREÇO
-// ======================================
-window.confirmarEndereco = async function () {
-
-  if (!posicaoAtual) return;
-
-  if (posicaoAtual.ocupada) {
-    alert("Posição já ocupada.");
     return;
+
   }
 
-  const loteId = document.getElementById("modalLote").value;
-  const volume = document.getElementById("modalVolume").value.trim();
-  const rz = document.getElementById("modalRz").value.trim();
 
-  if (!volume) {
-    alert("Volume obrigatório.");
+  // ----------------------------------------
+  // VALIDAR RZ DUPLICADA
+  // ----------------------------------------
+  if (rzDuplicada(loteId, rz, posId)) {
+
+    alert("Esta RZ já foi usada neste lote.");
+
     return;
+
   }
 
-  if (!rz) {
-    alert("RZ obrigatória.");
-    return;
-  }
 
   try {
 
+    // ----------------------------------------
+    // ATUALIZA BANCO
+    // ----------------------------------------
     const { error } = await window.supabaseClient
       .from("posicoes")
       .update({
@@ -129,65 +207,63 @@ window.confirmarEndereco = async function () {
         volume: volume,
         rz: rz
       })
-      .eq("id", posicaoAtual.id);
+      .eq("id", posId);
 
     if (error) throw error;
 
 
-    // ======================================
-    // ATUALIZA STATE LOCAL
-    // ======================================
-    const index = state.posicoes.findIndex(
-      p => String(p.id) === String(posicaoAtual.id)
-    );
-
-    if (index !== -1) {
-
-      state.posicoes[index] = {
-        ...state.posicoes[index],
-        ocupada: true,
-        lote_id: loteId,
-        volume: volume,
-        rz: rz
-      };
-
-    }
+    // ----------------------------------------
+    // ATUALIZA ESTADO LOCAL
+    // ----------------------------------------
+    pos.ocupada = true;
+    pos.lote_id = loteId;
+    pos.volume = volume;
+    pos.rz = rz;
 
 
-    // ======================================
+    // ----------------------------------------
     // RENDER IMEDIATO
-    // ======================================
-    renderMapa();
+    // ----------------------------------------
+    if (typeof renderMapa === "function") renderMapa();
+    if (typeof renderDashboard === "function") renderDashboard();
 
-    if (typeof renderDashboard === "function")
-      renderDashboard();
 
     fecharModal();
 
-  }
-  catch (err) {
+  } catch (err) {
 
     console.error(err);
-    alert("Erro ao salvar.");
+    alert("Erro ao salvar posição.");
 
   }
 
 };
 
 
-// ======================================
-// REMOVER GAYLORD
-// ======================================
-window.removerGaylord = async function () {
 
-  if (!posicaoAtual) return;
+// ------------------------------------------------
+// REMOVER ALOCAÇÃO
+// ------------------------------------------------
+window.removerAlocacao = async function () {
 
-  if (!posicaoAtual.ocupada) {
-    alert("Posição já vazia.");
+  const posId = modalContext.posicaoId;
+
+  const pos = state.posicoes.find(
+    p => String(p.id) === String(posId)
+  );
+
+  if (!pos) return;
+
+  if (!pos.ocupada) {
+
+    alert("Esta posição já está livre.");
     return;
+
   }
 
-  if (!confirm("Remover Gaylord?")) return;
+
+  if (!confirm("Deseja remover esta alocação?")) return;
+
 
   try {
 
@@ -199,43 +275,30 @@ window.removerGaylord = async function () {
         volume: null,
         rz: null
       })
-      .eq("id", posicaoAtual.id);
+      .eq("id", posId);
 
     if (error) throw error;
 
 
-    // ======================================
-    // ATUALIZA STATE
-    // ======================================
-    const index = state.posicoes.findIndex(
-      p => String(p.id) === String(posicaoAtual.id)
-    );
-
-    if (index !== -1) {
-
-      state.posicoes[index] = {
-        ...state.posicoes[index],
-        ocupada: false,
-        lote_id: null,
-        volume: null,
-        rz: null
-      };
-
-    }
+    // ----------------------------------------
+    // ATUALIZA ESTADO LOCAL
+    // ----------------------------------------
+    pos.ocupada = false;
+    pos.lote_id = null;
+    pos.volume = null;
+    pos.rz = null;
 
 
-    renderMapa();
+    if (typeof renderMapa === "function") renderMapa();
+    if (typeof renderDashboard === "function") renderDashboard();
 
-    if (typeof renderDashboard === "function")
-      renderDashboard();
 
     fecharModal();
 
-  }
-  catch (err) {
+  } catch (err) {
 
     console.error(err);
-    alert("Erro ao remover.");
+    alert("Erro ao remover alocação.");
 
   }
 
