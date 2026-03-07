@@ -112,6 +112,11 @@ window.renderDashboard = function(){
         <button onclick="alterarLote('${lote.id}')">
           Alterar
         </button>
+        
+        <button onclick="excluirLote('${lote.id}')">
+           Excluir
+        </button>
+
 
       </div>
 
