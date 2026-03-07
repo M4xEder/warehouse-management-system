@@ -1,10 +1,10 @@
 // ==============================================
-// DASHBOARD.JS — CONTROLE DE LOTES
+// DASHBOARD.JS — CONTROLE DE LOTES (COM REGRAS)
 // ==============================================
 
 
 // ------------------------------------------------
-// CONTAR GAYLORDS ALOCADOS NO LOTE
+// CONTAR ALOCADOS NO MAPA
 // ------------------------------------------------
 function contarAlocados(loteId) {
 
@@ -20,7 +20,7 @@ function contarAlocados(loteId) {
 
 
 // ------------------------------------------------
-// CONTAR EXPEDIDOS DO LOTE
+// CONTAR EXPEDIDOS
 // ------------------------------------------------
 function contarExpedidos(loteId) {
 
@@ -47,7 +47,6 @@ window.renderDashboard = function () {
   ativos.innerHTML = "";
   expedidos.innerHTML = "";
 
-
   if (!state?.lotes) return;
 
 
@@ -59,15 +58,15 @@ window.renderDashboard = function () {
 
     const expedidosQtd = contarExpedidos(lote.id);
 
-    const naoAlocados = total - alocados - expedidosQtd;
+    const naoAlocados = Math.max(0, total - alocados);
 
-    const saldoDisponivel = total - expedidosQtd;
+    const saldoDisponivel = Math.max(0, total - expedidosQtd);
 
 
     // STATUS
     let status = "Ativo";
 
-    if (saldoDisponivel <= 0) {
+    if (saldoDisponivel === 0) {
       status = "Finalizado";
     }
     else if (expedidosQtd > 0) {
@@ -115,8 +114,7 @@ window.renderDashboard = function () {
     `;
 
 
-    // LOTE FINALIZADO
-    if (saldoDisponivel <= 0) {
+    if (saldoDisponivel === 0) {
 
       expedidos.appendChild(card);
 
@@ -137,7 +135,7 @@ window.renderDashboard = function () {
 
 
 // ------------------------------------------------
-// RESUMO GERAL DO ARMAZÉM
+// RESUMO GERAL
 // ------------------------------------------------
 window.renderResumoGeral = function () {
 
@@ -172,7 +170,7 @@ window.renderResumoGeral = function () {
 
 
 // ------------------------------------------------
-// ALTERAR LOTE
+// ALTERAR LOTE (COM REGRA)
 // ------------------------------------------------
 window.alterarLote = function (loteId) {
 
@@ -180,11 +178,30 @@ window.alterarLote = function (loteId) {
 
   if (!lote) return;
 
-  const novoTotal = prompt("Novo total de volume:", lote.volume_total);
+  const alocados = contarAlocados(lote.id);
+
+  const novoTotal = Number(
+    prompt("Novo total do lote:", lote.volume_total)
+  );
 
   if (!novoTotal) return;
 
-  lote.volume_total = Number(novoTotal);
+
+  // 🔒 REGRA PRINCIPAL
+  if (novoTotal < alocados) {
+
+    alert(
+      `Não é possível reduzir o lote.\n\n` +
+      `Existem ${alocados} posições já alocadas no mapa.`
+    );
+
+    return;
+
+  }
+
+
+  lote.volume_total = novoTotal;
+
 
   if (typeof saveState === "function") {
     saveState();
