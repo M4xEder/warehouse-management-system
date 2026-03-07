@@ -1,19 +1,20 @@
 // ==============================================
-// DASHBOARD.JS — CONTROLE DE LOTES (COM REGRAS)
+// DASHBOARD.JS — CONTROLE DE LOTES
 // ==============================================
 
 
-// ------------------------------------------------
-// CONTAR ALOCADOS NO MAPA
-// ------------------------------------------------
-function contarAlocados(loteId) {
 
-  if (!state?.posicoes) return 0;
+// ------------------------------------------------
+// CONTAR POSIÇÕES ALOCADAS NO MAPA
+// ------------------------------------------------
+function contarAlocados(loteId){
+
+  if(!state?.posicoes) return 0
 
   return state.posicoes.filter(p =>
     p.ocupada === true &&
     String(p.lote_id) === String(loteId)
-  ).length;
+  ).length
 
 }
 
@@ -22,65 +23,68 @@ function contarAlocados(loteId) {
 // ------------------------------------------------
 // CONTAR EXPEDIDOS
 // ------------------------------------------------
-function contarExpedidos(loteId) {
+function contarExpedidos(loteId){
 
-  if (!state?.historicoExpedidos) return 0;
+  if(!state?.historicoExpedidos) return 0
 
   return state.historicoExpedidos
     .filter(e => String(e.lote_id) === String(loteId))
-    .reduce((soma, e) => soma + (Number(e.quantidade) || 0), 0);
+    .reduce((soma,e)=> soma + (Number(e.quantidade)||0),0)
 
 }
 
 
 
 // ------------------------------------------------
-// RENDER LOTES
+// RENDER DASHBOARD DOS LOTES
 // ------------------------------------------------
-window.renderDashboard = function () {
+window.renderDashboard = function(){
 
-  const ativos = document.getElementById("lotesAtivos");
-  const expedidos = document.getElementById("lotesExpedidos");
+  const containerAtivos = document.getElementById("lotesAtivos")
+  const containerExpedidos = document.getElementById("lotesExpedidos")
 
-  if (!ativos || !expedidos) return;
+  if(!containerAtivos || !containerExpedidos) return
 
-  ativos.innerHTML = "";
-  expedidos.innerHTML = "";
+  containerAtivos.innerHTML = ""
+  containerExpedidos.innerHTML = ""
 
-  if (!state?.lotes) return;
+  if(!state?.lotes) return
 
 
-  state.lotes.forEach(lote => {
 
-    const total = Number(lote.volume_total || lote.total || 0);
+  state.lotes.forEach(lote=>{
 
-    const alocados = contarAlocados(lote.id);
+    // TOTAL DO LOTE (FIXO)
+    const total = Number(lote.quantidade || lote.volume_total || 0)
 
-    const expedidosQtd = contarExpedidos(lote.id);
+    const alocados = contarAlocados(lote.id)
 
-    const naoAlocados = Math.max(0, total - alocados);
+    const expedidos = contarExpedidos(lote.id)
 
-    const saldoDisponivel = Math.max(0, total - expedidosQtd);
+    const naoAlocados = Math.max(0,total - alocados)
+
+    const saldoDisponivel = Math.max(0,total - expedidos)
+
 
 
     // STATUS
-    let status = "Ativo";
+    let status = "Ativo"
 
-    if (saldoDisponivel === 0) {
-      status = "Finalizado";
+    if(saldoDisponivel === 0){
+      status = "Finalizado"
     }
-    else if (expedidosQtd > 0) {
-      status = "Parcial";
+    else if(expedidos > 0){
+      status = "Parcial"
     }
 
 
-    const card = document.createElement("div");
 
-    card.className = "lote-card";
+    const card = document.createElement("div")
 
+    card.className = "lote-card"
 
     card.innerHTML = `
-    
+
       <h3>${lote.nome}</h3>
 
       <div class="resumo-lote">
@@ -91,7 +95,7 @@ window.renderDashboard = function () {
 
         <p><b>Não alocados:</b> ${naoAlocados}</p>
 
-        <p><b>Expedidos:</b> ${expedidosQtd}</p>
+        <p><b>Expedidos:</b> ${expedidos}</p>
 
         <p><b>Saldo disponível:</b> ${saldoDisponivel}</p>
 
@@ -110,103 +114,147 @@ window.renderDashboard = function () {
         </button>
 
       </div>
-    
-    `;
+
+    `
 
 
-    if (saldoDisponivel === 0) {
 
-      expedidos.appendChild(card);
-
+    if(status === "Finalizado"){
+      containerExpedidos.appendChild(card)
     }
-    else {
-
-      ativos.appendChild(card);
-
+    else{
+      containerAtivos.appendChild(card)
     }
 
-  });
+  })
 
 
-  renderResumoGeral();
 
-};
+  renderResumoGeral()
+
+}
 
 
 
 // ------------------------------------------------
-// RESUMO GERAL
+// RESUMO GERAL DO ARMAZÉM
 // ------------------------------------------------
-window.renderResumoGeral = function () {
+window.renderResumoGeral = function(){
 
-  const totalLotes = state.lotes?.length || 0;
+  const totalLotes = state.lotes?.length || 0
 
-  const totalPosicoes = state.posicoes?.length || 0;
+  const totalPosicoes = state.posicoes?.length || 0
 
   const ocupadas = state.posicoes
-    ?.filter(p => p.ocupada === true).length || 0;
+    ?.filter(p => p.ocupada === true).length || 0
 
-  const livres = totalPosicoes - ocupadas;
+  const livres = totalPosicoes - ocupadas
+
+
+
+  let totalExpedidos = 0
+
+  if(state?.historicoExpedidos){
+
+    totalExpedidos = state.historicoExpedidos
+      .reduce((s,e)=> s + (Number(e.quantidade)||0),0)
+
+  }
+
+
 
   const ocupacao = totalPosicoes
-    ? ((ocupadas / totalPosicoes) * 100).toFixed(1)
-    : 0;
+    ? ((ocupadas/totalPosicoes)*100).toFixed(1)
+    : 0
 
 
-  document.getElementById("resumoLotes").textContent = totalLotes;
 
-  document.getElementById("resumoAlocados").textContent = ocupadas;
+  document.getElementById("resumoLotes").textContent = totalLotes
 
-  document.getElementById("resumoNaoAlocados").textContent = livres;
+  document.getElementById("resumoAlocados").textContent = ocupadas
 
-  document.getElementById("resumoExpedidos").textContent =
-    state.historicoExpedidos
-      ?.reduce((s, e) => s + (Number(e.quantidade) || 0), 0) || 0;
+  document.getElementById("resumoNaoAlocados").textContent = livres
 
-  document.getElementById("resumoSaldo").textContent = ocupacao + "%";
+  document.getElementById("resumoExpedidos").textContent = totalExpedidos
 
-};
+  document.getElementById("resumoSaldo").textContent = ocupacao + "%"
+
+}
 
 
 
 // ------------------------------------------------
-// ALTERAR LOTE (COM REGRA)
+// EXPEDIR LOTE
 // ------------------------------------------------
-window.alterarLote = function (loteId) {
+window.expedirLote = function(loteId){
 
-  const lote = state.lotes.find(l => String(l.id) === String(loteId));
+  const qtd = Number(prompt("Quantidade a expedir"))
 
-  if (!lote) return;
+  if(!qtd || qtd <= 0) return
 
-  const alocados = contarAlocados(lote.id);
+
+
+  if(!state.historicoExpedidos){
+    state.historicoExpedidos = []
+  }
+
+
+
+  state.historicoExpedidos.push({
+
+    id: Date.now(),
+
+    lote_id: loteId,
+
+    quantidade: qtd,
+
+    data: new Date().toISOString()
+
+  })
+
+
+
+  renderDashboard()
+
+}
+
+
+
+// ------------------------------------------------
+// ALTERAR QUANTIDADE DO LOTE
+// ------------------------------------------------
+window.alterarLote = function(loteId){
+
+  const lote = state.lotes.find(l => String(l.id) === String(loteId))
+
+  if(!lote) return
+
+  const alocados = contarAlocados(lote.id)
 
   const novoTotal = Number(
-    prompt("Novo total do lote:", lote.volume_total)
-  );
+    prompt("Nova quantidade do lote:", lote.quantidade)
+  )
 
-  if (!novoTotal) return;
+  if(!novoTotal) return
 
 
-  // 🔒 REGRA PRINCIPAL
-  if (novoTotal < alocados) {
+
+  // REGRA DE SEGURANÇA
+  if(novoTotal < alocados){
 
     alert(
-      `Não é possível reduzir o lote.\n\n` +
-      `Existem ${alocados} posições já alocadas no mapa.`
-    );
+      `Não é possível reduzir.\n` +
+      `Existem ${alocados} posições alocadas no mapa.`
+    )
 
-    return;
+    return
 
   }
 
 
-  lote.volume_total = novoTotal;
 
+  lote.quantidade = novoTotal
 
-  if (typeof saveState === "function") {
-    saveState();
-  }
+  renderDashboard()
 
-  renderDashboard();
-
-};
+}
