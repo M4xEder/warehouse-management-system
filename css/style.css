@@ -69,26 +69,22 @@ font-weight:600;
 }
 
 /* ===============================
-POSIÇÕES (HORIZONTAL)
+POSIÇÕES (HORIZONTAL COM SCROLL)
 ================================ */
 
 .posicoes{
-
 display:flex;
 flex-direction:row;
-
 flex-wrap:nowrap;
-
 gap:8px;
 
 overflow-x:auto;
 overflow-y:hidden;
 
 padding-bottom:8px;
-
 }
 
-/* SCROLL */
+/* barra de rolagem */
 
 .posicoes::-webkit-scrollbar{
 height:8px;
@@ -105,8 +101,8 @@ POSIÇÃO
 
 .posicao{
 
-min-width:42px;
-height:42px;
+width:40px;
+height:40px;
 
 flex-shrink:0;
 
@@ -126,31 +122,12 @@ background:#e5e7eb;
 cursor:pointer;
 
 transition:0.15s;
+
 }
 
 .posicao:hover{
 transform:scale(1.12);
 box-shadow:0 4px 10px rgba(0,0,0,0.2);
-}
-
-/* LIVRE */
-
-.posicao.livre{
-background:#e5e7eb;
-}
-
-/* OCUPADA */
-
-.posicao.ocupada{
-color:white;
-border:2px solid #000;
-}
-
-/* BUSCA */
-
-.posicao.highlight{
-outline:3px solid #2563eb;
-transform:scale(1.15);
 }
 
 /* ===============================
