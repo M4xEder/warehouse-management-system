@@ -223,102 +223,111 @@ window.expedirLote = function(loteId){
 
 }
 
-
-
 // ------------------------------------------------
-// ALTERAR QUANTIDADE DO LOTE
+// EXCLUIR LOTE (SUPABASE)
 // ------------------------------------------------
-window.alterarLote = function(loteId){
-
-  const lote = state.lotes.find(l => String(l.id) === String(loteId))
-
-  if(!lote) return
-
-  const alocados = contarAlocados(lote.id)
-
-  const novoTotal = Number(
-    prompt("Nova quantidade do lote:", lote.quantidade)
-  )
-
-  if(!novoTotal) return
-
-
-
-  // REGRA DE SEGURANÇA
-  if(novoTotal < alocados){
-
-    alert(
-      `Não é possível reduzir.\n` +
-      `Existem ${alocados} posições alocadas no mapa.`
-    )
-
-    return
-
-  }
-
-
-
-  lote.quantidade = novoTotal
-
-  renderDashboard()
-
-}
-
-// ------------------------------------------------
-// EXCLUIR LOTE COM VALIDAÇÃO
-// ------------------------------------------------
-window.excluirLote = function(loteId){
+window.excluirLote = async function (loteId) {
 
   const lote = state.lotes.find(
     l => String(l.id) === String(loteId)
-  )
+  );
 
-  if(!lote) return
+  if (!lote) return;
 
 
+  // ------------------------------------------
+  // VERIFICAR POSIÇÕES ALOCADAS
+  // ------------------------------------------
   const alocados = state.posicoes.filter(p =>
     p.ocupada === true &&
     String(p.lote_id) === String(loteId)
-  ).length
+  ).length;
 
 
-  if(alocados > 0){
+  if (alocados > 0) {
 
     alert(
-      "Não é possível excluir o lote.\n" +
+      "Não é possível excluir o lote.\n\n" +
       "Existem gaylords alocados no mapa."
-    )
+    );
 
-    return
+    return;
+
   }
 
 
+  // ------------------------------------------
+  // VERIFICAR EXPEDIDOS
+  // ------------------------------------------
   const expedidos = state.historicoExpedidos
     ?.filter(e => String(e.lote_id) === String(loteId))
-    .reduce((s,e)=> s + (Number(e.quantidade)||0),0) || 0
+    .reduce((s, e) => s + (Number(e.quantidade) || 0), 0) || 0;
 
 
-  if(expedidos > 0){
+  if (expedidos > 0) {
 
     alert(
-      "Não é possível excluir o lote.\n" +
+      "Não é possível excluir o lote.\n\n" +
       "Existem gaylords expedidos."
-    )
+    );
 
-    return
+    return;
+
   }
 
 
-  if(!confirm(`Deseja excluir o lote ${lote.nome}?`)) return
+  // ------------------------------------------
+  // CONFIRMAÇÃO
+  // ------------------------------------------
+  if (!confirm(`Deseja excluir o lote "${lote.nome}" ?`)) {
+    return;
+  }
 
 
-  // REMOVE DO STATE
-  state.lotes = state.lotes.filter(
-    l => String(l.id) !== String(loteId)
-  )
+  try {
+
+    // ------------------------------------------
+    // DELETE NO BANCO
+    // ------------------------------------------
+    const { error } = await window.supabaseClient
+      .from("lotes")
+      .delete()
+      .eq("id", loteId);
+
+    if (error) throw error;
 
 
-  // ATUALIZA TELA
-  renderDashboard()
+    // ------------------------------------------
+    // REMOVE DO STATE LOCAL
+    // ------------------------------------------
+    state.lotes = state.lotes.filter(
+      l => String(l.id) !== String(loteId)
+    );
 
-}
+
+    // ------------------------------------------
+    // ATUALIZA TELAS
+    // ------------------------------------------
+    if (typeof renderDashboard === "function") {
+      renderDashboard();
+    }
+
+    if (typeof renderMapa === "function") {
+      renderMapa();
+    }
+
+
+    alert("Lote excluído com sucesso.");
+
+  }
+  catch (err) {
+
+    console.error(err);
+
+    alert("Erro ao excluir lote.");
+
+  }
+
+};
+
+
