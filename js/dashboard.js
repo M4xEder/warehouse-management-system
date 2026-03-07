@@ -1,130 +1,152 @@
 // ==============================================
-// DASHBOARD.JS — CONTROLE DE LOTES E RESUMO
+// DASHBOARD.JS — CONTROLE DE LOTES
 // ==============================================
 
 
 // ------------------------------------------------
-// RENDER DASHBOARD COMPLETO
+// CONTAR GAYLORDS ALOCADOS NO LOTE
+// ------------------------------------------------
+function contarAlocados(loteId) {
+
+  if (!state?.posicoes) return 0;
+
+  return state.posicoes.filter(p =>
+    p.ocupada === true &&
+    String(p.lote_id) === String(loteId)
+  ).length;
+
+}
+
+
+
+// ------------------------------------------------
+// CONTAR EXPEDIDOS DO LOTE
+// ------------------------------------------------
+function contarExpedidos(loteId) {
+
+  if (!state?.historicoExpedidos) return 0;
+
+  return state.historicoExpedidos
+    .filter(e => String(e.lote_id) === String(loteId))
+    .reduce((soma, e) => soma + (Number(e.quantidade) || 0), 0);
+
+}
+
+
+
+// ------------------------------------------------
+// RENDER LOTES
 // ------------------------------------------------
 window.renderDashboard = function () {
 
-  const containerAtivos = document.getElementById("lotesAtivos");
-  const containerExpedidos = document.getElementById("lotesExpedidos");
+  const ativos = document.getElementById("lotesAtivos");
+  const expedidos = document.getElementById("lotesExpedidos");
 
-  if (!containerAtivos || !containerExpedidos) return;
+  if (!ativos || !expedidos) return;
 
-  containerAtivos.innerHTML = "";
-  containerExpedidos.innerHTML = "";
+  ativos.innerHTML = "";
+  expedidos.innerHTML = "";
+
 
   if (!state?.lotes) return;
 
 
-  // =====================================================
-  // LOOP LOTES
-  // =====================================================
   state.lotes.forEach(lote => {
 
-    const totalPosicoes = contarGaylordsDoLote(lote.id);
-    const totalExpedido = totalExpedidoDoLote(lote.id);
+    const total = Number(lote.volume_total || lote.total || 0);
 
-    const totalMovimentado = totalPosicoes + totalExpedido;
+    const alocados = contarAlocados(lote.id);
+
+    const expedidosQtd = contarExpedidos(lote.id);
+
+    const naoAlocados = total - alocados - expedidosQtd;
+
+    const saldoDisponivel = total - expedidosQtd;
+
+
+    // STATUS
+    let status = "Ativo";
+
+    if (saldoDisponivel <= 0) {
+      status = "Finalizado";
+    }
+    else if (expedidosQtd > 0) {
+      status = "Parcial";
+    }
+
 
     const card = document.createElement("div");
+
     card.className = "lote-card";
 
 
-    // ============================================
-    // STATUS DO LOTE
-    // ============================================
-    if (totalMovimentado === 0) {
-
-      card.classList.add("lote-ativo");
-
-    }
-    else if (totalExpedido > 0 && totalPosicoes > 0) {
-
-      card.classList.add("lote-parcial");
-
-    }
-    else if (totalPosicoes === 0 && totalExpedido > 0) {
-
-      card.classList.add("lote-total");
-
-    }
-
-
-    // ============================================
-    // CONTEÚDO
-    // ============================================
     card.innerHTML = `
-
+    
       <h3>${lote.nome}</h3>
 
       <div class="resumo-lote">
 
-        <p><b>Volume Total:</b> ${lote.volume_total || 0}</p>
+        <p><b>Total:</b> ${total}</p>
 
-        <p><b>No Armazém:</b> ${totalPosicoes}</p>
+        <p><b>Alocados:</b> ${alocados}</p>
 
-        <p><b>Expedido:</b> ${totalExpedido}</p>
+        <p><b>Não alocados:</b> ${naoAlocados}</p>
+
+        <p><b>Expedidos:</b> ${expedidosQtd}</p>
+
+        <p><b>Saldo disponível:</b> ${saldoDisponivel}</p>
+
+        <p><b>Status:</b> ${status}</p>
 
       </div>
 
       <div class="acoes">
 
-        <button onclick="verLote('${lote.id}')">
-          Ver no mapa
-        </button>
-
         <button onclick="expedirLote('${lote.id}')">
           Expedir
         </button>
 
-      </div>
+        <button onclick="alterarLote('${lote.id}')">
+          Alterar
+        </button>
 
+      </div>
+    
     `;
 
 
-    // ============================================
-    // DESTINO DO CARD
-    // ============================================
-    if (totalPosicoes === 0 && totalExpedido > 0) {
+    // LOTE FINALIZADO
+    if (saldoDisponivel <= 0) {
 
-      containerExpedidos.appendChild(card);
+      expedidos.appendChild(card);
 
-    } else {
+    }
+    else {
 
-      containerAtivos.appendChild(card);
+      ativos.appendChild(card);
 
     }
 
   });
 
 
-  // ============================================
-  // RESUMO GERAL
-  // ============================================
   renderResumoGeral();
 
 };
 
 
 
-// ==============================================
+// ------------------------------------------------
 // RESUMO GERAL DO ARMAZÉM
-// ==============================================
+// ------------------------------------------------
 window.renderResumoGeral = function () {
-
-  const cards = document.querySelectorAll(".dashboard-resumo .card");
-
-  if (!cards.length) return;
 
   const totalLotes = state.lotes?.length || 0;
 
   const totalPosicoes = state.posicoes?.length || 0;
 
-  const ocupadas =
-    state.posicoes?.filter(p => p.ocupada === true).length || 0;
+  const ocupadas = state.posicoes
+    ?.filter(p => p.ocupada === true).length || 0;
 
   const livres = totalPosicoes - ocupadas;
 
@@ -133,90 +155,41 @@ window.renderResumoGeral = function () {
     : 0;
 
 
-  cards[0].querySelector("span").textContent = totalLotes;
-  cards[1].querySelector("span").textContent = totalPosicoes;
-  cards[2].querySelector("span").textContent = ocupadas;
-  cards[3].querySelector("span").textContent = livres;
-  cards[4].querySelector("span").textContent = ocupacao + "%";
+  document.getElementById("resumoLotes").textContent = totalLotes;
+
+  document.getElementById("resumoAlocados").textContent = ocupadas;
+
+  document.getElementById("resumoNaoAlocados").textContent = livres;
+
+  document.getElementById("resumoExpedidos").textContent =
+    state.historicoExpedidos
+      ?.reduce((s, e) => s + (Number(e.quantidade) || 0), 0) || 0;
+
+  document.getElementById("resumoSaldo").textContent = ocupacao + "%";
 
 };
 
 
 
-// ==============================================
-// VER LOTE NO MAPA
-// ==============================================
-window.verLote = function (loteId) {
+// ------------------------------------------------
+// ALTERAR LOTE
+// ------------------------------------------------
+window.alterarLote = function (loteId) {
 
-  if (!state?.posicoes) return;
+  const lote = state.lotes.find(l => String(l.id) === String(loteId));
 
-  state.posicoes.forEach(pos => {
+  if (!lote) return;
 
-    if (String(pos.lote_id) === String(loteId)) {
+  const novoTotal = prompt("Novo total de volume:", lote.volume_total);
 
-      pos._highlight = true;
+  if (!novoTotal) return;
 
-    } else {
+  lote.volume_total = Number(novoTotal);
 
-      delete pos._highlight;
-
-    }
-
-  });
-
-  if (typeof renderMapa === "function") {
-
-    renderMapa();
-
+  if (typeof saveState === "function") {
+    saveState();
   }
 
-};
-
-
-
-// ==============================================
-// EXPEDIR LOTE
-// ==============================================
-window.expedirLote = async function (loteId) {
-
-  const qtd = prompt("Quantidade a expedir:");
-
-  if (!qtd) return;
-
-  const quantidade = Number(qtd);
-
-  if (isNaN(quantidade) || quantidade <= 0) {
-
-    alert("Quantidade inválida.");
-
-    return;
-
-  }
-
-
-  try {
-
-    const res = await dbRegistrarExpedicao({
-      lote_id: loteId,
-      quantidade: quantidade
-    });
-
-    if (res.error) throw res.error;
-
-    alert("Expedição registrada.");
-
-    if (typeof carregarSistema === "function") {
-
-      carregarSistema();
-
-    }
-
-  }
-  catch (err) {
-
-    console.error(err);
-    alert("Erro ao registrar expedição.");
-
-  }
+  renderDashboard();
 
 };
