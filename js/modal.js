@@ -1,6 +1,6 @@
 // ===============================================
 // MODAL.JS — CONTROLE DE ALOCAÇÃO DE POSIÇÕES
-// ENTERPRISE SAFE
+// ENTERPRISE SAFE (AJUSTADO AO HTML)
 // ===============================================
 
 
@@ -26,11 +26,11 @@ window.abrirModalPorId = function (posicaoId) {
   modalContext.posicaoId = posicaoId;
 
   const modal = document.getElementById("modal");
-  const loteSelect = document.getElementById("loteSelect");
-  const volumeInput = document.getElementById("volumeInput");
-  const rzInput = document.getElementById("rzInput");
+  const loteSelect = document.getElementById("modalLote");
+  const volumeInput = document.getElementById("modalVolume");
+  const rzInput = document.getElementById("modalRz");
 
-  if (!modal) return;
+  if (!modal || !loteSelect || !volumeInput || !rzInput) return;
 
   modal.classList.remove("hidden");
 
@@ -59,7 +59,7 @@ window.abrirModalPorId = function (posicaoId) {
 
 
   // ----------------------------------------
-  // SE POSIÇÃO JÁ ESTÁ OCUPADA
+  // POSIÇÃO JÁ OCUPADA
   // ----------------------------------------
   if (pos.ocupada) {
 
@@ -70,22 +70,6 @@ window.abrirModalPorId = function (posicaoId) {
     loteSelect.disabled = true;
     volumeInput.disabled = true;
     rzInput.disabled = true;
-
-    const info = document.getElementById("infoPosicao");
-
-    if (info) {
-
-      const lote = state.lotes.find(
-        l => String(l.id) === String(pos.lote_id)
-      );
-
-      info.innerHTML = `
-      <p><b>Lote:</b> ${lote?.nome || ""}</p>
-      <p><b>Volume:</b> ${pos.volume}</p>
-      <p><b>RZ:</b> ${pos.rz}</p>
-      `;
-
-    }
 
   } else {
 
@@ -137,13 +121,13 @@ function rzDuplicada(loteId, rz, posicaoAtualId) {
 
 
 // ------------------------------------------------
-// SALVAR POSIÇÃO
+// CONFIRMAR ENDEREÇO (SALVAR POSIÇÃO)
 // ------------------------------------------------
-window.salvarPosicao = async function () {
+window.confirmarEndereco = async function () {
 
-  const loteId = document.getElementById("loteSelect").value;
-  const volume = document.getElementById("volumeInput").value.trim();
-  const rz = document.getElementById("rzInput").value.trim();
+  const loteId = document.getElementById("modalLote").value;
+  const volume = document.getElementById("modalVolume").value.trim();
+  const rz = document.getElementById("modalRz").value.trim();
 
   if (!loteId) {
     alert("Selecione o lote.");
@@ -222,7 +206,7 @@ window.salvarPosicao = async function () {
 
 
     // ----------------------------------------
-    // RENDER IMEDIATO
+    // ATUALIZA MAPA E DASHBOARD
     // ----------------------------------------
     if (typeof renderMapa === "function") renderMapa();
     if (typeof renderDashboard === "function") renderDashboard();
@@ -244,7 +228,7 @@ window.salvarPosicao = async function () {
 // ------------------------------------------------
 // REMOVER ALOCAÇÃO
 // ------------------------------------------------
-window.removerAlocacao = async function () {
+window.removerGaylord = async function () {
 
   const posId = modalContext.posicaoId;
 
