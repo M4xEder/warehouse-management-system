@@ -109,7 +109,7 @@ window.alterarQuantidade = async function (loteId) {
   // =================================================
   // REGRA 1 — NÃO PODE SER MENOR QUE ALOCADOS
   // =================================================
-  const alocados = state.posicoes.filter(p =>
+  const alocados = (state.posicoes || []).filter(p =>
     p.ocupada &&
     String(p.lote_id) === String(lote.id)
   ).length;
@@ -128,7 +128,9 @@ window.alterarQuantidade = async function (loteId) {
   // =================================================
   // REGRA 2 — NÃO PODE SER MENOR QUE EXPEDIDOS
   // =================================================
-  const expedidos = state.historicoExpedidos.filter(r =>
+  const historico = state.historicoExpedidos || [];
+
+  const expedidos = historico.filter(r =>
     String(r.lote_id) === String(lote.id)
   ).length;
 
@@ -182,12 +184,14 @@ window.alterarQuantidade = async function (loteId) {
 // =====================================================
 window.excluirLote = async function (loteId) {
 
-  const alocados = state.posicoes.filter(p =>
+  const alocados = (state.posicoes || []).filter(p =>
     p.ocupada &&
     String(p.lote_id) === String(loteId)
   ).length;
 
-  const expedidos = state.historicoExpedidos.filter(r =>
+  const historico = state.historicoExpedidos || [];
+
+  const expedidos = historico.filter(r =>
     String(r.lote_id) === String(loteId)
   ).length;
 
@@ -240,11 +244,13 @@ window.excluirLote = async function (loteId) {
 // LOTES ATIVOS
 window.getLotesAtivos = function () {
 
-  return state.lotes.filter(lote => {
+  const historico = state.historicoExpedidos || [];
+
+  return (state.lotes || []).filter(lote => {
 
     const total = Number(lote.quantidade ?? 0);
 
-    const expedidos = state.historicoExpedidos.filter(r =>
+    const expedidos = historico.filter(r =>
       String(r.lote_id) === String(lote.id)
     ).length;
 
@@ -254,14 +260,17 @@ window.getLotesAtivos = function () {
 };
 
 
+
 // LOTES EXPEDIDOS
 window.getLotesExpedidos = function () {
 
-  return state.lotes.filter(lote => {
+  const historico = state.historicoExpedidos || [];
+
+  return (state.lotes || []).filter(lote => {
 
     const total = Number(lote.quantidade ?? 0);
 
-    const expedidos = state.historicoExpedidos.filter(r =>
+    const expedidos = historico.filter(r =>
       String(r.lote_id) === String(lote.id)
     ).length;
 
