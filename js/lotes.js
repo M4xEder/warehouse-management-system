@@ -1,6 +1,7 @@
 // =====================================================
-// LOTES.JS — VERSÃO FINAL ESTÁVEL SEM STATUS
+// LOTES.JS — VERSÃO FINAL ESTÁVEL
 // =====================================================
+
 
 
 // =====================================================
@@ -71,7 +72,7 @@ window.cadastrarLote = async function () {
 
 
 // =====================================================
-// ALTERAR QUANTIDADE (SEM SELECT / SEM RETURNING *)
+// ALTERAR QUANTIDADE DO LOTE
 // =====================================================
 window.alterarQuantidade = async function (loteId) {
 
@@ -103,6 +104,45 @@ window.alterarQuantidade = async function (loteId) {
     return;
   }
 
+
+
+  // =================================================
+  // REGRA 1 — NÃO PODE SER MENOR QUE ALOCADOS
+  // =================================================
+  const alocados = state.posicoes.filter(p =>
+    p.ocupada &&
+    String(p.lote_id) === String(lote.id)
+  ).length;
+
+  if (quantidadeNumero < alocados) {
+
+    alert(
+      `Não pode ser menor que ${alocados} (gaylords já alocados no mapa).`
+    );
+
+    return;
+  }
+
+
+
+  // =================================================
+  // REGRA 2 — NÃO PODE SER MENOR QUE EXPEDIDOS
+  // =================================================
+  const expedidos = state.historicoExpedidos.filter(r =>
+    String(r.lote_id) === String(lote.id)
+  ).length;
+
+  if (quantidadeNumero < expedidos) {
+
+    alert(
+      `Não pode ser menor que ${expedidos} (gaylords já expedidos).`
+    );
+
+    return;
+  }
+
+
+
   try {
 
     const { error } = await window.supabaseClient
@@ -115,7 +155,6 @@ window.alterarQuantidade = async function (loteId) {
       return;
     }
 
-    // Atualiza local
     const index = state.lotes.findIndex(l =>
       String(l.id) === String(lote.id)
     );
@@ -142,6 +181,24 @@ window.alterarQuantidade = async function (loteId) {
 // EXCLUIR LOTE
 // =====================================================
 window.excluirLote = async function (loteId) {
+
+  const alocados = state.posicoes.filter(p =>
+    p.ocupada &&
+    String(p.lote_id) === String(loteId)
+  ).length;
+
+  const expedidos = state.historicoExpedidos.filter(r =>
+    String(r.lote_id) === String(loteId)
+  ).length;
+
+  if (alocados > 0 || expedidos > 0) {
+
+    alert(
+      "Não é possível excluir. Existem gaylords alocados ou expedidos."
+    );
+
+    return;
+  }
 
   if (!confirm("Tem certeza que deseja excluir este lote?")) return;
 
@@ -176,8 +233,11 @@ window.excluirLote = async function (loteId) {
 
 
 // =====================================================
-// FILTROS DINÂMICOS (SEM STATUS)
+// FILTROS DINÂMICOS
 // =====================================================
+
+
+// LOTES ATIVOS
 window.getLotesAtivos = function () {
 
   return state.lotes.filter(lote => {
@@ -190,8 +250,11 @@ window.getLotesAtivos = function () {
 
     return expedidos < total;
   });
+
 };
 
+
+// LOTES EXPEDIDOS
 window.getLotesExpedidos = function () {
 
   return state.lotes.filter(lote => {
@@ -204,4 +267,5 @@ window.getLotesExpedidos = function () {
 
     return total > 0 && expedidos >= total;
   });
+
 };
