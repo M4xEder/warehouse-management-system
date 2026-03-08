@@ -108,9 +108,9 @@ window.renderDashboard = function(){
         <button onclick="abrirModalExpedicao('${lote.id}')">
         Expedir
         </button>
-
-        <button onclick="alterarLote('${lote.id}')">
-          Alterar
+        
+        <button onclick="alterarQuantidadeLote('${lote.id}')">
+        Alterar
         </button>
         
         <button onclick="excluirLote('${lote.id}')">
