@@ -9,7 +9,7 @@
 // ------------------------------------------------
 function contarAlocados(loteId){
 
-  if(!state?.posicoes) return 0
+  if(!state || !state.posicoes) return 0
 
   return state.posicoes.filter(p =>
     p.ocupada === true &&
@@ -25,11 +25,11 @@ function contarAlocados(loteId){
 // ------------------------------------------------
 function contarExpedidos(loteId){
 
-  if(!state?.historicoExpedidos) return 0
+  if(!state || !state.historicoExpedidos) return 0
 
   return state.historicoExpedidos
     .filter(e => String(e.lote_id) === String(loteId))
-    .reduce((soma,e)=> soma + (Number(e.quantidade)||0),0)
+    .length
 
 }
 
@@ -48,14 +48,14 @@ window.renderDashboard = function(){
   containerAtivos.innerHTML = ""
   containerExpedidos.innerHTML = ""
 
-  if(!state?.lotes) return
+  if(!state || !state.lotes) return
 
 
 
   state.lotes.forEach(lote=>{
 
     // TOTAL DO LOTE (FIXO)
-    const total = Number(lote.quantidade || lote.volume_total || 0)
+    const total = Number(lote.quantidade || 0)
 
     const alocados = contarAlocados(lote.id)
 
@@ -71,10 +71,10 @@ window.renderDashboard = function(){
     let status = "Ativo"
 
     if(saldoDisponivel === 0){
-      status = "Finalizado"
+      status = "Expedido completo"
     }
     else if(expedidos > 0){
-      status = "Parcial"
+      status = "Expedição parcial"
     }
 
 
@@ -109,14 +109,13 @@ window.renderDashboard = function(){
         Expedir
         </button>
         
-        <button onclick="alterarQuantidade('${lote.id}')">
+        <button onclick="alterarQuantidadeLote('${lote.id}')">
         Alterar
         </button>
         
         <button onclick="excluirLote('${lote.id}')">
-           Excluir
+        Excluir
         </button>
-
 
       </div>
 
@@ -124,11 +123,27 @@ window.renderDashboard = function(){
 
 
 
-    if(status === "Finalizado"){
+    // ------------------------------------------
+    // DEFINIR EM QUAL SESSÃO ENTRA
+    // ------------------------------------------
+
+    if(status === "Expedido completo"){
+
       containerExpedidos.appendChild(card)
+
     }
     else{
+
       containerAtivos.appendChild(card)
+
+      // se for parcial também aparece em expedidos
+      if(status === "Expedição parcial"){
+
+        const clone = card.cloneNode(true)
+        containerExpedidos.appendChild(clone)
+
+      }
+
     }
 
   })
@@ -146,25 +161,20 @@ window.renderDashboard = function(){
 // ------------------------------------------------
 window.renderResumoGeral = function(){
 
-  const totalLotes = state.lotes?.length || 0
+  const totalLotes = state?.lotes?.length || 0
 
-  const totalPosicoes = state.posicoes?.length || 0
+  const totalPosicoes = state?.posicoes?.length || 0
 
-  const ocupadas = state.posicoes
+  const ocupadas = state?.posicoes
     ?.filter(p => p.ocupada === true).length || 0
 
   const livres = totalPosicoes - ocupadas
 
 
 
-  let totalExpedidos = 0
-
-  if(state?.historicoExpedidos){
-
-    totalExpedidos = state.historicoExpedidos
-      .reduce((s,e)=> s + (Number(e.quantidade)||0),0)
-
-  }
+  const totalExpedidos = state?.historicoExpedidos
+    ? state.historicoExpedidos.length
+    : 0
 
 
 
@@ -174,54 +184,21 @@ window.renderResumoGeral = function(){
 
 
 
-  document.getElementById("resumoLotes").textContent = totalLotes
+  const el1 = document.getElementById("resumoLotes")
+  const el2 = document.getElementById("resumoAlocados")
+  const el3 = document.getElementById("resumoNaoAlocados")
+  const el4 = document.getElementById("resumoExpedidos")
+  const el5 = document.getElementById("resumoSaldo")
 
-  document.getElementById("resumoAlocados").textContent = ocupadas
-
-  document.getElementById("resumoNaoAlocados").textContent = livres
-
-  document.getElementById("resumoExpedidos").textContent = totalExpedidos
-
-  document.getElementById("resumoSaldo").textContent = ocupacao + "%"
-
-}
-
-
-
-// ------------------------------------------------
-// EXPEDIR LOTE
-// ------------------------------------------------
-window.expedirLote = function(loteId){
-
-  const qtd = Number(prompt("Quantidade a expedir"))
-
-  if(!qtd || qtd <= 0) return
-
-
-
-  if(!state.historicoExpedidos){
-    state.historicoExpedidos = []
-  }
-
-
-
-  state.historicoExpedidos.push({
-
-    id: Date.now(),
-
-    lote_id: loteId,
-
-    quantidade: qtd,
-
-    data: new Date().toISOString()
-
-  })
-
-
-
-  renderDashboard()
+  if(el1) el1.textContent = totalLotes
+  if(el2) el2.textContent = ocupadas
+  if(el3) el3.textContent = livres
+  if(el4) el4.textContent = totalExpedidos
+  if(el5) el5.textContent = ocupacao + "%"
 
 }
+
+
 
 // ------------------------------------------------
 // EXCLUIR LOTE (SUPABASE)
@@ -235,9 +212,7 @@ window.excluirLote = async function (loteId) {
   if (!lote) return;
 
 
-  // ------------------------------------------
-  // VERIFICAR POSIÇÕES ALOCADAS
-  // ------------------------------------------
+  // verificar posições alocadas
   const alocados = state.posicoes.filter(p =>
     p.ocupada === true &&
     String(p.lote_id) === String(loteId)
@@ -256,12 +231,8 @@ window.excluirLote = async function (loteId) {
   }
 
 
-  // ------------------------------------------
-  // VERIFICAR EXPEDIDOS
-  // ------------------------------------------
-  const expedidos = state.historicoExpedidos
-    ?.filter(e => String(e.lote_id) === String(loteId))
-    .reduce((s, e) => s + (Number(e.quantidade) || 0), 0) || 0;
+  // verificar expedidos
+  const expedidos = contarExpedidos(loteId)
 
 
   if (expedidos > 0) {
@@ -276,9 +247,6 @@ window.excluirLote = async function (loteId) {
   }
 
 
-  // ------------------------------------------
-  // CONFIRMAÇÃO
-  // ------------------------------------------
   if (!confirm(`Deseja excluir o lote "${lote.nome}" ?`)) {
     return;
   }
@@ -286,9 +254,6 @@ window.excluirLote = async function (loteId) {
 
   try {
 
-    // ------------------------------------------
-    // DELETE NO BANCO
-    // ------------------------------------------
     const { error } = await window.supabaseClient
       .from("lotes")
       .delete()
@@ -297,17 +262,11 @@ window.excluirLote = async function (loteId) {
     if (error) throw error;
 
 
-    // ------------------------------------------
-    // REMOVE DO STATE LOCAL
-    // ------------------------------------------
     state.lotes = state.lotes.filter(
       l => String(l.id) !== String(loteId)
     );
 
 
-    // ------------------------------------------
-    // ATUALIZA TELAS
-    // ------------------------------------------
     if (typeof renderDashboard === "function") {
       renderDashboard();
     }
@@ -328,6 +287,4 @@ window.excluirLote = async function (loteId) {
 
   }
 
-};
-
-
+    }
