@@ -453,24 +453,88 @@ padding:6px 12px;
 border-radius:20px;
 
 }
+
+
+
+/* ========================= */
+/* TABELA DETALHES EXPEDIÇÃO */
+/* ========================= */
+
 .tabela-expedicao{
   width:100%;
   border-collapse:collapse;
-  margin-top:10px;
+  margin-top:15px;
+  font-size:14px;
+  background:#fff;
+  border-radius:6px;
+  overflow:hidden;
+}
+
+/* cabeçalho */
+
+.tabela-expedicao thead{
+  background:#2c3e50;
+  color:#fff;
+}
+
+.tabela-expedicao th{
+  padding:12px;
+  text-align:center;
+  font-weight:600;
+  letter-spacing:0.5px;
+}
+
+/* células */
+
+.tabela-expedicao td{
+  padding:10px 14px;
+  border-bottom:1px solid #e5e5e5;
+}
+
+/* linhas alternadas */
+
+.tabela-expedicao tbody tr:nth-child(even){
+  background:#f7f7f7;
+}
+
+/* hover */
+
+.tabela-expedicao tbody tr:hover{
+  background:#eef4ff;
+}
+
+/* colunas alinhadas */
+
+.tabela-expedicao td:nth-child(1){
+  text-align:center;
+  font-weight:600;
+}
+
+.tabela-expedicao td:nth-child(2){
+  text-align:center;
+  font-weight:500;
+}
+
+.tabela-expedicao td:nth-child(3){
+  text-align:center;
+  color:#555;
+  font-size:13px;
+}
+
+/* responsivo */
+
+@media(max-width:600px){
+
+.tabela-expedicao{
+  font-size:12px;
 }
 
 .tabela-expedicao th,
 .tabela-expedicao td{
-  border:1px solid #ddd;
   padding:8px;
-  text-align:center;
 }
 
-.tabela-expedicao th{
-  background:#f4f4f4;
-  font-weight:bold;
 }
-
 
 /* ===============================
 RESPONSIVO
