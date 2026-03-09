@@ -48,7 +48,6 @@
 <script src="js/busca.js" defer></script>
 <script src="js/expedicao.js" defer></script>
 
-
 <!-- ========================= -->
 <!-- INTERFACE -->
 <!-- ========================= -->
@@ -153,7 +152,10 @@ Cadastrar Lote
 <h2>Lotes Expedidos</h2>
 <div id="lotesExpedidos"></div>
 
+<!-- ========================= -->
 <!-- MODAL ENDEREÇAMENTO -->
+<!-- ========================= -->
+
 <div id="modal" class="modal hidden">
 
 <div class="modal-content">
@@ -196,7 +198,10 @@ Cancelar
 </div>
 </div>
 
+<!-- ========================= -->
 <!-- MODAL EXPEDIÇÃO -->
+<!-- ========================= -->
+
 <div id="modalExpedicao" class="modal hidden">
 
 <div class="modal-content" style="width:500px; max-height:80vh; overflow:auto">
@@ -225,6 +230,29 @@ Confirmar
 
 <button onclick="fecharModalExpedicao()">
 Cancelar
+</button>
+
+</div>
+
+</div>
+</div>
+
+<!-- ========================= -->
+<!-- MODAL DETALHES EXPEDIÇÃO -->
+<!-- ========================= -->
+
+<div id="modalDetalhesExpedicao" class="modal hidden">
+
+<div class="modal-content" style="width:600px; max-height:80vh; overflow:auto">
+
+<h3>Detalhes da Expedição</h3>
+
+<div id="listaDetalhesExpedicao"></div>
+
+<div class="acoes">
+
+<button onclick="fecharDetalhesExpedicao()">
+Fechar
 </button>
 
 </div>
