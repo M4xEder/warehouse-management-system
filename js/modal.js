@@ -1,6 +1,6 @@
 // ===============================================
 // MODAL.JS — CONTROLE DE ALOCAÇÃO DE POSIÇÕES
-// ENTERPRISE SAFE (AJUSTADO AO HTML)
+// ENTERPRISE SAFE + BLOQUEIO DE CAPACIDADE
 // ===============================================
 
 
@@ -17,7 +17,9 @@ window.modalContext = {
 // ------------------------------------------------
 window.abrirModalPorId = function (posicaoId) {
 
-  const pos = state.posicoes.find(
+  if (!window.state) return;
+
+  const pos = state.posicoes?.find(
     p => String(p.id) === String(posicaoId)
   );
 
@@ -35,32 +37,30 @@ window.abrirModalPorId = function (posicaoId) {
   modal.classList.remove("hidden");
 
 
-  // ----------------------------------------
   // LIMPAR CAMPOS
-  // ----------------------------------------
   loteSelect.innerHTML = "";
   volumeInput.value = "";
   rzInput.value = "";
 
 
-  // ----------------------------------------
   // CARREGAR LOTES
-  // ----------------------------------------
-  state.lotes.forEach(lote => {
+  if (Array.isArray(state.lotes)) {
 
-    const option = document.createElement("option");
+    state.lotes.forEach(lote => {
 
-    option.value = lote.id;
-    option.textContent = lote.nome;
+      const option = document.createElement("option");
 
-    loteSelect.appendChild(option);
+      option.value = lote.id;
+      option.textContent = lote.nome;
 
-  });
+      loteSelect.appendChild(option);
+
+    });
+
+  }
 
 
-  // ----------------------------------------
   // POSIÇÃO JÁ OCUPADA
-  // ----------------------------------------
   if (pos.ocupada) {
 
     loteSelect.value = pos.lote_id || "";
@@ -103,6 +103,8 @@ window.fecharModal = function () {
 // ------------------------------------------------
 function rzDuplicada(loteId, rz, posicaoAtualId) {
 
+  if (!Array.isArray(state.posicoes)) return false;
+
   return state.posicoes.some(p => {
 
     if (!p.ocupada) return false;
@@ -121,7 +123,38 @@ function rzDuplicada(loteId, rz, posicaoAtualId) {
 
 
 // ------------------------------------------------
-// CONFIRMAR ENDEREÇO (SALVAR POSIÇÃO)
+// CONTAR GAYLORDS DO LOTE
+// ------------------------------------------------
+function contarGaylordsDoLote(loteId) {
+
+  if (!Array.isArray(state.posicoes)) return 0;
+
+  return state.posicoes.filter(p =>
+    p.ocupada &&
+    String(p.lote_id) === String(loteId)
+  ).length;
+
+}
+
+
+
+// ------------------------------------------------
+// BUSCAR LOTE
+// ------------------------------------------------
+function buscarLote(loteId) {
+
+  if (!Array.isArray(state.lotes)) return null;
+
+  return state.lotes.find(l =>
+    String(l.id) === String(loteId)
+  );
+
+}
+
+
+
+// ------------------------------------------------
+// CONFIRMAR ENDEREÇO
 // ------------------------------------------------
 window.confirmarEndereco = async function () {
 
@@ -144,10 +177,9 @@ window.confirmarEndereco = async function () {
     return;
   }
 
-
   const posId = modalContext.posicaoId;
 
-  const pos = state.posicoes.find(
+  const pos = state.posicoes?.find(
     p => String(p.id) === String(posId)
   );
 
@@ -155,11 +187,11 @@ window.confirmarEndereco = async function () {
 
 
   // ----------------------------------------
-  // BLOQUEIO SE JÁ OCUPADA
+  // BLOQUEIO SE POSIÇÃO OCUPADA
   // ----------------------------------------
   if (pos.ocupada) {
 
-    alert("Esta posição já está ocupada. Remova para alterar.");
+    alert("Esta posição já está ocupada.");
 
     return;
 
@@ -178,11 +210,31 @@ window.confirmarEndereco = async function () {
   }
 
 
+  // ----------------------------------------
+  // BLOQUEIO DE CAPACIDADE DO LOTE
+  // ----------------------------------------
+  const lote = buscarLote(loteId);
+
+  if (!lote) {
+
+    alert("Lote inválido.");
+    return;
+
+  }
+
+  const usadas = contarGaylordsDoLote(loteId);
+
+  if (usadas >= lote.quantidade) {
+
+    alert("Este lote já atingiu o limite de gaylords.");
+
+    return;
+
+  }
+
+
   try {
 
-    // ----------------------------------------
-    // ATUALIZA BANCO
-    // ----------------------------------------
     const { error } = await window.supabaseClient
       .from("posicoes")
       .update({
@@ -196,18 +248,13 @@ window.confirmarEndereco = async function () {
     if (error) throw error;
 
 
-    // ----------------------------------------
     // ATUALIZA ESTADO LOCAL
-    // ----------------------------------------
     pos.ocupada = true;
     pos.lote_id = loteId;
     pos.volume = volume;
     pos.rz = rz;
 
 
-    // ----------------------------------------
-    // ATUALIZA MAPA E DASHBOARD
-    // ----------------------------------------
     if (typeof renderMapa === "function") renderMapa();
     if (typeof renderDashboard === "function") renderDashboard();
 
@@ -232,7 +279,7 @@ window.removerGaylord = async function () {
 
   const posId = modalContext.posicaoId;
 
-  const pos = state.posicoes.find(
+  const pos = state.posicoes?.find(
     p => String(p.id) === String(posId)
   );
 
@@ -244,7 +291,6 @@ window.removerGaylord = async function () {
     return;
 
   }
-
 
   if (!confirm("Deseja remover esta alocação?")) return;
 
@@ -264,9 +310,6 @@ window.removerGaylord = async function () {
     if (error) throw error;
 
 
-    // ----------------------------------------
-    // ATUALIZA ESTADO LOCAL
-    // ----------------------------------------
     pos.ocupada = false;
     pos.lote_id = null;
     pos.volume = null;
