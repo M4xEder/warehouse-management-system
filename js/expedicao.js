@@ -1,15 +1,12 @@
-
 // ===============================================
 // EXPEDICAO.JS
 // CONTROLE DE EXPEDIÇÃO DE GAYLORDS
 // ===============================================
 
-
 window.expedicaoContext = {
   loteId: null,
   posicoes: []
 };
-
 
 
 // ------------------------------------------------
@@ -26,8 +23,6 @@ window.abrirModalExpedicao = function(loteId){
 
   lista.innerHTML = "";
 
-
-
   // pegar posições ocupadas do lote
   const posicoes = state.posicoes.filter(p =>
     p.ocupada === true &&
@@ -37,7 +32,6 @@ window.abrirModalExpedicao = function(loteId){
   expedicaoContext.posicoes = posicoes;
 
 
-
   if(posicoes.length === 0){
 
     lista.innerHTML = "<p>Nenhuma gaylord alocada neste lote.</p>";
@@ -45,7 +39,6 @@ window.abrirModalExpedicao = function(loteId){
     return;
 
   }
-
 
 
   posicoes.forEach(pos=>{
@@ -74,7 +67,6 @@ window.abrirModalExpedicao = function(loteId){
     lista.appendChild(linha);
 
   });
-
 
 
   modal.classList.remove("hidden");
@@ -156,16 +148,18 @@ window.confirmarExpedicao = async function(){
 
 
 
-      // -------------------------------
-      // REGISTRAR EXPEDIÇÃO NO BANCO
-      // -------------------------------
+      // ---------------------------------
+      // REGISTRAR HISTÓRICO DE EXPEDIÇÃO
+      // ---------------------------------
       const { error:errExp } = await supabaseClient
-        .from("expedicoes")
+        .from("historico_expedidos")
         .insert({
+          lote: pos.lote,
+          area: pos.area,
+          rua: pos.rua,
+          posicao: pos.posicao,
           lote_id: pos.lote_id,
           posicao_id: pos.id,
-          rz: pos.rz,
-          volume: pos.volume,
           data_expedicao: dataExpedicao
         });
 
@@ -173,9 +167,9 @@ window.confirmarExpedicao = async function(){
 
 
 
-      // -------------------------------
+      // ---------------------------------
       // LIBERAR POSIÇÃO NO MAPA
-      // -------------------------------
+      // ---------------------------------
       const { error:errPos } = await supabaseClient
         .from("posicoes")
         .update({
