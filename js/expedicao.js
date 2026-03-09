@@ -1,48 +1,41 @@
 // ===============================================
-// EXPEDICAO.JS
-// CONTROLE DE EXPEDIÇÃO DE GAYLORDS
+// EXPEDICAO.JS — CONTROLE DE EXPEDIÇÃO
 // ===============================================
 
 window.expedicaoContext = {
-  loteId: null,
-  posicoes: []
+  loteId:null,
+  posicoes:[]
 };
 
 
 
 // ------------------------------------------------
-// ABRIR MODAL DE EXPEDIÇÃO
+// ABRIR MODAL
 // ------------------------------------------------
 window.abrirModalExpedicao = function(loteId){
 
-  const modal = document.getElementById("modalExpedicao");
-  const lista = document.getElementById("listaExpedicao");
+  const modal = document.getElementById("modalExpedicao")
+  const lista = document.getElementById("listaExpedicao")
 
-  if(!modal || !lista) return;
+  if(!modal || !lista) return
 
-  expedicaoContext.loteId = loteId;
+  lista.innerHTML = ""
 
-  lista.innerHTML = "";
-
-  if(!state?.posicoes) return;
-
-
-
-  // POSIÇÕES ALOCADAS DO LOTE
   const posicoes = state.posicoes.filter(p =>
     p.ocupada === true &&
-    String(p.lote_id) === String(loteId)
-  );
+    idEquals(p.lote_id, loteId)
+  )
 
-  expedicaoContext.posicoes = posicoes;
+  expedicaoContext.loteId = loteId
+  expedicaoContext.posicoes = posicoes
 
 
 
   if(posicoes.length === 0){
 
-    lista.innerHTML = "<p>Nenhuma gaylord alocada neste lote.</p>";
-    modal.classList.remove("hidden");
-    return;
+    lista.innerHTML = "<p>Nenhuma gaylord alocada</p>"
+    modal.classList.remove("hidden")
+    return
 
   }
 
@@ -50,8 +43,9 @@ window.abrirModalExpedicao = function(loteId){
 
   posicoes.forEach(pos=>{
 
-    const linha = document.createElement("label");
-    linha.className = "linha-expedicao";
+    const linha = document.createElement("label")
+
+    linha.className = "linha-expedicao"
 
     linha.innerHTML = `
 
@@ -69,17 +63,17 @@ window.abrirModalExpedicao = function(loteId){
 
       </span>
 
-    `;
+    `
 
-    lista.appendChild(linha);
+    lista.appendChild(linha)
 
-  });
+  })
 
 
 
-  modal.classList.remove("hidden");
+  modal.classList.remove("hidden")
 
-};
+}
 
 
 
@@ -88,39 +82,13 @@ window.abrirModalExpedicao = function(loteId){
 // ------------------------------------------------
 window.fecharModalExpedicao = function(){
 
-  const modal = document.getElementById("modalExpedicao");
+  const modal = document.getElementById("modalExpedicao")
 
   if(modal){
-    modal.classList.add("hidden");
+    modal.classList.add("hidden")
   }
 
-};
-
-
-
-// ------------------------------------------------
-// SELECIONAR TODOS
-// ------------------------------------------------
-window.selecionarTodosGaylords = function(){
-
-  document
-    .querySelectorAll(".check-expedicao")
-    .forEach(c => c.checked = true);
-
-};
-
-
-
-// ------------------------------------------------
-// DESMARCAR TODOS
-// ------------------------------------------------
-window.desmarcarTodosGaylords = function(){
-
-  document
-    .querySelectorAll(".check-expedicao")
-    .forEach(c => c.checked = false);
-
-};
+}
 
 
 
@@ -129,117 +97,75 @@ window.desmarcarTodosGaylords = function(){
 // ------------------------------------------------
 window.confirmarExpedicao = async function(){
 
-  const checks = document.querySelectorAll(".check-expedicao:checked");
+  const checks = document.querySelectorAll(".check-expedicao:checked")
 
   if(checks.length === 0){
 
-    alert("Selecione ao menos uma gaylord.");
-    return;
+    alert("Selecione ao menos uma gaylord.")
+    return
 
   }
 
+  const dataExpedicao = new Date().toISOString()
 
-  const dataExpedicao = new Date().toISOString();
 
 
   try{
 
     for(const check of checks){
 
-      const posId = check.value;
+      const posId = check.value
 
-      const pos = state.posicoes.find(
-        p => String(p.id) === String(posId)
-      );
+      const pos = getPosicaoById(posId)
 
-      if(!pos) continue;
+      if(!pos) continue
 
 
 
-      // --------------------------------
-      // REGISTRAR HISTÓRICO
-      // --------------------------------
-      const { error:errExp } = await supabaseClient
+      // REGISTRA HISTÓRICO
+      const { error } = await supabaseClient
         .from("historico_expedidos")
         .insert({
-          lote: pos.lote,
-          area: pos.area,
-          rua: pos.rua,
-          posicao: pos.posicao,
-          lote_id: pos.lote_id,
-          posicao_id: pos.id,
-          data_expedicao: dataExpedicao
-        });
+          lote_id:pos.lote_id,
+          posicao_id:pos.id,
+          area:pos.area,
+          rua:pos.rua,
+          posicao:pos.posicao,
+          rz:pos.rz,
+          volume:pos.volume,
+          data_expedicao:dataExpedicao
+        })
 
-      if(errExp) throw errExp;
-
-
-
-      // --------------------------------
-      // ATUALIZAR STATE LOCAL HISTÓRICO
-      // --------------------------------
-      if(!state.historicoExpedidos){
-        state.historicoExpedidos = [];
-      }
-
-      state.historicoExpedidos.push({
-        lote_id: pos.lote_id,
-        posicao_id: pos.id,
-        data_expedicao: dataExpedicao
-      });
+      if(error) throw error
 
 
 
-      // --------------------------------
-      // LIBERAR POSIÇÃO NO MAPA
-      // --------------------------------
+      // LIBERA POSIÇÃO
       const { error:errPos } = await supabaseClient
         .from("posicoes")
         .update({
           ocupada:false,
           lote_id:null,
-          volume:null,
-          rz:null
+          rz:null,
+          volume:null
         })
-        .eq("id",pos.id);
+        .eq("id",pos.id)
 
-      if(errPos) throw errPos;
-
-
-
-      // --------------------------------
-      // ATUALIZAR STATE LOCAL
-      // --------------------------------
-      pos.ocupada = false;
-      pos.lote_id = null;
-      pos.volume = null;
-      pos.rz = null;
+      if(errPos) throw errPos
 
     }
 
 
 
-    // --------------------------------
-    // ATUALIZAR MAPA E DASHBOARD
-    // --------------------------------
-    if(typeof renderMapa === "function"){
-      renderMapa();
-    }
-
-    if(typeof renderDashboard === "function"){
-      renderDashboard();
-    }
+    fecharModalExpedicao()
 
 
 
-    fecharModalExpedicao();
+  }catch(err){
 
-  }
-  catch(err){
-
-    console.error(err);
-    alert("Erro ao registrar expedição.");
+    console.error(err)
+    alert("Erro ao registrar expedição.")
 
   }
 
-};
+}
