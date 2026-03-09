@@ -1,17 +1,16 @@
 // ===============================================
-// EXPEDICAO.JS — ULTRA OTIMIZADO (BATCH MODE)
+// EXPEDICAO.JS
 // ===============================================
 
 window.expedicaoContext = {
-  loteId:null,
-  posicoes:[]
+  loteId: null,
+  posicoes: []
 };
 
 
-
-// ------------------------------------------------
-// ABRIR MODAL
-// ------------------------------------------------
+// =====================================================
+// ABRIR MODAL DE EXPEDIÇÃO
+// =====================================================
 window.abrirModalExpedicao = function(loteId){
 
   const modal = document.getElementById("modalExpedicao");
@@ -23,7 +22,7 @@ window.abrirModalExpedicao = function(loteId){
 
   const posicoes = state.posicoes.filter(p =>
     p.ocupada === true &&
-    idEquals(p.lote_id,loteId)
+    idEquals(p.lote_id, loteId)
   );
 
   expedicaoContext.loteId = loteId;
@@ -31,7 +30,7 @@ window.abrirModalExpedicao = function(loteId){
 
   if(posicoes.length === 0){
 
-    lista.innerHTML = "<p>Nenhuma gaylord alocada</p>";
+    lista.innerHTML = "<p>Nenhuma gaylord alocada.</p>";
     modal.classList.remove("hidden");
     return;
 
@@ -67,9 +66,9 @@ window.abrirModalExpedicao = function(loteId){
 
 
 
-// ------------------------------------------------
-// FECHAR MODAL
-// ------------------------------------------------
+// =====================================================
+// FECHAR MODAL EXPEDIÇÃO
+// =====================================================
 window.fecharModalExpedicao = function(){
 
   const modal = document.getElementById("modalExpedicao");
@@ -82,9 +81,9 @@ window.fecharModalExpedicao = function(){
 
 
 
-// ------------------------------------------------
-// CONFIRMAR EXPEDIÇÃO (BATCH MODE)
-// ------------------------------------------------
+// =====================================================
+// CONFIRMAR EXPEDIÇÃO (ULTRA OTIMIZADO)
+// =====================================================
 window.confirmarExpedicao = async function(){
 
   const checks = document.querySelectorAll(".check-expedicao:checked");
@@ -116,25 +115,22 @@ window.confirmarExpedicao = async function(){
 
 
     // ======================================
-    // MONTAR INSERT EM LOTE
+    // MONTAR HISTÓRICO
     // ======================================
 
     const historicoInsert = posicoesSelecionadas.map(pos=>({
 
-      lote_id:pos.lote_id,
-      posicao_id:pos.id,
-      area:pos.area,
-      rua:pos.rua,
-      posicao:pos.posicao,
-      rz:pos.rz,
-      volume:pos.volume,
-      data_expedicao:dataExpedicao
+      lote_id: pos.lote_id,
+      posicao_id: pos.id,
+      rz: pos.rz,
+      volume: pos.volume,
+      data_expedicao: dataExpedicao
 
     }));
 
 
     // ======================================
-    // INSERT EM LOTE
+    // INSERT HISTÓRICO
     // ======================================
 
     const { data:historicoData, error:histErr } =
@@ -154,7 +150,7 @@ window.confirmarExpedicao = async function(){
 
 
     // ======================================
-    // UPDATE EM LOTE
+    // LIBERAR POSIÇÕES
     // ======================================
 
     const { error:updateErr } =
@@ -180,9 +176,8 @@ window.confirmarExpedicao = async function(){
     }
 
     historicoData.forEach(reg=>{
-      state.historico_expedidos.push(normalizeId(reg));
+      state.historico_expedidos.push(reg);
     });
-
 
     posIds.forEach(id=>{
 
@@ -222,6 +217,89 @@ window.confirmarExpedicao = async function(){
     console.error(err);
     alert("Erro ao registrar expedição.");
 
+  }
+
+};
+
+
+
+// =====================================================
+// VER DETALHES DA EXPEDIÇÃO (TABELA)
+// =====================================================
+window.verDetalhesExpedicao = function(loteId){
+
+  if(!state || !state.historico_expedidos){
+    alert("Histórico não carregado.");
+    return;
+  }
+
+  const registros = state.historico_expedidos.filter(r =>
+    idEquals(r.lote_id, loteId)
+  );
+
+  if(registros.length === 0){
+    alert("Nenhuma expedição encontrada.");
+    return;
+  }
+
+  const modal = document.getElementById("modalDetalhesExpedicao");
+  const lista = document.getElementById("listaDetalhesExpedicao");
+
+  if(!modal || !lista){
+    alert("Modal não encontrado.");
+    return;
+  }
+
+  lista.innerHTML = "";
+
+  const tabela = document.createElement("table");
+
+  tabela.className = "tabela-expedicao";
+
+  tabela.innerHTML = `
+    <thead>
+      <tr>
+        <th>RZ</th>
+        <th>Volume</th>
+        <th>Data</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  `;
+
+  const tbody = tabela.querySelector("tbody");
+
+  registros.forEach(reg=>{
+
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${reg.rz || "-"}</td>
+      <td>${reg.volume || "-"}</td>
+      <td>${new Date(reg.data_expedicao).toLocaleString()}</td>
+    `;
+
+    tbody.appendChild(tr);
+
+  });
+
+  lista.appendChild(tabela);
+
+  modal.classList.remove("hidden");
+
+};
+
+
+
+// =====================================================
+// FECHAR DETALHES
+// =====================================================
+window.fecharDetalhesExpedicao = function(){
+
+  const modal = document.getElementById("modalDetalhesExpedicao");
+
+  if(modal){
+    modal.classList.add("hidden");
   }
 
 };
