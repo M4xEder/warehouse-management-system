@@ -9,7 +9,7 @@
 // ------------------------------------------------
 function contarAlocados(loteId){
 
-  if(!state || !state.posicoes) return 0
+  if(!state?.posicoes) return 0
 
   return state.posicoes.filter(p =>
     p.ocupada === true &&
@@ -25,7 +25,7 @@ function contarAlocados(loteId){
 // ------------------------------------------------
 function contarExpedidos(loteId){
 
-  if(!state || !state.historicoExpedidos) return 0
+  if(!state?.historicoExpedidos) return 0
 
   return state.historicoExpedidos
     .filter(e => String(e.lote_id) === String(loteId))
@@ -36,7 +36,7 @@ function contarExpedidos(loteId){
 
 
 // ------------------------------------------------
-// RENDER DASHBOARD DOS LOTES
+// RENDER DASHBOARD
 // ------------------------------------------------
 window.renderDashboard = function(){
 
@@ -48,13 +48,12 @@ window.renderDashboard = function(){
   containerAtivos.innerHTML = ""
   containerExpedidos.innerHTML = ""
 
-  if(!state || !state.lotes) return
+  if(!state?.lotes) return
 
 
 
   state.lotes.forEach(lote=>{
 
-    // TOTAL DO LOTE (FIXO)
     const total = Number(lote.quantidade || 0)
 
     const alocados = contarAlocados(lote.id)
@@ -67,7 +66,9 @@ window.renderDashboard = function(){
 
 
 
-    // STATUS
+    // -----------------------------------------
+    // DEFINIR STATUS
+    // -----------------------------------------
     let status = "Ativo"
 
     if(saldoDisponivel === 0){
@@ -79,70 +80,91 @@ window.renderDashboard = function(){
 
 
 
-    const card = document.createElement("div")
+    // =========================================
+    // CARD DE LOTES ATIVOS
+    // =========================================
+    if(status !== "Expedido completo"){
 
-    card.className = "lote-card"
+      const card = document.createElement("div")
 
-    card.innerHTML = `
+      card.className = "lote-card"
 
-      <h3>${lote.nome}</h3>
+      card.innerHTML = `
 
-      <div class="resumo-lote">
+        <h3>${lote.nome}</h3>
 
-        <p><b>Total:</b> ${total}</p>
+        <div class="resumo-lote">
 
-        <p><b>Alocados:</b> ${alocados}</p>
+          <p><b>Total:</b> ${total}</p>
 
-        <p><b>Não alocados:</b> ${naoAlocados}</p>
+          <p><b>Alocados:</b> ${alocados}</p>
 
-        <p><b>Expedidos:</b> ${expedidos}</p>
+          <p><b>Não alocados:</b> ${naoAlocados}</p>
 
-        <p><b>Saldo disponível:</b> ${saldoDisponivel}</p>
+          <p><b>Expedidos:</b> ${expedidos}</p>
 
-        <p><b>Status:</b> ${status}</p>
+          <p><b>Saldo disponível:</b> ${saldoDisponivel}</p>
 
-      </div>
+          <p><b>Status:</b> ${status}</p>
 
-      <div class="acoes">
+        </div>
 
-        <button onclick="abrirModalExpedicao('${lote.id}')">
-        Expedir
-        </button>
-        
-        <button onclick="alterarQuantidadeLote('${lote.id}')">
-        Alterar
-        </button>
-        
-        <button onclick="excluirLote('${lote.id}')">
-        Excluir
-        </button>
+        <div class="acoes">
 
-      </div>
+          <button onclick="abrirModalExpedicao('${lote.id}')">
+          Expedir
+          </button>
+          
+          <button onclick="alterarQuantidadeLote('${lote.id}')">
+          Alterar
+          </button>
+          
+          <button onclick="excluirLote('${lote.id}')">
+          Excluir
+          </button>
 
-    `
+        </div>
 
-
-
-    // ------------------------------------------
-    // DEFINIR EM QUAL SESSÃO ENTRA
-    // ------------------------------------------
-
-    if(status === "Expedido completo"){
-
-      containerExpedidos.appendChild(card)
-
-    }
-    else{
+      `
 
       containerAtivos.appendChild(card)
 
-      // se for parcial também aparece em expedidos
-      if(status === "Expedição parcial"){
+    }
 
-        const clone = card.cloneNode(true)
-        containerExpedidos.appendChild(clone)
 
-      }
+
+    // =========================================
+    // CARD DE LOTES EXPEDIDOS (ESTRUTURA NOVA)
+    // =========================================
+    if(status === "Expedição parcial" || status === "Expedido completo"){
+
+      const cardExp = document.createElement("div")
+
+      cardExp.className = "lote-card-expedido"
+
+      cardExp.innerHTML = `
+
+        <h3>${lote.nome}</h3>
+
+        <p><b>Total Gaylords:</b> ${total}</p>
+
+        <p><b>Status:</b> ${status}</p>
+
+        <div class="acoes">
+
+          <button onclick="verDetalhesExpedicao('${lote.id}')">
+          Detalhes
+          </button>
+
+          <button onclick="excluirLote('${lote.id}')">
+          Excluir
+          </button>
+
+        </div>
+
+      `
+
+      containerExpedidos.appendChild(cardExp)
 
     }
 
@@ -157,7 +179,7 @@ window.renderDashboard = function(){
 
 
 // ------------------------------------------------
-// RESUMO GERAL DO ARMAZÉM
+// RESUMO GERAL
 // ------------------------------------------------
 window.renderResumoGeral = function(){
 
@@ -184,107 +206,10 @@ window.renderResumoGeral = function(){
 
 
 
-  const el1 = document.getElementById("resumoLotes")
-  const el2 = document.getElementById("resumoAlocados")
-  const el3 = document.getElementById("resumoNaoAlocados")
-  const el4 = document.getElementById("resumoExpedidos")
-  const el5 = document.getElementById("resumoSaldo")
-
-  if(el1) el1.textContent = totalLotes
-  if(el2) el2.textContent = ocupadas
-  if(el3) el3.textContent = livres
-  if(el4) el4.textContent = totalExpedidos
-  if(el5) el5.textContent = ocupacao + "%"
+  document.getElementById("resumoLotes").textContent = totalLotes
+  document.getElementById("resumoAlocados").textContent = ocupadas
+  document.getElementById("resumoNaoAlocados").textContent = livres
+  document.getElementById("resumoExpedidos").textContent = totalExpedidos
+  document.getElementById("resumoSaldo").textContent = ocupacao + "%"
 
 }
-
-
-
-// ------------------------------------------------
-// EXCLUIR LOTE (SUPABASE)
-// ------------------------------------------------
-window.excluirLote = async function (loteId) {
-
-  const lote = state.lotes.find(
-    l => String(l.id) === String(loteId)
-  );
-
-  if (!lote) return;
-
-
-  // verificar posições alocadas
-  const alocados = state.posicoes.filter(p =>
-    p.ocupada === true &&
-    String(p.lote_id) === String(loteId)
-  ).length;
-
-
-  if (alocados > 0) {
-
-    alert(
-      "Não é possível excluir o lote.\n\n" +
-      "Existem gaylords alocados no mapa."
-    );
-
-    return;
-
-  }
-
-
-  // verificar expedidos
-  const expedidos = contarExpedidos(loteId)
-
-
-  if (expedidos > 0) {
-
-    alert(
-      "Não é possível excluir o lote.\n\n" +
-      "Existem gaylords expedidos."
-    );
-
-    return;
-
-  }
-
-
-  if (!confirm(`Deseja excluir o lote "${lote.nome}" ?`)) {
-    return;
-  }
-
-
-  try {
-
-    const { error } = await window.supabaseClient
-      .from("lotes")
-      .delete()
-      .eq("id", loteId);
-
-    if (error) throw error;
-
-
-    state.lotes = state.lotes.filter(
-      l => String(l.id) !== String(loteId)
-    );
-
-
-    if (typeof renderDashboard === "function") {
-      renderDashboard();
-    }
-
-    if (typeof renderMapa === "function") {
-      renderMapa();
-    }
-
-
-    alert("Lote excluído com sucesso.");
-
-  }
-  catch (err) {
-
-    console.error(err);
-
-    alert("Erro ao excluir lote.");
-
-  }
-
-    }
