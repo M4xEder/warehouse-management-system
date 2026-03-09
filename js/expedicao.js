@@ -20,26 +20,20 @@ window.abrirModalExpedicao = function(loteId){
   if(!modal || !lista) return;
 
   expedicaoContext.loteId = loteId;
-
   lista.innerHTML = "";
 
-  // pegar posições ocupadas do lote
-  const posicoes = state.posicoes.filter(p =>
+  const posicoes = (state.posicoes || []).filter(p =>
     p.ocupada === true &&
     String(p.lote_id) === String(loteId)
   );
 
   expedicaoContext.posicoes = posicoes;
 
-
   if(posicoes.length === 0){
-
     lista.innerHTML = "<p>Nenhuma gaylord alocada neste lote.</p>";
     modal.classList.remove("hidden");
     return;
-
   }
-
 
   posicoes.forEach(pos=>{
 
@@ -47,32 +41,24 @@ window.abrirModalExpedicao = function(loteId){
     linha.className = "linha-expedicao";
 
     linha.innerHTML = `
-
       <input
         type="checkbox"
         class="check-expedicao"
         value="${pos.id}"
         checked
       >
-
       <span style="margin-left:8px">
-
-        <b>${pos.rz}</b>
-        | Volume ${pos.volume}
-
+        <b>${pos.rz}</b> | Volume ${pos.volume}
       </span>
-
     `;
 
     lista.appendChild(linha);
 
   });
 
-
   modal.classList.remove("hidden");
 
 };
-
 
 
 // ------------------------------------------------
@@ -81,13 +67,9 @@ window.abrirModalExpedicao = function(loteId){
 window.fecharModalExpedicao = function(){
 
   const modal = document.getElementById("modalExpedicao");
-
-  if(modal){
-    modal.classList.add("hidden");
-  }
+  if(modal) modal.classList.add("hidden");
 
 };
-
 
 
 // ------------------------------------------------
@@ -100,7 +82,6 @@ window.selecionarTodosGaylords = function(){
     .forEach(c => c.checked = true);
 
 };
-
 
 
 // ------------------------------------------------
@@ -124,15 +105,11 @@ window.confirmarExpedicao = async function(){
   const checks = document.querySelectorAll(".check-expedicao:checked");
 
   if(checks.length === 0){
-
     alert("Selecione ao menos uma gaylord.");
     return;
-
   }
 
-
   const dataExpedicao = new Date().toISOString();
-
 
   try{
 
@@ -140,17 +117,13 @@ window.confirmarExpedicao = async function(){
 
       const posId = check.value;
 
-      const pos = state.posicoes.find(
+      const pos = (state.posicoes || []).find(
         p => String(p.id) === String(posId)
       );
 
       if(!pos) continue;
 
-
-
-      // ---------------------------------
-      // REGISTRAR HISTÓRICO DE EXPEDIÇÃO
-      // ---------------------------------
+      // registrar histórico
       const { error:errExp } = await supabaseClient
         .from("historico_expedidos")
         .insert({
@@ -165,11 +138,7 @@ window.confirmarExpedicao = async function(){
 
       if(errExp) throw errExp;
 
-
-
-      // ---------------------------------
-      // LIBERAR POSIÇÃO NO MAPA
-      // ---------------------------------
+      // liberar posição
       const { error:errPos } = await supabaseClient
         .from("posicoes")
         .update({
@@ -182,9 +151,7 @@ window.confirmarExpedicao = async function(){
 
       if(errPos) throw errPos;
 
-
-
-      // atualizar state local
+      // atualizar state
       pos.ocupada = false;
       pos.lote_id = null;
       pos.volume = null;
@@ -193,15 +160,48 @@ window.confirmarExpedicao = async function(){
     }
 
 
+    // --------------------------------
+    // VERIFICAR STATUS DO LOTE
+    // --------------------------------
 
-    // --------------------------------
-    // ATUALIZAR MAPA E DASHBOARD
-    // --------------------------------
+    const lote = (state.lotes || []).find(
+      l => String(l.id) === String(expedicaoContext.loteId)
+    );
+
+    if(lote){
+
+      const { data:expedidas } = await supabaseClient
+        .from("historico_expedidos")
+        .select("id")
+        .eq("lote_id", lote.id);
+
+      const totalExpedidas = expedidas ? expedidas.length : 0;
+
+      if(totalExpedidas >= lote.quantidade){
+
+        await supabaseClient
+          .from("lotes")
+          .update({ status: "expedido_completo" })
+          .eq("id", lote.id);
+
+        lote.status = "expedido_completo";
+
+      }
+      else if(totalExpedidas > 0){
+
+        await supabaseClient
+          .from("lotes")
+          .update({ status: "expedido_parcial" })
+          .eq("id", lote.id);
+
+        lote.status = "expedido_parcial";
+
+      }
+
+    }
+
     if(typeof renderMapa === "function") renderMapa();
-
     if(typeof renderDashboard === "function") renderDashboard();
-
-
 
     fecharModalExpedicao();
 
