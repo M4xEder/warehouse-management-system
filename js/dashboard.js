@@ -106,7 +106,7 @@ window.renderDashboard = function(){
             Expedir
           </button>
 
-          <button onclick="alterarQuantidadeLote('${lote.id}')">
+          <button onclick="alterarQuantidade('${lote.id}')">
             Alterar
           </button>
 
