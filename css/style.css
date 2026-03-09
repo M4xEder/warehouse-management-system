@@ -453,6 +453,23 @@ padding:6px 12px;
 border-radius:20px;
 
 }
+.tabela-expedicao{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
+}
+
+.tabela-expedicao th,
+.tabela-expedicao td{
+  border:1px solid #ddd;
+  padding:8px;
+  text-align:center;
+}
+
+.tabela-expedicao th{
+  background:#f4f4f4;
+  font-weight:bold;
+}
 
 
 /* ===============================
