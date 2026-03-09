@@ -1,11 +1,10 @@
 // ==============================================
-// DASHBOARD.JS — CONTROLE DE LOTES
+// DASHBOARD.JS — CONTROLE DE LOTES (ENTERPRISE)
 // ==============================================
 
 
-
 // ------------------------------------------------
-// CONTAR POSIÇÕES ALOCADAS NO MAPA
+// CONTAR POSIÇÕES ALOCADAS
 // ------------------------------------------------
 function contarAlocados(loteId){
 
@@ -13,7 +12,7 @@ function contarAlocados(loteId){
 
   return state.posicoes.filter(p =>
     p.ocupada === true &&
-    String(p.lote_id) === String(loteId)
+    idEquals(p.lote_id, loteId)
   ).length
 
 }
@@ -25,10 +24,10 @@ function contarAlocados(loteId){
 // ------------------------------------------------
 function contarExpedidos(loteId){
 
-  if(!state?.historicoExpedidos) return 0
+  if(!state?.historico_expedidos) return 0
 
-  return state.historicoExpedidos
-    .filter(e => String(e.lote_id) === String(loteId))
+  return state.historico_expedidos
+    .filter(e => idEquals(e.lote_id, loteId))
     .length
 
 }
@@ -60,18 +59,15 @@ window.renderDashboard = function(){
 
     const expedidos = contarExpedidos(lote.id)
 
-    const naoAlocados = Math.max(0,total - alocados)
+    const naoAlocados = Math.max(0, total - alocados)
 
-    const saldoDisponivel = Math.max(0,total - expedidos)
+    const saldo = Math.max(0, total - expedidos)
 
 
 
-    // -----------------------------------------
-    // DEFINIR STATUS
-    // -----------------------------------------
     let status = "Ativo"
 
-    if(saldoDisponivel === 0){
+    if(saldo === 0){
       status = "Expedido completo"
     }
     else if(expedidos > 0){
@@ -81,7 +77,7 @@ window.renderDashboard = function(){
 
 
     // =========================================
-    // CARD DE LOTES ATIVOS
+    // LOTES ATIVOS
     // =========================================
     if(status !== "Expedido completo"){
 
@@ -96,15 +92,10 @@ window.renderDashboard = function(){
         <div class="resumo-lote">
 
           <p><b>Total:</b> ${total}</p>
-
           <p><b>Alocados:</b> ${alocados}</p>
-
           <p><b>Não alocados:</b> ${naoAlocados}</p>
-
           <p><b>Expedidos:</b> ${expedidos}</p>
-
-          <p><b>Saldo disponível:</b> ${saldoDisponivel}</p>
-
+          <p><b>Saldo:</b> ${saldo}</p>
           <p><b>Status:</b> ${status}</p>
 
         </div>
@@ -112,15 +103,15 @@ window.renderDashboard = function(){
         <div class="acoes">
 
           <button onclick="abrirModalExpedicao('${lote.id}')">
-          Expedir
+            Expedir
           </button>
-          
+
           <button onclick="alterarQuantidadeLote('${lote.id}')">
-          Alterar
+            Alterar
           </button>
-          
+
           <button onclick="excluirLote('${lote.id}')">
-          Excluir
+            Excluir
           </button>
 
         </div>
@@ -134,15 +125,15 @@ window.renderDashboard = function(){
 
 
     // =========================================
-    // CARD DE LOTES EXPEDIDOS (ESTRUTURA NOVA)
+    // LOTES EXPEDIDOS (LAYOUT SIMPLIFICADO)
     // =========================================
-    if(status === "Expedição parcial" || status === "Expedido completo"){
+    if(expedidos > 0){
 
-      const cardExp = document.createElement("div")
+      const card = document.createElement("div")
 
-      cardExp.className = "lote-card-expedido"
+      card.className = "lote-card-expedido"
 
-      cardExp.innerHTML = `
+      card.innerHTML = `
 
         <h3>${lote.nome}</h3>
 
@@ -153,18 +144,18 @@ window.renderDashboard = function(){
         <div class="acoes">
 
           <button onclick="verDetalhesExpedicao('${lote.id}')">
-          Detalhes
+            Detalhes
           </button>
 
           <button onclick="excluirLote('${lote.id}')">
-          Excluir
+            Excluir
           </button>
 
         </div>
 
       `
 
-      containerExpedidos.appendChild(cardExp)
+      containerExpedidos.appendChild(card)
 
     }
 
@@ -192,16 +183,10 @@ window.renderResumoGeral = function(){
 
   const livres = totalPosicoes - ocupadas
 
-
-
-  const totalExpedidos = state?.historicoExpedidos
-    ? state.historicoExpedidos.length
-    : 0
-
-
+  const expedidos = state?.historico_expedidos?.length || 0
 
   const ocupacao = totalPosicoes
-    ? ((ocupadas/totalPosicoes)*100).toFixed(1)
+    ? ((ocupadas / totalPosicoes) * 100).toFixed(1)
     : 0
 
 
@@ -209,7 +194,7 @@ window.renderResumoGeral = function(){
   document.getElementById("resumoLotes").textContent = totalLotes
   document.getElementById("resumoAlocados").textContent = ocupadas
   document.getElementById("resumoNaoAlocados").textContent = livres
-  document.getElementById("resumoExpedidos").textContent = totalExpedidos
+  document.getElementById("resumoExpedidos").textContent = expedidos
   document.getElementById("resumoSaldo").textContent = ocupacao + "%"
 
 }
