@@ -1,176 +1,249 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Relatórios de Expedição</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- CSS GLOBAL -->
-  <link rel="stylesheet" href="css/style.css">
+<meta charset="UTF-8">
+<title>Relatórios de Expedição</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- PDF & Excel -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<!-- CSS GLOBAL -->
+<link rel="stylesheet" href="css/style.css">
 
-  <!-- ================= SUPABASE (OBRIGATÓRIO PRIMEIRO) ================= -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    if (typeof supabase === "undefined") {
-      console.error("Supabase SDK não carregado.");
-    } else {
-      window.supabase = supabase;
-      console.log("Supabase SDK carregado com sucesso.");
-    }
-  </script>
+<!-- ================= SUPABASE ================= -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- CSS ESPECÍFICO DO RELATÓRIO -->
-  <style>
-    body { background: #f4f4f4; }
+<script>
+if (typeof supabase === "undefined") {
+  console.error("Supabase SDK não carregado.");
+} else {
+  window.supabase = supabase;
+  console.log("Supabase SDK carregado.");
+}
+</script>
 
-    h1 {
-      text-align: center;
-      margin: 20px 0;
-    }
+<!-- ================= EXCEL ================= -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
-    .filtro {
-      margin: 0 20px 20px 20px;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
+<!-- ================= PDF ================= -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
-    .filtro label {
-      display: flex;
-      flex-direction: column;
-      font-size: 14px;
-    }
 
-    .filtro select {
-      padding: 8px;
-      min-width: 200px;
-    }
+<!-- ================= CSS RELATÓRIO ================= -->
+<style>
 
-    .filtro button {
-      padding: 10px 14px;
-      cursor: pointer;
-    }
+body{
+background:#f4f4f4;
+}
 
-    #resumo {
-      display: none;
-      margin: 0 20px 20px 20px;
-      padding: 12px;
-      background: #fff8dc;
-      border-left: 5px solid #f4c430;
-      font-size: 14px;
-    }
+h1{
+text-align:center;
+margin:20px 0;
+}
 
-    .tabela-container {
-      margin: 0 20px 20px 20px;
-      overflow-x: auto;
-      background: #fff;
-      border-radius: 6px;
-    }
+.filtro{
+margin:0 20px 20px 20px;
+display:flex;
+gap:10px;
+flex-wrap:wrap;
+align-items:center;
+}
 
-    #tabelaRelatorio {
-      width: 100%;
-      min-width: 900px;
-      border-collapse: collapse;
-    }
+.filtro label{
+display:flex;
+flex-direction:column;
+font-size:14px;
+}
 
-    #tabelaRelatorio th,
-    #tabelaRelatorio td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      font-size: 13px;
-      text-align: left;
-    }
+.filtro select{
+padding:8px;
+min-width:200px;
+}
 
-    #tabelaRelatorio th {
-      background: #f4c430;
-      color: #000;
-      position: sticky;
-      top: 0;
-      z-index: 1;
-    }
+.filtro button{
+padding:10px 14px;
+cursor:pointer;
+}
 
-    #tabelaRelatorio tr:nth-child(even) {
-      background: #f9f9f9;
-    }
+#resumo{
+display:none;
+margin:0 20px 20px 20px;
+padding:12px;
+background:#fff8dc;
+border-left:5px solid #f4c430;
+font-size:14px;
+}
 
-    @media (max-width: 768px) {
-      h1 { font-size: 20px; }
+.tabela-container{
+margin:0 20px 20px 20px;
+overflow-x:auto;
+background:#fff;
+border-radius:6px;
+}
 
-      .filtro {
-        flex-direction: column;
-        align-items: stretch;
-      }
+#tabelaRelatorio{
+width:100%;
+min-width:900px;
+border-collapse:collapse;
+}
 
-      .filtro select,
-      .filtro button {
-        width: 100%;
-      }
+#tabelaRelatorio th,
+#tabelaRelatorio td{
 
-      #resumo {
-        font-size: 13px;
-      }
-    }
-  </style>
+border:1px solid #ddd;
+
+padding:8px;
+
+font-size:13px;
+
+text-align:left;
+
+}
+
+#tabelaRelatorio th{
+
+background:#f4c430;
+
+color:#000;
+
+position:sticky;
+
+top:0;
+
+z-index:1;
+
+}
+
+#tabelaRelatorio tr:nth-child(even){
+background:#f9f9f9;
+}
+
+@media (max-width:768px){
+
+h1{
+font-size:20px;
+}
+
+.filtro{
+flex-direction:column;
+align-items:stretch;
+}
+
+.filtro select,
+.filtro button{
+width:100%;
+}
+
+#resumo{
+font-size:13px;
+}
+
+}
+
+</style>
+
 </head>
 
 <body>
 
-<!-- HEADER -->
+
+<!-- ================= HEADER ================= -->
+
 <div id="header-container"></div>
 
 <script>
-  fetch('components/header.html')
-    .then(r => r.text())
-    .then(html => {
-      document.getElementById('header-container').innerHTML = html;
 
-      if (typeof configurarHeader === 'function') {
-        configurarHeader('relatorios');
-      }
-    });
+fetch("components/header.html")
+
+.then(r=>r.text())
+
+.then(html=>{
+
+document.getElementById("header-container").innerHTML = html
+
+if(typeof configurarHeader === "function"){
+
+configurarHeader("relatorios")
+
+}
+
+})
+
 </script>
+
+
 
 <h1>Relatórios de Expedição</h1>
 
-<!-- FILTRO -->
-<div class="filtro">
-  <label>
-    Lote
-    <select id="selectLote"></select>
-  </label>
 
-  <button onclick="gerarRelatorio()">Gerar Relatório</button>
-  <button onclick="exportarExcel()">Exportar Excel</button>
-  <button onclick="exportarPDF()">Exportar PDF</button>
+<!-- ================= FILTRO ================= -->
+
+<div class="filtro">
+
+<label>
+
+Lote
+
+<select id="selectLote"></select>
+
+</label>
+
+<button onclick="gerarRelatorio()">
+Gerar Relatório
+</button>
+
+<button onclick="exportarExcelLote()">
+Exportar Excel
+</button>
+
+<button onclick="exportarExcelGeral()">
+Excel Geral
+</button>
+
+<button onclick="exportarPDF()">
+Exportar PDF
+</button>
+
 </div>
 
-<!-- RESUMO -->
+
+
+<!-- ================= RESUMO ================= -->
+
 <div id="resumo"></div>
 
-<!-- TABELA -->
+
+
+<!-- ================= TABELA ================= -->
+
 <div class="tabela-container">
-  <table id="tabelaRelatorio">
-    <thead>
-      <tr>
-        <th>Lote</th>
-        <th>RZ</th>
-        <th>Volume</th>
-        <th>Status</th>
-        <th>Área</th>
-        <th>Rua</th>
-        <th>Data</th>
-        <th>Hora</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+
+<table id="tabelaRelatorio">
+
+<thead>
+
+<tr>
+
+<th>Lote</th>
+<th>RZ</th>
+<th>Volume</th>
+<th>Status</th>
+<th>Área</th>
+<th>Rua</th>
+<th>Data</th>
+<th>Hora</th>
+
+</tr>
+
+</thead>
+
+<tbody></tbody>
+
+</table>
+
 </div>
+
+
 
 <!-- ================= SCRIPTS DO SISTEMA ================= -->
 
@@ -178,6 +251,7 @@
 <script src="js/state.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/relatórios/relatorios.js"></script>
+
 
 </body>
 </html>
