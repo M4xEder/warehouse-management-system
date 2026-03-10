@@ -6,7 +6,7 @@
 <title>Relatórios de Expedição</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- CSS GLOBAL -->
+<!-- ================= CSS GLOBAL ================= -->
 <link rel="stylesheet" href="css/style.css">
 
 <!-- ================= SUPABASE ================= -->
@@ -14,10 +14,10 @@
 
 <script>
 if (typeof supabase === "undefined") {
-  console.error("Supabase SDK não carregado.");
+  console.error("❌ Supabase SDK não carregado.");
 } else {
   window.supabase = supabase;
-  console.log("Supabase SDK carregado.");
+  console.log("✅ Supabase SDK carregado.");
 }
 </script>
 
@@ -34,6 +34,7 @@ if (typeof supabase === "undefined") {
 
 body{
 background:#f4f4f4;
+font-family:Arial, Helvetica, sans-serif;
 }
 
 h1{
@@ -46,23 +47,34 @@ margin:0 20px 20px 20px;
 display:flex;
 gap:10px;
 flex-wrap:wrap;
-align-items:center;
+align-items:end;
 }
 
 .filtro label{
 display:flex;
 flex-direction:column;
 font-size:14px;
+font-weight:600;
 }
 
 .filtro select{
 padding:8px;
 min-width:200px;
+border-radius:4px;
+border:1px solid #ccc;
 }
 
 .filtro button{
 padding:10px 14px;
 cursor:pointer;
+border:none;
+border-radius:4px;
+background:#f4c430;
+font-weight:bold;
+}
+
+.filtro button:hover{
+opacity:0.9;
 }
 
 #resumo{
@@ -72,6 +84,7 @@ padding:12px;
 background:#fff8dc;
 border-left:5px solid #f4c430;
 font-size:14px;
+border-radius:4px;
 }
 
 .tabela-container{
@@ -79,6 +92,7 @@ margin:0 20px 20px 20px;
 overflow-x:auto;
 background:#fff;
 border-radius:6px;
+box-shadow:0 2px 6px rgba(0,0,0,0.08);
 }
 
 #tabelaRelatorio{
@@ -89,33 +103,26 @@ border-collapse:collapse;
 
 #tabelaRelatorio th,
 #tabelaRelatorio td{
-
 border:1px solid #ddd;
-
 padding:8px;
-
 font-size:13px;
-
 text-align:left;
-
 }
 
 #tabelaRelatorio th{
-
 background:#f4c430;
-
 color:#000;
-
 position:sticky;
-
 top:0;
-
 z-index:1;
-
 }
 
 #tabelaRelatorio tr:nth-child(even){
 background:#f9f9f9;
+}
+
+#tabelaRelatorio tr:hover{
+background:#fff4c2;
 }
 
 @media (max-width:768px){
@@ -154,17 +161,13 @@ font-size:13px;
 <script>
 
 fetch("components/header.html")
-
 .then(r=>r.text())
-
 .then(html=>{
 
 document.getElementById("header-container").innerHTML = html
 
 if(typeof configurarHeader === "function"){
-
 configurarHeader("relatorios")
-
 }
 
 })
@@ -181,11 +184,8 @@ configurarHeader("relatorios")
 <div class="filtro">
 
 <label>
-
 Lote
-
 <select id="selectLote"></select>
-
 </label>
 
 <button onclick="gerarRelatorio()">
@@ -247,9 +247,22 @@ Exportar PDF
 
 <!-- ================= SCRIPTS DO SISTEMA ================= -->
 
+<!-- LOGIN -->
 <script src="js/login.js"></script>
+
+<!-- CONFIG SUPABASE -->
+<script src="js/config.js"></script>
+
+<!-- FUNÇÕES DO BANCO -->
+<script src="js/database.js"></script>
+
+<!-- STATE GLOBAL -->
 <script src="js/state.js"></script>
+
+<!-- UTILIDADES -->
 <script src="js/utils.js"></script>
+
+<!-- RELATÓRIOS -->
 <script src="js/relatórios/relatorios.js"></script>
 
 
