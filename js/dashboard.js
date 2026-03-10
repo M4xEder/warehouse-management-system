@@ -59,10 +59,12 @@ window.renderDashboard = function(){
 
     const expedidos = contarExpedidos(lote.id)
 
-    // ✔ CORREÇÃO AQUI
+    // cálculo correto
     const naoAlocados = Math.max(0, total - (alocados + expedidos))
 
-    const saldo = Math.max(0, total - expedidos)
+    const restanteExpedir = Math.max(0, total - expedidos)
+
+    const saldo = restanteExpedir
 
 
 
@@ -126,9 +128,11 @@ window.renderDashboard = function(){
 
 
     // =========================================
-    // LOTES EXPEDIDOS (LAYOUT SIMPLIFICADO)
+    // LOTES EXPEDIDOS
     // =========================================
     if(expedidos > 0){
+
+      const restante = Math.max(0, total - expedidos)
 
       const card = document.createElement("div")
 
@@ -138,9 +142,17 @@ window.renderDashboard = function(){
 
         <h3>${lote.nome}</h3>
 
-        <p><b>Total Gaylords:</b> ${total}</p>
+        <div class="resumo-lote">
 
-        <p><b>Status:</b> ${status}</p>
+          <p><b>Total Gaylords:</b> ${total}</p>
+
+          <p><b>Quantidade expedida:</b> ${expedidos}</p>
+
+          <p><b>Faltando expedir:</b> ${restante}</p>
+
+          <p><b>Status:</b> ${status}</p>
+
+        </div>
 
         <div class="acoes">
 
@@ -192,10 +204,16 @@ window.renderResumoGeral = function(){
 
 
 
-  document.getElementById("resumoLotes").textContent = totalLotes
-  document.getElementById("resumoAlocados").textContent = ocupadas
-  document.getElementById("resumoNaoAlocados").textContent = livres
-  document.getElementById("resumoExpedidos").textContent = expedidos
-  document.getElementById("resumoSaldo").textContent = ocupacao + "%"
+  const elLotes = document.getElementById("resumoLotes")
+  const elAlocados = document.getElementById("resumoAlocados")
+  const elNaoAlocados = document.getElementById("resumoNaoAlocados")
+  const elExpedidos = document.getElementById("resumoExpedidos")
+  const elSaldo = document.getElementById("resumoSaldo")
+
+  if(elLotes) elLotes.textContent = totalLotes
+  if(elAlocados) elAlocados.textContent = ocupadas
+  if(elNaoAlocados) elNaoAlocados.textContent = livres
+  if(elExpedidos) elExpedidos.textContent = expedidos
+  if(elSaldo) elSaldo.textContent = ocupacao + "%"
 
 }
