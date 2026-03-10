@@ -6,10 +6,10 @@
 <title>Relatórios de Expedição</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- ================= CSS GLOBAL ================= -->
+<!-- CSS GLOBAL -->
 <link rel="stylesheet" href="css/style.css">
 
-<!-- ================= SUPABASE ================= -->
+<!-- SUPABASE SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
@@ -21,15 +21,14 @@ if (typeof supabase === "undefined") {
 }
 </script>
 
-<!-- ================= EXCEL ================= -->
+<!-- EXCEL -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
-<!-- ================= PDF ================= -->
+<!-- PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
 
-<!-- ================= CSS RELATÓRIO ================= -->
 <style>
 
 body{
@@ -83,8 +82,8 @@ margin:0 20px 20px 20px;
 padding:12px;
 background:#fff8dc;
 border-left:5px solid #f4c430;
-font-size:14px;
 border-radius:4px;
+font-size:14px;
 }
 
 .tabela-container{
@@ -141,10 +140,6 @@ align-items:stretch;
 width:100%;
 }
 
-#resumo{
-font-size:13px;
-}
-
 }
 
 </style>
@@ -154,7 +149,7 @@ font-size:13px;
 <body>
 
 
-<!-- ================= HEADER ================= -->
+<!-- HEADER -->
 
 <div id="header-container"></div>
 
@@ -175,11 +170,8 @@ configurarHeader("relatorios")
 </script>
 
 
-
 <h1>Relatórios de Expedição</h1>
 
-
-<!-- ================= FILTRO ================= -->
 
 <div class="filtro">
 
@@ -207,14 +199,8 @@ Exportar PDF
 </div>
 
 
-
-<!-- ================= RESUMO ================= -->
-
 <div id="resumo"></div>
 
-
-
-<!-- ================= TABELA ================= -->
 
 <div class="tabela-container">
 
@@ -223,7 +209,6 @@ Exportar PDF
 <thead>
 
 <tr>
-
 <th>Lote</th>
 <th>RZ</th>
 <th>Volume</th>
@@ -232,7 +217,6 @@ Exportar PDF
 <th>Rua</th>
 <th>Data</th>
 <th>Hora</th>
-
 </tr>
 
 </thead>
@@ -244,22 +228,28 @@ Exportar PDF
 </div>
 
 
+
 <!-- ================= SCRIPTS DO SISTEMA ================= -->
 
 <!-- LOGIN -->
 <script src="js/login.js"></script>
 
-<!-- GUARD DE SESSÃO -->
+<!-- PROTEÇÃO DE ROTA -->
 <script src="js/guard.js"></script>
 
 <!-- CONFIG -->
 <script src="js/config.js"></script>
 
-<!-- CLIENT SUPABASE -->
+<!-- SUPABASE -->
 <script src="js/supabaseClient.js"></script>
-
-<!-- FUNÇÕES DO BANCO -->
 <script src="js/supabase.js"></script>
+
+<!-- MÓDULOS DO SISTEMA -->
+<script src="js/areas.js"></script>
+<script src="js/ruas.js"></script>
+<script src="js/lotes.js"></script>
+<script src="js/mapa.js"></script>
+<script src="js/expedicao.js"></script>
 
 <!-- STATE GLOBAL -->
 <script src="js/state.js"></script>
@@ -269,6 +259,7 @@ Exportar PDF
 
 <!-- RELATÓRIOS -->
 <script src="js/relatórios/relatorios.js"></script>
+
 
 </body>
 </html>
