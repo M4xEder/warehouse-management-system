@@ -136,7 +136,7 @@ window.renderDashboard = function(){
 
       const card = document.createElement("div")
 
-      card.className = "lote-card-expedido"
+      card.className = " lote-card lote-expedido"
 
       card.innerHTML = `
 
