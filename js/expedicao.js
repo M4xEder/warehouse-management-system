@@ -48,9 +48,10 @@ window.abrirModalExpedicao = function(loteId){
         class="check-expedicao"
         value="${pos.id}"
         checked
+        onchange="atualizarContadorExpedicao()"
       >
 
-      <span style="margin-left:8px">
+      <span class="info-expedicao">
         <b>${pos.rz || "-"}</b>
         | Volume ${pos.volume || "-"}
       </span>
@@ -60,10 +61,11 @@ window.abrirModalExpedicao = function(loteId){
 
   });
 
+  atualizarContadorExpedicao();
+
   modal.classList.remove("hidden");
 
 };
-
 
 
 // =====================================================
@@ -79,6 +81,53 @@ window.fecharModalExpedicao = function(){
 
 };
 
+
+// =====================================================
+// SELECIONAR TODOS
+// =====================================================
+window.selecionarTodosExpedicao = function(){
+
+  const checks = document.querySelectorAll(".check-expedicao");
+
+  checks.forEach(cb=>{
+    cb.checked = true;
+  });
+
+  atualizarContadorExpedicao();
+
+};
+
+
+// =====================================================
+// DESMARCAR TODOS
+// =====================================================
+window.desmarcarTodosExpedicao = function(){
+
+  const checks = document.querySelectorAll(".check-expedicao");
+
+  checks.forEach(cb=>{
+    cb.checked = false;
+  });
+
+  atualizarContadorExpedicao();
+
+};
+
+
+// =====================================================
+// CONTADOR DE SELECIONADOS
+// =====================================================
+window.atualizarContadorExpedicao = function(){
+
+  const contador = document.getElementById("contadorExpedicao");
+
+  if(!contador) return;
+
+  const checks = document.querySelectorAll(".check-expedicao:checked");
+
+  contador.innerText = checks.length;
+
+};
 
 
 // =====================================================
@@ -191,130 +240,3 @@ window.confirmarExpedicao = async function(){
 
 
     // ======================================
-    // LIBERAR POSIÇÕES NO STATE
-    // ======================================
-
-    posIds.forEach(id=>{
-
-      const index = state.posicoes.findIndex(p =>
-        idEquals(p.id,id)
-      );
-
-      if(index !== -1){
-
-        state.posicoes[index].ocupada = false;
-        state.posicoes[index].lote_id = null;
-        state.posicoes[index].rz = null;
-        state.posicoes[index].volume = null;
-
-      }
-
-    });
-
-
-    // ======================================
-    // RENDER IMEDIATO
-    // ======================================
-
-    fecharModalExpedicao();
-
-    if(typeof renderMapa === "function"){
-      renderMapa();
-    }
-
-    if(typeof renderDashboard === "function"){
-      renderDashboard();
-    }
-
-  }
-  catch(err){
-
-    console.error(err);
-    alert("Erro ao registrar expedição.");
-
-  }
-
-};
-
-
-
-// =====================================================
-// VER DETALHES DA EXPEDIÇÃO (TABELA)
-// =====================================================
-window.verDetalhesExpedicao = function(loteId){
-
-  if(!state || !state.historico_expedidos){
-    alert("Histórico não carregado.");
-    return;
-  }
-
-  const registros = state.historico_expedidos.filter(r =>
-    idEquals(r.lote_id, loteId)
-  );
-
-  if(registros.length === 0){
-    alert("Nenhuma expedição encontrada.");
-    return;
-  }
-
-  const modal = document.getElementById("modalDetalhesExpedicao");
-  const lista = document.getElementById("listaDetalhesExpedicao");
-
-  if(!modal || !lista){
-    alert("Modal não encontrado.");
-    return;
-  }
-
-  lista.innerHTML = "";
-
-  const tabela = document.createElement("table");
-
-  tabela.className = "tabela-expedicao";
-
-  tabela.innerHTML = `
-    <thead>
-      <tr>
-        <th>RZ</th>
-        <th>Volume</th>
-        <th>Data</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  `;
-
-  const tbody = tabela.querySelector("tbody");
-
-  registros.forEach(reg=>{
-
-    const tr = document.createElement("tr");
-
-    tr.innerHTML = `
-      <td>${reg.rz || "-"}</td>
-      <td>${reg.volume || "-"}</td>
-      <td>${new Date(reg.data_expedicao).toLocaleString()}</td>
-    `;
-
-    tbody.appendChild(tr);
-
-  });
-
-  lista.appendChild(tabela);
-
-  modal.classList.remove("hidden");
-
-};
-
-
-
-// =====================================================
-// FECHAR DETALHES
-// =====================================================
-window.fecharDetalhesExpedicao = function(){
-
-  const modal = document.getElementById("modalDetalhesExpedicao");
-
-  if(modal){
-    modal.classList.add("hidden");
-  }
-
-};
