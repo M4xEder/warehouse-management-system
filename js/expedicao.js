@@ -82,7 +82,7 @@ window.fecharModalExpedicao = function(){
 
 
 // =====================================================
-// CONFIRMAR EXPEDIÇÃO (ULTRA OTIMIZADO)
+// CONFIRMAR EXPEDIÇÃO
 // =====================================================
 window.confirmarExpedicao = async function(){
 
@@ -98,7 +98,7 @@ window.confirmarExpedicao = async function(){
   try{
 
     // ======================================
-    // BUSCAR POSIÇÕES SELECIONADAS
+    // POSIÇÕES SELECIONADAS
     // ======================================
 
     const posicoesSelecionadas = [];
@@ -112,6 +112,11 @@ window.confirmarExpedicao = async function(){
       }
 
     });
+
+    if(posicoesSelecionadas.length === 0){
+      alert("Nenhuma posição válida selecionada.");
+      return;
+    }
 
 
     // ======================================
@@ -168,16 +173,26 @@ window.confirmarExpedicao = async function(){
 
 
     // ======================================
-    // ATUALIZA STATE LOCAL
+    // GARANTIR HISTÓRICO NO STATE
     // ======================================
 
     if(!state.historico_expedidos){
       state.historico_expedidos = [];
     }
 
+
+    // ======================================
+    // ATUALIZA HISTÓRICO LOCAL
+    // ======================================
+
     historicoData.forEach(reg=>{
       state.historico_expedidos.push(reg);
     });
+
+
+    // ======================================
+    // LIBERAR POSIÇÕES NO STATE
+    // ======================================
 
     posIds.forEach(id=>{
 
