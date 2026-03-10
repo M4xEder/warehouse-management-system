@@ -1,6 +1,6 @@
 // ===============================================
 // MODAL.JS — CONTROLE DE ALOCAÇÃO DE POSIÇÕES
-// ENTERPRISE SAFE + CONTROLE TOTAL DE LOTES
+// ENTERPRISE SAFE + CONTROLE DE LOTES
 // ===============================================
 
 
@@ -116,7 +116,7 @@ window.abrirModalPorId = function (posicaoId) {
 
 
   // ------------------------------------------------
-  // CARREGAR SOMENTE LOTES ATIVOS
+  // CARREGAR LOTES NO SELECT
   // ------------------------------------------------
   if (Array.isArray(state.lotes)) {
 
@@ -124,14 +124,34 @@ window.abrirModalPorId = function (posicaoId) {
 
       const restante = restanteDoLote(lote);
 
-      if (restante <= 0) return;
-
       const option = document.createElement("option");
-
       option.value = lote.id;
-      option.textContent = `${lote.nome} (restante: ${restante})`;
 
-      loteSelect.appendChild(option);
+
+      // --------------------------------------------
+      // SE POSIÇÃO JÁ OCUPADA MOSTRAR LOTE MESMO FECHADO
+      // --------------------------------------------
+      if (pos.ocupada && String(pos.lote_id) === String(lote.id)) {
+
+        option.textContent = `${lote.nome} (lote deste endereço)`;
+
+        loteSelect.appendChild(option);
+
+        return;
+
+      }
+
+
+      // --------------------------------------------
+      // MOSTRAR APENAS LOTES COM RESTANTE
+      // --------------------------------------------
+      if (restante > 0) {
+
+        option.textContent = `${lote.nome} (restante: ${restante})`;
+
+        loteSelect.appendChild(option);
+
+      }
 
     });
 
@@ -178,7 +198,7 @@ window.fecharModal = function () {
 
 
 // ------------------------------------------------
-// VALIDAR RZ DUPLICADA NO LOTE
+// VALIDAR RZ DUPLICADA
 // ------------------------------------------------
 function rzDuplicada(loteId, rz, posicaoAtualId) {
 
@@ -274,10 +294,10 @@ window.confirmarEndereco = async function () {
 
 
 
-  // BLOQUEIO DE LIMITE DO LOTE
+  // BLOQUEIO LIMITE LOTE
   if (totalUsado >= lote.quantidade) {
 
-    alert("Este lote já atingiu o limite total.");
+    alert("Este lote já atingiu o limite.");
 
     return;
 
@@ -301,7 +321,6 @@ window.confirmarEndereco = async function () {
 
 
 
-    // ATUALIZA STATE LOCAL
     pos.ocupada = true;
     pos.lote_id = loteId;
     pos.volume = volume;
