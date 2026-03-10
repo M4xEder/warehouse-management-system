@@ -59,7 +59,8 @@ window.renderDashboard = function(){
 
     const expedidos = contarExpedidos(lote.id)
 
-    const naoAlocados = Math.max(0, total - alocados)
+    // ✔ CORREÇÃO AQUI
+    const naoAlocados = Math.max(0, total - (alocados + expedidos))
 
     const saldo = Math.max(0, total - expedidos)
 
