@@ -1,6 +1,6 @@
 // ===============================================
 // MODAL.JS — CONTROLE DE ALOCAÇÃO DE POSIÇÕES
-// ENTERPRISE SAFE + BLOQUEIO DE CAPACIDADE
+// ENTERPRISE SAFE + CONTROLE TOTAL DE LOTES
 // ===============================================
 
 
@@ -12,8 +12,9 @@ window.modalContext = {
 };
 
 
+
 // ------------------------------------------------
-// CONTAR GAYLORDS DO LOTE NO MAPA
+// CONTAR GAYLORDS ALOCADOS NO MAPA
 // ------------------------------------------------
 function contarGaylordsDoLote(loteId) {
 
@@ -27,39 +28,66 @@ function contarGaylordsDoLote(loteId) {
 }
 
 
+
 // ------------------------------------------------
 // CONTAR EXPEDIÇÕES DO LOTE
 // ------------------------------------------------
 function contarExpedidosDoLote(loteId) {
 
-  if (!Array.isArray(state.historicoExpedidos)) return 0;
+  if (!Array.isArray(state.historico_expedidos)) return 0;
 
-  return state.historicoExpedidos.filter(e =>
+  return state.historico_expedidos.filter(e =>
     String(e.lote_id) === String(loteId)
   ).length;
 
 }
 
 
+
 // ------------------------------------------------
-// VERIFICAR SE LOTE AINDA ESTÁ ATIVO
+// CALCULAR RESTANTE DO LOTE
 // ------------------------------------------------
-function loteEstaAtivo(lote) {
+function restanteDoLote(lote) {
 
   const alocados = contarGaylordsDoLote(lote.id);
   const expedidos = contarExpedidosDoLote(lote.id);
 
-  const restante = lote.quantidade - (alocados + expedidos);
-
-  return restante > 0;
+  return lote.quantidade - (alocados + expedidos);
 
 }
+
+
+
+// ------------------------------------------------
+// VERIFICAR SE LOTE ESTÁ ATIVO
+// ------------------------------------------------
+function loteEstaAtivo(lote) {
+
+  return restanteDoLote(lote) > 0;
+
+}
+
+
+
+// ------------------------------------------------
+// BUSCAR LOTE
+// ------------------------------------------------
+function buscarLote(loteId) {
+
+  if (!Array.isArray(state.lotes)) return null;
+
+  return state.lotes.find(l =>
+    String(l.id) === String(loteId)
+  );
+
+}
+
 
 
 // ------------------------------------------------
 // ABRIR MODAL
 // ------------------------------------------------
-window.abrirModalPorId = async function (posicaoId) {
+window.abrirModalPorId = function (posicaoId) {
 
   if (!window.state) return;
 
@@ -80,30 +108,23 @@ window.abrirModalPorId = async function (posicaoId) {
 
   modal.classList.remove("hidden");
 
+
+  // LIMPAR CAMPOS
   loteSelect.innerHTML = "";
   volumeInput.value = "";
   rzInput.value = "";
 
 
   // ------------------------------------------------
-  // CARREGAR LOTES ATIVOS
+  // CARREGAR SOMENTE LOTES ATIVOS
   // ------------------------------------------------
-  try {
+  if (Array.isArray(state.lotes)) {
 
-    const { data: lotes, error } = await window.supabaseClient
-      .from("lotes")
-      .select("*");
+    state.lotes.forEach(lote => {
 
-    if (error) throw error;
+      const restante = restanteDoLote(lote);
 
-    lotes.forEach(lote => {
-
-      if (!loteEstaAtivo(lote)) return;
-
-      const alocados = contarGaylordsDoLote(lote.id);
-      const expedidos = contarExpedidosDoLote(lote.id);
-
-      const restante = lote.quantidade - (alocados + expedidos);
+      if (restante <= 0) return;
 
       const option = document.createElement("option");
 
@@ -114,11 +135,8 @@ window.abrirModalPorId = async function (posicaoId) {
 
     });
 
-  } catch (err) {
-
-    console.error("Erro ao carregar lotes:", err);
-
   }
+
 
 
   // ------------------------------------------------
@@ -145,6 +163,7 @@ window.abrirModalPorId = async function (posicaoId) {
 };
 
 
+
 // ------------------------------------------------
 // FECHAR MODAL
 // ------------------------------------------------
@@ -157,8 +176,9 @@ window.fecharModal = function () {
 };
 
 
+
 // ------------------------------------------------
-// VALIDAR RZ DUPLICADA
+// VALIDAR RZ DUPLICADA NO LOTE
 // ------------------------------------------------
 function rzDuplicada(loteId, rz, posicaoAtualId) {
 
@@ -179,19 +199,6 @@ function rzDuplicada(loteId, rz, posicaoAtualId) {
 
 }
 
-
-// ------------------------------------------------
-// BUSCAR LOTE
-// ------------------------------------------------
-function buscarLote(loteId) {
-
-  if (!Array.isArray(state.lotes)) return null;
-
-  return state.lotes.find(l =>
-    String(l.id) === String(loteId)
-  );
-
-}
 
 
 // ------------------------------------------------
@@ -218,6 +225,7 @@ window.confirmarEndereco = async function () {
     return;
   }
 
+
   const posId = modalContext.posicaoId;
 
   const pos = state.posicoes?.find(
@@ -225,6 +233,7 @@ window.confirmarEndereco = async function () {
   );
 
   if (!pos) return;
+
 
 
   // BLOQUEIO POSIÇÃO OCUPADA
@@ -236,6 +245,7 @@ window.confirmarEndereco = async function () {
   }
 
 
+
   // RZ DUPLICADA
   if (rzDuplicada(loteId, rz, posId)) {
 
@@ -243,6 +253,7 @@ window.confirmarEndereco = async function () {
     return;
 
   }
+
 
 
   const lote = buscarLote(loteId);
@@ -255,15 +266,23 @@ window.confirmarEndereco = async function () {
   }
 
 
-  const usadas = contarGaylordsDoLote(loteId);
-  const expedidas = contarExpedidosDoLote(loteId);
 
-  if ((usadas + expedidas) >= lote.quantidade) {
+  const alocados = contarGaylordsDoLote(loteId);
+  const expedidos = contarExpedidosDoLote(loteId);
 
-    alert("Este lote já atingiu o limite.");
+  const totalUsado = alocados + expedidos;
+
+
+
+  // BLOQUEIO DE LIMITE DO LOTE
+  if (totalUsado >= lote.quantidade) {
+
+    alert("Este lote já atingiu o limite total.");
+
     return;
 
   }
+
 
 
   try {
@@ -281,14 +300,18 @@ window.confirmarEndereco = async function () {
     if (error) throw error;
 
 
+
+    // ATUALIZA STATE LOCAL
     pos.ocupada = true;
     pos.lote_id = loteId;
     pos.volume = volume;
     pos.rz = rz;
 
 
+
     if (typeof renderMapa === "function") renderMapa();
     if (typeof renderDashboard === "function") renderDashboard();
+
 
 
     fecharModal();
@@ -301,6 +324,7 @@ window.confirmarEndereco = async function () {
   }
 
 };
+
 
 
 // ------------------------------------------------
@@ -326,6 +350,7 @@ window.removerGaylord = async function () {
   if (!confirm("Deseja remover esta alocação?")) return;
 
 
+
   try {
 
     const { error } = await window.supabaseClient
@@ -341,14 +366,17 @@ window.removerGaylord = async function () {
     if (error) throw error;
 
 
+
     pos.ocupada = false;
     pos.lote_id = null;
     pos.volume = null;
     pos.rz = null;
 
 
+
     if (typeof renderMapa === "function") renderMapa();
     if (typeof renderDashboard === "function") renderDashboard();
+
 
 
     fecharModal();
