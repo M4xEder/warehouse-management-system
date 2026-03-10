@@ -27,19 +27,21 @@ font-weight:600;
 BOTÕES
 ================================ */
 button{
-padding:8px 14px;
-border-radius:8px;
+padding:9px 16px;
+border-radius:10px;
 border:none;
 background:#f4c430;
 color:#000;
-font-weight:600;
+font-weight:700;
 cursor:pointer;
 transition:0.2s;
+font-size:13px;
 }
 
 button:hover{
 background:#e0b800;
-transform:translateY(-1px);
+transform:translateY(-2px);
+box-shadow:0 5px 10px rgba(0,0,0,0.2);
 }
 
 button.danger{
@@ -89,15 +91,32 @@ box-shadow:0 5px 15px rgba(0,0,0,0.08);
 
 
 /* ===============================
-MAPA
+MAPA (DESTAQUE)
 ================================ */
 #mapa{
-margin:20px;
-padding:24px;
-background:#ffffff;
-border-radius:22px;
-border:4px solid #f4c430;
-box-shadow:0 15px 35px rgba(0,0,0,0.15);
+margin:25px;
+padding:28px;
+background:linear-gradient(180deg,#ffffff,#f8fafc);
+border-radius:24px;
+border:5px solid #f4c430;
+box-shadow:
+0 20px 50px rgba(0,0,0,0.15),
+inset 0 0 15px rgba(0,0,0,0.04);
+position:relative;
+}
+
+#mapa::before{
+content:"MAPA DO ARMAZÉM";
+position:absolute;
+top:-14px;
+left:20px;
+background:#f4c430;
+padding:6px 14px;
+border-radius:20px;
+font-size:12px;
+font-weight:700;
+letter-spacing:1px;
+box-shadow:0 4px 10px rgba(0,0,0,0.2);
 }
 
 
@@ -149,32 +168,20 @@ gap:10px;
 
 
 /* ===============================
-POSIÇÕES (HORIZONTAL)
+POSIÇÕES
 ================================ */
 .posicoes{
-
 display:flex;
-
 flex-direction:row;
-
 flex-wrap:nowrap;
-
 gap:8px;
-
 overflow-x:auto;
-
 overflow-y:hidden;
-
 padding:10px 4px;
-
 white-space:nowrap;
-
 scrollbar-width:thin;
-
 }
 
-
-/* SCROLL */
 .posicoes::-webkit-scrollbar{
 height:8px;
 }
@@ -189,61 +196,38 @@ border-radius:10px;
 POSIÇÃO
 ================================ */
 .posicao{
-
-min-width:38px;
-width:38px;
-
-height:38px;
-
+min-width:40px;
+width:40px;
+height:40px;
 flex:0 0 auto;
-
 background:#e5e7eb;
-
-border-radius:8px;
-
-border:2px dashed #cbd5e1;
-
+border-radius:10px;
+border:2px solid #d1d5db;
 cursor:pointer;
-
 display:flex;
-
 align-items:center;
-
 justify-content:center;
-
 font-size:12px;
-
-font-weight:600;
-
-transition:0.15s;
-
+font-weight:700;
+transition:0.18s;
 }
 
-
-/* HOVER */
 .posicao:hover{
-
-transform:scale(1.1);
-
-box-shadow:0 5px 12px rgba(0,0,0,0.25);
-
+transform:scale(1.18);
+box-shadow:0 6px 14px rgba(0,0,0,0.35);
+z-index:2;
 }
 
-
-/* LIVRE */
 .posicao.livre{
 background:#e5e7eb;
 }
 
-
-/* OCUPADA */
 .posicao.ocupada{
 color:#fff;
 border:2px solid #000;
+box-shadow:inset 0 0 6px rgba(0,0,0,0.4);
 }
 
-
-/* BUSCA */
 .posicao.highlight{
 outline:3px solid #2563eb;
 transform:scale(1.15);
@@ -251,62 +235,83 @@ transform:scale(1.15);
 
 
 /* ===============================
-LOTE DASHBOARD
+LOTES DASHBOARD
 ================================ */
 #lotesAtivos,
 #lotesExpedidos{
-
 margin:20px;
-
 display:grid;
-
 grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
-
 gap:20px;
-
 }
 
 
-/* CARD LOTE */
+/* ===============================
+CARD LOTE
+================================ */
 .lote-card{
-
 background:#ffffff;
-
 padding:20px;
-
-border-radius:16px;
-
-box-shadow:0 6px 18px rgba(0,0,0,0.08);
-
-transition:0.2s;
-
-border-left:6px solid #3498db;
-
+border-radius:18px;
+box-shadow:0 10px 25px rgba(0,0,0,0.12);
+transition:0.25s;
+border-left:8px solid #3498db;
+position:relative;
+overflow:hidden;
 }
 
 .lote-card:hover{
-transform:translateY(-3px);
+transform:translateY(-6px);
+box-shadow:0 15px 35px rgba(0,0,0,0.2);
 }
 
 .lote-card h3{
 margin-bottom:12px;
 font-size:18px;
 border-bottom:1px solid #eee;
-padding-bottom:6px;
+padding-bottom:8px;
+letter-spacing:0.3px;
 }
 
 
 /* STATUS */
 .lote-ativo{
-border-left:6px solid #3498db;
+border-left:8px solid #3498db;
 }
 
 .lote-parcial{
-border-left:6px solid #f59e0b;
+border-left:8px solid #f59e0b;
 }
 
 .lote-total{
-border-left:6px solid #dc2626;
+border-left:8px solid #dc2626;
+}
+
+
+/* ===============================
+LOTES EXPEDIDOS
+================================ */
+#lotesExpedidos .lote-card{
+border-left:8px solid #16a34a;
+background:linear-gradient(180deg,#ffffff,#f0fff4);
+}
+
+#lotesExpedidos .lote-card h3{
+color:#065f46;
+}
+
+#lotesExpedidos .lote-card::after{
+content:"EXPEDIDO";
+position:absolute;
+top:12px;
+right:-35px;
+background:#16a34a;
+color:#fff;
+font-size:11px;
+font-weight:700;
+padding:4px 40px;
+transform:rotate(35deg);
+letter-spacing:1px;
 }
 
 
@@ -341,16 +346,17 @@ margin:20px;
 }
 
 .dashboard-resumo .card{
-background:#ffffff;
-padding:15px 25px;
-border-radius:12px;
+background:linear-gradient(180deg,#ffffff,#f9fafb);
+padding:18px 30px;
+border-radius:16px;
 text-align:center;
-min-width:150px;
-box-shadow:0 4px 10px rgba(0,0,0,0.08);
+min-width:160px;
+box-shadow:0 8px 20px rgba(0,0,0,0.12);
+border-top:4px solid #f4c430;
 }
 
 .dashboard-resumo .card span{
-font-size:24px;
+font-size:26px;
 font-weight:bold;
 display:block;
 margin-top:6px;
@@ -361,21 +367,13 @@ margin-top:6px;
 MODAL
 ================================ */
 .modal{
-
 position:fixed;
-
 inset:0;
-
 background:rgba(0,0,0,0.6);
-
 display:flex;
-
 align-items:center;
-
 justify-content:center;
-
 z-index:2000;
-
 }
 
 .modal.hidden{
@@ -383,19 +381,12 @@ display:none;
 }
 
 .modal-content{
-
 background:#fff;
-
 padding:22px;
-
 border-radius:18px;
-
 width:400px;
-
 max-width:95%;
-
 box-shadow:0 15px 35px rgba(0,0,0,0.3);
-
 }
 
 .modal-content label{
@@ -415,25 +406,15 @@ gap:10px;
 HEADER
 ================================ */
 #header{
-
 display:flex;
-
 justify-content:space-between;
-
 align-items:center;
-
 background:linear-gradient(90deg,#f4c430,#f7d24f);
-
 padding:14px 24px;
-
 box-shadow:0 4px 12px rgba(0,0,0,0.1);
-
 position:sticky;
-
 top:0;
-
 z-index:1000;
-
 }
 
 #header h2{
@@ -443,98 +424,55 @@ font-weight:700;
 }
 
 #usuarioHeader{
-
 font-size:14px;
-
 background:rgba(255,255,255,0.5);
-
 padding:6px 12px;
-
 border-radius:20px;
-
 }
 
 
-
-/* ========================= */
-/* TABELA DETALHES EXPEDIÇÃO */
-/* ========================= */
+/* =========================
+TABELA DETALHES EXPEDIÇÃO
+========================= */
 
 .tabela-expedicao{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:15px;
-  font-size:14px;
-  background:#fff;
-  border-radius:6px;
-  overflow:hidden;
+width:100%;
+border-collapse:collapse;
+margin-top:15px;
+font-size:14px;
+background:#fff;
+border-radius:6px;
+overflow:hidden;
 }
 
-/* cabeçalho */
-
 .tabela-expedicao thead{
-  background:#2c3e50;
-  color:#fff;
+background:#2c3e50;
+color:#fff;
 }
 
 .tabela-expedicao th{
-  padding:12px;
-  text-align:center;
-  font-weight:600;
-  letter-spacing:0.5px;
+padding:12px;
+text-align:center;
+font-weight:600;
 }
-
-/* células */
 
 .tabela-expedicao td{
-  padding:10px 14px;
-  border-bottom:1px solid #e5e5e5;
+padding:10px 14px;
+border-bottom:1px solid #e5e5e5;
 }
-
-/* linhas alternadas */
 
 .tabela-expedicao tbody tr:nth-child(even){
-  background:#f7f7f7;
+background:#f7f7f7;
 }
-
-/* hover */
 
 .tabela-expedicao tbody tr:hover{
-  background:#eef4ff;
+background:#eef4ff;
 }
 
-/* colunas alinhadas */
-
-.tabela-expedicao td:nth-child(1){
-  text-align:center;
-  font-weight:600;
-}
-
-.tabela-expedicao td:nth-child(2){
-  text-align:center;
-  font-weight:500;
-}
-
-.tabela-expedicao td:nth-child(3){
-  text-align:center;
-  color:#555;
-  font-size:13px;
-}
-
-/* responsivo */
-
-@media(max-width:600px){
-
-.tabela-expedicao{
-  font-size:12px;
-}
-
-.tabela-expedicao th,
 .tabela-expedicao td{
-  padding:8px;
+text-align:center;
 }
 
-}
 
 /* ===============================
 RESPONSIVO
@@ -547,15 +485,10 @@ padding:18px;
 }
 
 .posicao{
-
-min-width:30px;
-
-width:30px;
-
-height:30px;
-
+min-width:32px;
+width:32px;
+height:32px;
 font-size:10px;
-
 }
 
 .modal-content{
