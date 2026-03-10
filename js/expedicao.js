@@ -52,8 +52,7 @@ window.abrirModalExpedicao = function(loteId){
       >
 
       <span class="info-expedicao">
-        <b>${pos.rz || "-"}</b>
-        | Volume ${pos.volume || "-"}
+        <b>${pos.rz || "-"}</b> | Volume ${pos.volume || "-"}
       </span>
     `;
 
@@ -69,7 +68,7 @@ window.abrirModalExpedicao = function(loteId){
 
 
 // =====================================================
-// FECHAR MODAL EXPEDIÇÃO
+// FECHAR MODAL
 // =====================================================
 window.fecharModalExpedicao = function(){
 
@@ -115,7 +114,7 @@ window.desmarcarTodosExpedicao = function(){
 
 
 // =====================================================
-// CONTADOR DE SELECIONADOS
+// CONTADOR
 // =====================================================
 window.atualizarContadorExpedicao = function(){
 
@@ -146,10 +145,6 @@ window.confirmarExpedicao = async function(){
 
   try{
 
-    // ======================================
-    // POSIÇÕES SELECIONADAS
-    // ======================================
-
     const posicoesSelecionadas = [];
 
     checks.forEach(check=>{
@@ -168,9 +163,7 @@ window.confirmarExpedicao = async function(){
     }
 
 
-    // ======================================
-    // MONTAR HISTÓRICO
-    // ======================================
+    // HISTÓRICO
 
     const historicoInsert = posicoesSelecionadas.map(pos=>({
 
@@ -183,10 +176,6 @@ window.confirmarExpedicao = async function(){
     }));
 
 
-    // ======================================
-    // INSERT HISTÓRICO
-    // ======================================
-
     const { data:historicoData, error:histErr } =
       await supabaseClient
         .from("historico_expedidos")
@@ -196,16 +185,12 @@ window.confirmarExpedicao = async function(){
     if(histErr) throw histErr;
 
 
-    // ======================================
-    // IDS DAS POSIÇÕES
-    // ======================================
+    // IDS POSIÇÕES
 
     const posIds = posicoesSelecionadas.map(p=>p.id);
 
 
-    // ======================================
     // LIBERAR POSIÇÕES
-    // ======================================
 
     const { error:updateErr } =
       await supabaseClient
@@ -221,22 +206,136 @@ window.confirmarExpedicao = async function(){
     if(updateErr) throw updateErr;
 
 
-    // ======================================
-    // GARANTIR HISTÓRICO NO STATE
-    // ======================================
+    // HISTÓRICO LOCAL
 
     if(!state.historico_expedidos){
       state.historico_expedidos = [];
     }
-
-
-    // ======================================
-    // ATUALIZA HISTÓRICO LOCAL
-    // ======================================
 
     historicoData.forEach(reg=>{
       state.historico_expedidos.push(reg);
     });
 
 
-    // ======================================
+    // LIBERAR POSIÇÕES NO STATE
+
+    posIds.forEach(id=>{
+
+      const index = state.posicoes.findIndex(p =>
+        idEquals(p.id,id)
+      );
+
+      if(index !== -1){
+
+        state.posicoes[index].ocupada = false;
+        state.posicoes[index].lote_id = null;
+        state.posicoes[index].rz = null;
+        state.posicoes[index].volume = null;
+
+      }
+
+    });
+
+
+    // ATUALIZA TELA
+
+    fecharModalExpedicao();
+
+    if(typeof renderMapa === "function"){
+      renderMapa();
+    }
+
+    if(typeof renderDashboard === "function"){
+      renderDashboard();
+    }
+
+  }
+  catch(err){
+
+    console.error(err);
+    alert("Erro ao registrar expedição.");
+
+  }
+
+};
+
+
+// =====================================================
+// DETALHES DA EXPEDIÇÃO
+// =====================================================
+window.verDetalhesExpedicao = function(loteId){
+
+  if(!state || !state.historico_expedidos){
+    alert("Histórico não carregado.");
+    return;
+  }
+
+  const registros = state.historico_expedidos.filter(r =>
+    idEquals(r.lote_id, loteId)
+  );
+
+  if(registros.length === 0){
+    alert("Nenhuma expedição encontrada.");
+    return;
+  }
+
+  const modal = document.getElementById("modalDetalhesExpedicao");
+  const lista = document.getElementById("listaDetalhesExpedicao");
+
+  if(!modal || !lista){
+    alert("Modal não encontrado.");
+    return;
+  }
+
+  lista.innerHTML = "";
+
+  const tabela = document.createElement("table");
+
+  tabela.className = "tabela-expedicao";
+
+  tabela.innerHTML = `
+    <thead>
+      <tr>
+        <th>RZ</th>
+        <th>Volume</th>
+        <th>Data</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  `;
+
+  const tbody = tabela.querySelector("tbody");
+
+  registros.forEach(reg=>{
+
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${reg.rz || "-"}</td>
+      <td>${reg.volume || "-"}</td>
+      <td>${new Date(reg.data_expedicao).toLocaleString()}</td>
+    `;
+
+    tbody.appendChild(tr);
+
+  });
+
+  lista.appendChild(tabela);
+
+  modal.classList.remove("hidden");
+
+};
+
+
+// =====================================================
+// FECHAR DETALHES
+// =====================================================
+window.fecharDetalhesExpedicao = function(){
+
+  const modal = document.getElementById("modalDetalhesExpedicao");
+
+  if(modal){
+    modal.classList.add("hidden");
+  }
+
+};
