@@ -28,7 +28,7 @@ function contarGaylordsDoLote(loteId) {
 
 
 // ------------------------------------------------
-// CONTAR GAYLORDS EXPEDIDOS
+// CONTAR EXPEDIÇÕES DO LOTE
 // ------------------------------------------------
 function contarExpedidosDoLote(loteId) {
 
@@ -49,17 +49,17 @@ function loteEstaAtivo(lote) {
   const alocados = contarGaylordsDoLote(lote.id);
   const expedidos = contarExpedidosDoLote(lote.id);
 
-  const totalUtilizado = alocados + expedidos;
+  const restante = lote.quantidade - (alocados + expedidos);
 
-  return totalUtilizado < lote.quantidade;
+  return restante > 0;
 
 }
 
 
 // ------------------------------------------------
-// ABRIR MODAL POR ID DA POSIÇÃO
+// ABRIR MODAL
 // ------------------------------------------------
-window.abrirModalPorId = function (posicaoId) {
+window.abrirModalPorId = async function (posicaoId) {
 
   if (!window.state) return;
 
@@ -80,27 +80,32 @@ window.abrirModalPorId = function (posicaoId) {
 
   modal.classList.remove("hidden");
 
-
-  // LIMPAR CAMPOS
   loteSelect.innerHTML = "";
   volumeInput.value = "";
   rzInput.value = "";
 
 
   // ------------------------------------------------
-  // CARREGAR APENAS LOTES ATIVOS
+  // CARREGAR LOTES ATIVOS
   // ------------------------------------------------
-  if (Array.isArray(state.lotes)) {
+  try {
 
-    state.lotes.forEach(lote => {
+    const { data: lotes, error } = await window.supabaseClient
+      .from("lotes")
+      .select("*");
+
+    if (error) throw error;
+
+    lotes.forEach(lote => {
 
       if (!loteEstaAtivo(lote)) return;
 
-      const option = document.createElement("option");
-
       const alocados = contarGaylordsDoLote(lote.id);
       const expedidos = contarExpedidosDoLote(lote.id);
+
       const restante = lote.quantidade - (alocados + expedidos);
+
+      const option = document.createElement("option");
 
       option.value = lote.id;
       option.textContent = `${lote.nome} (restante: ${restante})`;
@@ -108,6 +113,10 @@ window.abrirModalPorId = function (posicaoId) {
       loteSelect.appendChild(option);
 
     });
+
+  } catch (err) {
+
+    console.error("Erro ao carregar lotes:", err);
 
   }
 
@@ -149,7 +158,7 @@ window.fecharModal = function () {
 
 
 // ------------------------------------------------
-// VALIDAR RZ DUPLICADA NO MESMO LOTE
+// VALIDAR RZ DUPLICADA
 // ------------------------------------------------
 function rzDuplicada(loteId, rz, posicaoAtualId) {
 
@@ -218,7 +227,7 @@ window.confirmarEndereco = async function () {
   if (!pos) return;
 
 
-  // BLOQUEIO SE POSIÇÃO OCUPADA
+  // BLOQUEIO POSIÇÃO OCUPADA
   if (pos.ocupada) {
 
     alert("Esta posição já está ocupada.");
@@ -227,7 +236,7 @@ window.confirmarEndereco = async function () {
   }
 
 
-  // VALIDAR RZ DUPLICADA
+  // RZ DUPLICADA
   if (rzDuplicada(loteId, rz, posId)) {
 
     alert("Esta RZ já foi usada neste lote.");
@@ -236,7 +245,6 @@ window.confirmarEndereco = async function () {
   }
 
 
-  // BLOQUEIO DE CAPACIDADE DO LOTE
   const lote = buscarLote(loteId);
 
   if (!lote) {
@@ -246,13 +254,13 @@ window.confirmarEndereco = async function () {
 
   }
 
+
   const usadas = contarGaylordsDoLote(loteId);
   const expedidas = contarExpedidosDoLote(loteId);
 
   if ((usadas + expedidas) >= lote.quantidade) {
 
-    alert("Este lote já atingiu o limite total.");
-
+    alert("Este lote já atingiu o limite.");
     return;
 
   }
