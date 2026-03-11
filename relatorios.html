@@ -6,20 +6,10 @@
 <title>Relatórios de Expedição</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- CSS GLOBAL -->
 <link rel="stylesheet" href="css/style.css">
 
 <!-- SUPABASE SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<script>
-if (typeof supabase === "undefined") {
-  console.error("❌ Supabase SDK não carregado.");
-} else {
-  window.supabase = supabase;
-  console.log("✅ Supabase SDK carregado.");
-}
-</script>
 
 <!-- EXCEL -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
@@ -28,12 +18,11 @@ if (typeof supabase === "undefined") {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
-
 <style>
 
 body{
 background:#f4f4f4;
-font-family:Arial, Helvetica, sans-serif;
+font-family:Arial;
 }
 
 h1{
@@ -42,104 +31,37 @@ margin:20px 0;
 }
 
 .filtro{
-margin:0 20px 20px 20px;
+margin:20px;
 display:flex;
 gap:10px;
 flex-wrap:wrap;
-align-items:end;
-}
-
-.filtro label{
-display:flex;
-flex-direction:column;
-font-size:14px;
-font-weight:600;
-}
-
-.filtro select{
-padding:8px;
-min-width:200px;
-border-radius:4px;
-border:1px solid #ccc;
-}
-
-.filtro button{
-padding:10px 14px;
-cursor:pointer;
-border:none;
-border-radius:4px;
-background:#f4c430;
-font-weight:bold;
-}
-
-.filtro button:hover{
-opacity:0.9;
-}
-
-#resumo{
-display:none;
-margin:0 20px 20px 20px;
-padding:12px;
-background:#fff8dc;
-border-left:5px solid #f4c430;
-border-radius:4px;
-font-size:14px;
-}
-
-.tabela-container{
-margin:0 20px 20px 20px;
-overflow-x:auto;
-background:#fff;
-border-radius:6px;
-box-shadow:0 2px 6px rgba(0,0,0,0.08);
-}
-
-#tabelaRelatorio{
-width:100%;
-min-width:900px;
-border-collapse:collapse;
-}
-
-#tabelaRelatorio th,
-#tabelaRelatorio td{
-border:1px solid #ddd;
-padding:8px;
-font-size:13px;
-text-align:left;
-}
-
-#tabelaRelatorio th{
-background:#f4c430;
-color:#000;
-position:sticky;
-top:0;
-z-index:1;
-}
-
-#tabelaRelatorio tr:nth-child(even){
-background:#f9f9f9;
-}
-
-#tabelaRelatorio tr:hover{
-background:#fff4c2;
-}
-
-@media (max-width:768px){
-
-h1{
-font-size:20px;
-}
-
-.filtro{
-flex-direction:column;
-align-items:stretch;
 }
 
 .filtro select,
 .filtro button{
-width:100%;
+padding:8px;
 }
 
+.tabela-container{
+margin:20px;
+background:white;
+overflow-x:auto;
+border-radius:6px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+}
+
+th,td{
+border:1px solid #ddd;
+padding:8px;
+font-size:13px;
+}
+
+th{
+background:#f4c430;
 }
 
 </style>
@@ -147,9 +69,6 @@ width:100%;
 </head>
 
 <body>
-
-
-<!-- HEADER -->
 
 <div id="header-container"></div>
 
@@ -175,17 +94,14 @@ configurarHeader("relatorios")
 
 <div class="filtro">
 
-<label>
-Lote
 <select id="selectLote"></select>
-</label>
 
 <button onclick="gerarRelatorio()">
 Gerar Relatório
 </button>
 
 <button onclick="exportarExcelLote()">
-Exportar Excel
+Excel
 </button>
 
 <button onclick="exportarExcelGeral()">
@@ -193,7 +109,7 @@ Excel Geral
 </button>
 
 <button onclick="exportarPDF()">
-Exportar PDF
+PDF
 </button>
 
 </div>
@@ -207,7 +123,6 @@ Exportar PDF
 <table id="tabelaRelatorio">
 
 <thead>
-
 <tr>
 <th>Lote</th>
 <th>RZ</th>
@@ -218,7 +133,6 @@ Exportar PDF
 <th>Data</th>
 <th>Hora</th>
 </tr>
-
 </thead>
 
 <tbody></tbody>
@@ -229,35 +143,29 @@ Exportar PDF
 
 
 
-<!-- ================= SCRIPTS DO SISTEMA ================= -->
+<!-- SISTEMA -->
 
-<!-- LOGIN -->
 <script src="js/login.js"></script>
-
-<!-- PROTEÇÃO DE ROTA -->
 <script src="js/guard.js"></script>
-
-<!-- CONFIG -->
-<script src="js/config.js"></script>
 
 <!-- SUPABASE -->
 <script src="js/supabaseClient.js"></script>
 <script src="js/supabase.js"></script>
 
-<!-- MÓDULOS DO SISTEMA -->
+<!-- DADOS -->
 <script src="js/areas.js"></script>
 <script src="js/ruas.js"></script>
 <script src="js/lotes.js"></script>
 <script src="js/mapa.js"></script>
 <script src="js/expedicao.js"></script>
 
-<!-- STATE GLOBAL -->
+<!-- STATE -->
 <script src="js/state.js"></script>
 
-<!-- UTILIDADES -->
+<!-- UTIL -->
 <script src="js/utils.js"></script>
 
-<!-- RELATÓRIOS -->
+<!-- RELATORIO -->
 <script src="js/relatórios/relatorios.js"></script>
 
 
