@@ -8,15 +8,15 @@
 
 <link rel="stylesheet" href="css/style.css">
 
-<!-- SUPABASE SDK -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- SUPABASE -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 
 <!-- EXCEL -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js" defer></script>
 
 <!-- PDF -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js" defer></script>
 
 <style>
 
@@ -72,23 +72,6 @@ background:#f4c430;
 
 <div id="header-container"></div>
 
-<script>
-
-fetch("components/header.html")
-.then(r=>r.text())
-.then(html=>{
-
-document.getElementById("header-container").innerHTML = html
-
-if(typeof configurarHeader === "function"){
-configurarHeader("relatorios")
-}
-
-})
-
-</script>
-
-
 <h1>Relatórios de Expedição</h1>
 
 
@@ -140,25 +123,23 @@ PDF
 </table>
 
 </div>
-<script src="js/login.js"></script>
-<script src="js/guard.js"></script>
 
-<!-- CONFIG SUPABASE -->
-<script src="js/config.js"></script>
 
-<!-- CLIENTE -->
-<script src="js/supabaseClient.js"></script>
+<!-- ================= BASE DO SISTEMA ================= -->
 
-<!-- FUNÇÕES DO BANCO -->
-<script src="js/supabase.js"></script>
+<script src="js/supabase.js" defer></script>
 
-<!-- STATE -->
-<script src="js/state.js"></script>
+<script src="js/model.js" defer></script>
+<script src="js/state.js" defer></script>
 
-<!-- UTIL -->
-<script src="js/utils.js"></script>
+<script src="js/utils.js" defer></script>
 
-<!-- RELATÓRIO -->
-<script src="js/relatórios/relatorios.js"></script>
+<!-- INTERFACE -->
+<script src="js/header.js" defer></script>
+<script src="js/login.js" defer></script>
+
+<!-- RELATÓRIOS -->
+<script src="js/relatórios/relatorios.js" defer></script>
+
 </body>
 </html>
