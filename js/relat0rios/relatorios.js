@@ -1,118 +1,95 @@
-// ===============================
+// ======================================
 // RELATÓRIOS
-// ===============================
+// ======================================
 
-let dadosRelatorio = []
+let dadosRelatorio = [];
 
-document.addEventListener("DOMContentLoaded", iniciarRelatorios)
+document.addEventListener("DOMContentLoaded", () => {
 
-async function iniciarRelatorios(){
+  esperarSistema();
 
-  try{
+});
 
-    // carrega banco e state
-    await carregarSistema()
 
-    console.log("Sistema carregado")
-    console.log("Lotes:", state.lotes)
+// ======================================
+// ESPERA SISTEMA CARREGAR
+// ======================================
 
-    carregarLotesSelect()
+function esperarSistema(){
 
-  }catch(e){
-
-    console.error("Erro ao iniciar relatórios", e)
-
+  if(state.carregando){
+    setTimeout(esperarSistema,200);
+    return;
   }
+
+  if(!state.lotes || state.lotes.length === 0){
+    console.warn("Nenhum lote encontrado no state");
+  }
+
+  carregarLotesSelect();
 
 }
 
 
-// ===============================
-// POPULAR SELECT LOTES
-// ===============================
+
+// ======================================
+// POPULAR SELECT
+// ======================================
 
 function carregarLotesSelect(){
 
-  const select = document.getElementById("selectLote")
+  const select = document.getElementById("selectLote");
 
-  if(!select){
-    console.error("Select de lotes não encontrado")
-    return
-  }
+  if(!select) return;
 
-  select.innerHTML = ""
+  select.innerHTML = "";
 
-  // opção todos
-  const optTodos = document.createElement("option")
-  optTodos.value = ""
-  optTodos.textContent = "Todos os lotes"
+  const optTodos = document.createElement("option");
+  optTodos.value = "";
+  optTodos.textContent = "Todos os lotes";
 
-  select.appendChild(optTodos)
-
-  if(!state.lotes || state.lotes.length === 0){
-
-    console.warn("Nenhum lote encontrado no state")
-
-    const opt = document.createElement("option")
-    opt.textContent = "Nenhum lote encontrado"
-    opt.disabled = true
-
-    select.appendChild(opt)
-
-    return
-  }
+  select.appendChild(optTodos);
 
   state.lotes.forEach(lote => {
 
-    const opt = document.createElement("option")
+    const opt = document.createElement("option");
 
-    opt.value = lote.id
+    opt.value = lote.id;
+    opt.textContent = lote.nome || lote.lote || `Lote ${lote.id}`;
 
-    // tenta nome ou lote
-    opt.textContent = lote.nome || lote.lote || `Lote ${lote.id}`
+    select.appendChild(opt);
 
-    select.appendChild(opt)
-
-  })
+  });
 
 }
 
 
 
-// ===============================
+// ======================================
 // GERAR RELATÓRIO
-// ===============================
+// ======================================
 
 function gerarRelatorio(){
 
-  const loteSelecionado = document.getElementById("selectLote").value
+  const loteId = document.getElementById("selectLote").value;
 
-  const tbody = document.querySelector("#tabelaRelatorio tbody")
+  const tbody = document.querySelector("#tabelaRelatorio tbody");
 
-  tbody.innerHTML = ""
+  tbody.innerHTML = "";
 
-  dadosRelatorio = []
+  dadosRelatorio = [];
 
-  if(!state.historicoExpedidos){
+  state.historico_expedidos.forEach(item => {
 
-    console.warn("Histórico vazio")
+    if(loteId && !idEquals(item.lote_id, loteId)) return;
 
-    return
-  }
+    const lote = getLoteById(item.lote_id);
+    const area = getAreaById(item.area_id);
+    const rua = getRuaById(item.rua_id);
 
-  state.historicoExpedidos.forEach(item => {
+    const data = new Date(item.data || item.created_at);
 
-    if(loteSelecionado && item.lote_id != loteSelecionado) return
-
-    const lote = state.lotes.find(l => l.id == item.lote_id)
-
-    const area = state.areas.find(a => a.id == item.area_id)
-
-    const rua = state.ruas.find(r => r.id == item.rua_id)
-
-    const tr = document.createElement("tr")
-
-    const data = new Date(item.data)
+    const tr = document.createElement("tr");
 
     tr.innerHTML = `
       <td>${lote?.nome || "-"}</td>
@@ -123,12 +100,11 @@ function gerarRelatorio(){
       <td>${rua?.nome || "-"}</td>
       <td>${data.toLocaleDateString()}</td>
       <td>${data.toLocaleTimeString()}</td>
-    `
+    `;
 
-    tbody.appendChild(tr)
+    tbody.appendChild(tr);
 
     dadosRelatorio.push({
-
       lote: lote?.nome,
       rz: item.rz,
       volume: item.volume,
@@ -137,115 +113,109 @@ function gerarRelatorio(){
       rua: rua?.nome,
       data: data.toLocaleDateString(),
       hora: data.toLocaleTimeString()
+    });
 
-    })
+  });
 
-  })
-
-  atualizarResumo()
+  atualizarResumo();
 
 }
 
 
 
-// ===============================
+// ======================================
 // RESUMO
-// ===============================
+// ======================================
 
 function atualizarResumo(){
 
-  const div = document.getElementById("resumo")
+  const div = document.getElementById("resumo");
 
-  if(!dadosRelatorio.length){
+  const total = dadosRelatorio.length;
 
-    div.innerHTML = "Nenhum registro encontrado"
-
-    return
-  }
-
-  const total = dadosRelatorio.length
-
-  const volumes = dadosRelatorio.reduce((s,v)=>s+(Number(v.volume)||0),0)
+  const volumeTotal = dadosRelatorio.reduce(
+    (s,v)=>s+(Number(v.volume)||0),0
+  );
 
   div.innerHTML = `
-  
   <b>Total expedido:</b> ${total}<br>
-  <b>Volume total:</b> ${volumes}
-  
-  `
+  <b>Volume total:</b> ${volumeTotal}
+  `;
 
 }
 
 
 
-// ===============================
+// ======================================
 // EXPORTAR EXCEL
-// ===============================
+// ======================================
 
 function exportarExcelLote(){
 
   if(!dadosRelatorio.length){
-    alert("Gere o relatório primeiro")
-    return
+    alert("Gere o relatório primeiro");
+    return;
   }
 
-  const ws = XLSX.utils.json_to_sheet(dadosRelatorio)
+  const ws = XLSX.utils.json_to_sheet(dadosRelatorio);
 
-  const wb = XLSX.utils.book_new()
+  const wb = XLSX.utils.book_new();
 
-  XLSX.utils.book_append_sheet(wb, ws, "Relatorio")
+  XLSX.utils.book_append_sheet(wb, ws, "Relatorio");
 
-  XLSX.writeFile(wb,"relatorio_expedicao.xlsx")
+  XLSX.writeFile(wb,"relatorio_expedicao.xlsx");
 
 }
 
 
 
-// ===============================
+// ======================================
 // EXCEL GERAL
-// ===============================
+// ======================================
 
 function exportarExcelGeral(){
 
-  gerarRelatorio()
+  gerarRelatorio();
 
-  exportarExcelLote()
+  exportarExcelLote();
 
 }
 
 
 
-// ===============================
+// ======================================
 // PDF
-// ===============================
+// ======================================
 
 function exportarPDF(){
 
   if(!dadosRelatorio.length){
-    alert("Gere o relatório primeiro")
-    return
+    alert("Gere o relatório primeiro");
+    return;
   }
 
-  const { jsPDF } = window.jspdf
+  const { jsPDF } = window.jspdf;
 
-  const doc = new jsPDF()
+  const doc = new jsPDF();
 
   const colunas = [
-    "Lote","RZ","Volume","Status","Área","Rua","Data","Hora"
-  ]
+    "Lote","RZ","Volume","Status",
+    "Área","Rua","Data","Hora"
+  ];
 
   const linhas = dadosRelatorio.map(r => [
-    r.lote,r.rz,r.volume,r.status,r.area,r.rua,r.data,r.hora
-  ])
+    r.lote,r.rz,r.volume,r.status,
+    r.area,r.rua,r.data,r.hora
+  ]);
 
-  doc.text("Relatório de Expedição",14,15)
+  doc.text("Relatório de Expedição",14,15);
 
   doc.autoTable({
     head:[colunas],
     body:linhas,
     startY:20
-  })
+  });
 
-  doc.save("relatorio_expedicao.pdf")
+  doc.save("relatorio_expedicao.pdf");
 
 }
