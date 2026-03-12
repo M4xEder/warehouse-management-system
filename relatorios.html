@@ -3,7 +3,7 @@
 <head>
 
 <meta charset="UTF-8">
-<title>Relatórios de Expedição</title>
+<title>Relatórios de Armazém</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <link rel="stylesheet" href="css/style.css">
@@ -23,6 +23,7 @@
 body{
 background:#f4f4f4;
 font-family:Arial;
+margin:0;
 }
 
 h1{
@@ -35,11 +36,24 @@ margin:20px;
 display:flex;
 gap:10px;
 flex-wrap:wrap;
+justify-content:center;
 }
 
 .filtro select,
 .filtro button{
-padding:8px;
+padding:8px 12px;
+font-size:14px;
+cursor:pointer;
+}
+
+#resumo{
+margin:20px;
+padding:15px;
+background:white;
+border-radius:6px;
+text-align:center;
+font-size:15px;
+font-weight:bold;
 }
 
 .tabela-container{
@@ -58,10 +72,15 @@ th,td{
 border:1px solid #ddd;
 padding:8px;
 font-size:13px;
+text-align:center;
 }
 
 th{
 background:#f4c430;
+}
+
+tbody tr:hover{
+background:#f2f2f2;
 }
 
 </style>
@@ -72,19 +91,21 @@ background:#f4c430;
 
 <div id="header-container"></div>
 
-<h1>Relatórios de Expedição</h1>
+<h1>Relatórios de Armazém</h1>
 
 
 <div class="filtro">
 
-<select id="selectLote"></select>
+<select id="selectLote">
+<option value="">Todos os Lotes</option>
+</select>
 
 <button onclick="gerarRelatorio()">
 Gerar Relatório
 </button>
 
 <button onclick="exportarExcelLote()">
-Excel
+Exportar Excel
 </button>
 
 <button onclick="exportarExcelGeral()">
@@ -92,13 +113,15 @@ Excel Geral
 </button>
 
 <button onclick="exportarPDF()">
-PDF
+Exportar PDF
 </button>
 
 </div>
 
 
-<div id="resumo"></div>
+<div id="resumo">
+Nenhum relatório gerado.
+</div>
 
 
 <div class="tabela-container">
@@ -108,17 +131,15 @@ PDF
 <thead>
 <tr>
 <th>Lote</th>
-<th>RZ</th>
-<th>Volume</th>
-<th>Status</th>
 <th>Área</th>
 <th>Rua</th>
-<th>Data</th>
-<th>Hora</th>
+<th>Gaylords</th>
 </tr>
 </thead>
 
-<tbody></tbody>
+<tbody>
+
+</tbody>
 
 </table>
 
@@ -139,7 +160,7 @@ PDF
 <script src="js/login.js" defer></script>
 
 <!-- RELATÓRIOS -->
-<script src="js/relat0rios/relatorios.js" defer></script>
+<script src="js/relatorios/relatorios.js" defer></script>
 
 </body>
 </html>
