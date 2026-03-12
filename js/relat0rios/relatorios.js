@@ -1,6 +1,6 @@
 // ======================================================
 // RELATORIOS.JS
-// Relatório logístico por Lote / Área / Rua
+// Relatório de localização dos lotes
 // ======================================================
 
 let dadosRelatorio = []
@@ -8,9 +8,7 @@ let dadosRelatorio = []
 document.addEventListener("DOMContentLoaded", iniciarRelatorios)
 
 function iniciarRelatorios(){
-
   esperarSistema()
-
 }
 
 function esperarSistema(){
@@ -21,29 +19,26 @@ function esperarSistema(){
   }
 
   carregarLotesSelect()
-
 }
 
 
 
-// ======================================
+// ===============================
 // SELECT LOTES
-// ======================================
+// ===============================
 
 function carregarLotesSelect(){
 
   const select = document.getElementById("selectLote")
 
-  if(!select) return
-
   select.innerHTML = '<option value="">Todos os lotes</option>'
 
-  state.lotes.forEach(lote=>{
+  state.lotes.forEach(lote => {
 
     const opt = document.createElement("option")
 
     opt.value = lote.id
-    opt.textContent = lote.nome || lote.id
+    opt.textContent = lote.nome || lote.codigo || lote.id
 
     select.appendChild(opt)
 
@@ -53,45 +48,53 @@ function carregarLotesSelect(){
 
 
 
-// ======================================
+// ===============================
 // GERAR RELATÓRIO
-// ======================================
+// ===============================
 
 function gerarRelatorio(){
 
   const loteFiltro = document.getElementById("selectLote").value
-
   const tbody = document.querySelector("#tabelaRelatorio tbody")
 
   tbody.innerHTML = ""
-
   dadosRelatorio = []
 
   const agrupado = {}
 
 
 
-  state.posicoes.forEach(p=>{
+  state.posicoes.forEach(p => {
 
     if(!p.ocupada) return
 
     if(loteFiltro && !idEquals(p.lote_id,loteFiltro)) return
 
+
     const lote = getLoteById(p.lote_id)
-    const area = getAreaById(p.area_id)
     const rua = getRuaById(p.rua_id)
 
-    if(!lote || !area || !rua) return
+    if(!lote || !rua) return
 
-    const chave = `${lote.nome}_${area.nome}_${rua.nome}`
+    const area = getAreaById(rua.area_id)
+
+    if(!area) return
+
+
+    const loteNome = lote.nome || lote.codigo || lote.id
+    const areaNome = area.nome || area.codigo || area.id
+    const ruaNome = rua.nome || rua.codigo || rua.id
+
+    const chave = `${loteNome}_${areaNome}_${ruaNome}`
+
 
     if(!agrupado[chave]){
 
       agrupado[chave] = {
-        lote:lote.nome,
-        area:area.nome,
-        rua:rua.nome,
-        quantidade:0
+        lote: loteNome,
+        area: areaNome,
+        rua: ruaNome,
+        quantidade: 0
       }
 
     }
@@ -102,15 +105,15 @@ function gerarRelatorio(){
 
 
 
-  Object.values(agrupado).forEach(item=>{
+  Object.values(agrupado).forEach(item => {
 
     const tr = document.createElement("tr")
 
     tr.innerHTML = `
-    <td>${item.lote}</td>
-    <td>${item.area}</td>
-    <td>${item.rua}</td>
-    <td>${item.quantidade}</td>
+      <td>${item.lote}</td>
+      <td>${item.area}</td>
+      <td>${item.rua}</td>
+      <td>${item.quantidade}</td>
     `
 
     tbody.appendChild(tr)
@@ -125,9 +128,9 @@ function gerarRelatorio(){
 
 
 
-// ======================================
+// ===============================
 // RESUMO
-// ======================================
+// ===============================
 
 function atualizarResumo(){
 
@@ -136,16 +139,16 @@ function atualizarResumo(){
   const total = dadosRelatorio.reduce((s,v)=>s+v.quantidade,0)
 
   div.innerHTML = `
-  <b>Total de Gaylords no Armazém:</b> ${total}
+  Total de Gaylords no Armazém: <b>${total}</b>
   `
 
 }
 
 
 
-// ======================================
+// ===============================
 // EXPORTAR EXCEL
-// ======================================
+// ===============================
 
 function exportarExcelLote(){
 
@@ -155,7 +158,6 @@ function exportarExcelLote(){
   }
 
   const ws = XLSX.utils.json_to_sheet(dadosRelatorio)
-
   const wb = XLSX.utils.book_new()
 
   XLSX.utils.book_append_sheet(wb,ws,"Relatorio")
@@ -166,23 +168,22 @@ function exportarExcelLote(){
 
 
 
-// ======================================
+// ===============================
 // EXCEL GERAL
-// ======================================
+// ===============================
 
 function exportarExcelGeral(){
 
   gerarRelatorio()
-
   exportarExcelLote()
 
 }
 
 
 
-// ======================================
-// PDF
-// ======================================
+// ===============================
+// EXPORTAR PDF
+// ===============================
 
 function exportarPDF(){
 
@@ -195,14 +196,9 @@ function exportarPDF(){
 
   const doc = new jsPDF()
 
-  const colunas = [
-    "Lote",
-    "Área",
-    "Rua",
-    "Gaylords"
-  ]
+  const colunas = ["Lote","Área","Rua","Gaylords"]
 
-  const linhas = dadosRelatorio.map(r=>[
+  const linhas = dadosRelatorio.map(r => [
     r.lote,
     r.area,
     r.rua,
@@ -219,4 +215,4 @@ function exportarPDF(){
 
   doc.save("relatorio_armazem.pdf")
 
-}
+    }
