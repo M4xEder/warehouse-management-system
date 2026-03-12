@@ -219,4 +219,4 @@ function exportarPDF(){
 
   doc.save("relatorio_armazem.pdf")
 
-    }
+}
