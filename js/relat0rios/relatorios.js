@@ -1,40 +1,75 @@
 // ===============================
-// RELATÓRIOS DE EXPEDIÇÃO
+// RELATÓRIOS
 // ===============================
 
 let dadosRelatorio = []
 
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded", iniciarRelatorios)
 
-  await carregarSistema()
+async function iniciarRelatorios(){
 
-  carregarLotesSelect()
+  try{
 
-})
+    // carrega banco e state
+    await carregarSistema()
+
+    console.log("Sistema carregado")
+    console.log("Lotes:", state.lotes)
+
+    carregarLotesSelect()
+
+  }catch(e){
+
+    console.error("Erro ao iniciar relatórios", e)
+
+  }
+
+}
 
 
 // ===============================
-// CARREGAR LOTES NO SELECT
+// POPULAR SELECT LOTES
 // ===============================
 
 function carregarLotesSelect(){
 
   const select = document.getElementById("selectLote")
 
+  if(!select){
+    console.error("Select de lotes não encontrado")
+    return
+  }
+
   select.innerHTML = ""
 
+  // opção todos
   const optTodos = document.createElement("option")
   optTodos.value = ""
   optTodos.textContent = "Todos os lotes"
 
   select.appendChild(optTodos)
 
+  if(!state.lotes || state.lotes.length === 0){
+
+    console.warn("Nenhum lote encontrado no state")
+
+    const opt = document.createElement("option")
+    opt.textContent = "Nenhum lote encontrado"
+    opt.disabled = true
+
+    select.appendChild(opt)
+
+    return
+  }
+
   state.lotes.forEach(lote => {
 
     const opt = document.createElement("option")
 
     opt.value = lote.id
-    opt.textContent = lote.nome
+
+    // tenta nome ou lote
+    opt.textContent = lote.nome || lote.lote || `Lote ${lote.id}`
 
     select.appendChild(opt)
 
@@ -58,6 +93,13 @@ function gerarRelatorio(){
 
   dadosRelatorio = []
 
+  if(!state.historicoExpedidos){
+
+    console.warn("Histórico vazio")
+
+    return
+  }
+
   state.historicoExpedidos.forEach(item => {
 
     if(loteSelecionado && item.lote_id != loteSelecionado) return
@@ -70,17 +112,17 @@ function gerarRelatorio(){
 
     const tr = document.createElement("tr")
 
-    tr.innerHTML = `
+    const data = new Date(item.data)
 
+    tr.innerHTML = `
       <td>${lote?.nome || "-"}</td>
       <td>${item.rz || "-"}</td>
       <td>${item.volume || "-"}</td>
       <td>Expedido</td>
       <td>${area?.nome || "-"}</td>
       <td>${rua?.nome || "-"}</td>
-      <td>${formatarData(item.data)}</td>
-      <td>${formatarHora(item.data)}</td>
-
+      <td>${data.toLocaleDateString()}</td>
+      <td>${data.toLocaleTimeString()}</td>
     `
 
     tbody.appendChild(tr)
@@ -93,14 +135,14 @@ function gerarRelatorio(){
       status: "Expedido",
       area: area?.nome,
       rua: rua?.nome,
-      data: formatarData(item.data),
-      hora: formatarHora(item.data)
+      data: data.toLocaleDateString(),
+      hora: data.toLocaleTimeString()
 
     })
 
   })
 
-  renderResumo()
+  atualizarResumo()
 
 }
 
@@ -110,20 +152,24 @@ function gerarRelatorio(){
 // RESUMO
 // ===============================
 
-function renderResumo(){
+function atualizarResumo(){
 
   const div = document.getElementById("resumo")
+
+  if(!dadosRelatorio.length){
+
+    div.innerHTML = "Nenhum registro encontrado"
+
+    return
+  }
 
   const total = dadosRelatorio.length
 
   const volumes = dadosRelatorio.reduce((s,v)=>s+(Number(v.volume)||0),0)
 
-  div.style.display = "block"
-
   div.innerHTML = `
   
-  <b>Total expedido:</b> ${total} gaylords
-  <br>
+  <b>Total expedido:</b> ${total}<br>
   <b>Volume total:</b> ${volumes}
   
   `
@@ -133,7 +179,7 @@ function renderResumo(){
 
 
 // ===============================
-// EXPORTAR EXCEL DO LOTE
+// EXPORTAR EXCEL
 // ===============================
 
 function exportarExcelLote(){
@@ -149,14 +195,14 @@ function exportarExcelLote(){
 
   XLSX.utils.book_append_sheet(wb, ws, "Relatorio")
 
-  XLSX.writeFile(wb, "relatorio_lote.xlsx")
+  XLSX.writeFile(wb,"relatorio_expedicao.xlsx")
 
 }
 
 
 
 // ===============================
-// EXPORTAR EXCEL GERAL
+// EXCEL GERAL
 // ===============================
 
 function exportarExcelGeral(){
@@ -170,7 +216,7 @@ function exportarExcelGeral(){
 
 
 // ===============================
-// EXPORTAR PDF
+// PDF
 // ===============================
 
 function exportarPDF(){
@@ -185,30 +231,14 @@ function exportarPDF(){
   const doc = new jsPDF()
 
   const colunas = [
-    "Lote",
-    "RZ",
-    "Volume",
-    "Status",
-    "Área",
-    "Rua",
-    "Data",
-    "Hora"
+    "Lote","RZ","Volume","Status","Área","Rua","Data","Hora"
   ]
 
   const linhas = dadosRelatorio.map(r => [
-
-    r.lote,
-    r.rz,
-    r.volume,
-    r.status,
-    r.area,
-    r.rua,
-    r.data,
-    r.hora
-
+    r.lote,r.rz,r.volume,r.status,r.area,r.rua,r.data,r.hora
   ])
 
-  doc.text("Relatório de Expedição", 14, 15)
+  doc.text("Relatório de Expedição",14,15)
 
   doc.autoTable({
     head:[colunas],
@@ -217,31 +247,5 @@ function exportarPDF(){
   })
 
   doc.save("relatorio_expedicao.pdf")
-
-}
-
-
-
-// ===============================
-// FORMATAR DATA
-// ===============================
-
-function formatarData(data){
-
-  if(!data) return "-"
-
-  const d = new Date(data)
-
-  return d.toLocaleDateString()
-
-}
-
-function formatarHora(data){
-
-  if(!data) return "-"
-
-  const d = new Date(data)
-
-  return d.toLocaleTimeString()
 
 }
