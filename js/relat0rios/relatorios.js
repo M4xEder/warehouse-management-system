@@ -8,17 +8,18 @@ let dadosRelatorio = []
 document.addEventListener("DOMContentLoaded", iniciarRelatorios)
 
 function iniciarRelatorios(){
-  esperarSistema()
+esperarSistema()
 }
 
 function esperarSistema(){
 
-  if(state.carregando){
-    setTimeout(esperarSistema,200)
-    return
-  }
+if(state.carregando){
+setTimeout(esperarSistema,200)
+return
+}
 
-  carregarLotesSelect()
+carregarLotesSelect()
+
 }
 
 
@@ -29,22 +30,22 @@ function esperarSistema(){
 
 function carregarLotesSelect(){
 
-  const select = document.getElementById("selectLote")
+const select = document.getElementById("selectLote")
 
-  if(!select) return
+if(!select) return
 
-  select.innerHTML = '<option value="">Todos os lotes</option>'
+select.innerHTML = '<option value="">Todos os lotes</option>'
 
-  state.lotes.forEach(lote => {
+state.lotes.forEach(lote => {
 
-    const opt = document.createElement("option")
+const opt = document.createElement("option")
 
-    opt.value = lote.id
-    opt.textContent = lote.nome || lote.codigo || lote.id
+opt.value = lote.id
+opt.textContent = lote.nome || lote.codigo || lote.id
 
-    select.appendChild(opt)
+select.appendChild(opt)
 
-  })
+})
 
 }
 
@@ -56,8 +57,8 @@ function carregarLotesSelect(){
 
 function gerarRelatorio(){
 
-  gerarRelatorioDetalhado()
-  gerarResumoEndereco()
+gerarRelatorioDetalhado()
+gerarResumoEndereco()
 
 }
 
@@ -87,7 +88,6 @@ let encontrou = false
 state.posicoes.forEach(p=>{
 
 if(!p.ocupada) return
-
 if(loteFiltro && !idEquals(p.lote_id,loteFiltro)) return
 
 const lote = getLoteById(p.lote_id)
@@ -111,6 +111,7 @@ tr.innerHTML = `
 `
 
 tbody.appendChild(tr)
+
 encontrou = true
 
 })
@@ -131,7 +132,21 @@ const lote = getLoteById(h.lote_id)
 const rua = getRuaById(h.rua_id)
 const area = getAreaById(h.area_id)
 
-const data = new Date(h.data)
+// tratamento seguro de data
+
+let dataFormatada = "-"
+let horaFormatada = "-"
+
+if(h.data){
+
+const dataObj = new Date(h.data)
+
+if(!isNaN(dataObj)){
+dataFormatada = dataObj.toLocaleDateString("pt-BR")
+horaFormatada = dataObj.toLocaleTimeString("pt-BR")
+}
+
+}
 
 const tr = document.createElement("tr")
 
@@ -142,11 +157,12 @@ tr.innerHTML = `
 <td>${area?.nome || "-"}</td>
 <td>${rua?.nome || "-"}</td>
 <td>EXPEDIDO</td>
-<td>${data.toLocaleDateString()}</td>
-<td>${data.toLocaleTimeString()}</td>
+<td>${dataFormatada}</td>
+<td>${horaFormatada}</td>
 `
 
 tbody.appendChild(tr)
+
 encontrou = true
 
 })
@@ -159,7 +175,7 @@ if(!encontrou){
 
 tbody.innerHTML = `
 <tr>
-<td colspan="8" style="text-align:center">Nenhum registro encontrado</td>
+<td colspan="8">Nenhum registro encontrado</td>
 </tr>
 `
 
@@ -181,18 +197,15 @@ const tbody = document.querySelector("#tabelaRelatorio tbody")
 if(!tbody) return
 
 tbody.innerHTML = ""
+
 dadosRelatorio = []
 
 const agrupado = {}
 
-
-
 state.posicoes.forEach(p => {
 
 if(!p.ocupada) return
-
 if(loteFiltro && !idEquals(p.lote_id,loteFiltro)) return
-
 
 const lote = getLoteById(p.lote_id)
 const rua = getRuaById(p.rua_id)
@@ -203,21 +216,19 @@ const area = getAreaById(rua.area_id)
 
 if(!area) return
 
-
 const loteNome = lote.nome || lote.codigo || lote.id
 const areaNome = area.nome || area.codigo || area.id
 const ruaNome = rua.nome || rua.codigo || rua.id
 
 const chave = `${loteNome}_${areaNome}_${ruaNome}`
 
-
 if(!agrupado[chave]){
 
 agrupado[chave] = {
-lote: loteNome,
-area: areaNome,
-rua: ruaNome,
-quantidade: 0
+lote:loteNome,
+area:areaNome,
+rua:ruaNome,
+quantidade:0
 }
 
 }
@@ -225,8 +236,6 @@ quantidade: 0
 agrupado[chave].quantidade++
 
 })
-
-
 
 Object.values(agrupado).forEach(item => {
 
@@ -245,13 +254,11 @@ dadosRelatorio.push(item)
 
 })
 
-
-
 if(dadosRelatorio.length === 0){
 
 tbody.innerHTML = `
 <tr>
-<td colspan="4" style="text-align:center">Nenhum endereço encontrado</td>
+<td colspan="4">Nenhum endereço encontrado</td>
 </tr>
 `
 
@@ -350,4 +357,4 @@ startY:20
 
 doc.save("relatorio_armazem.pdf")
 
-  }
+}
