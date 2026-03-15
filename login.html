@@ -1,18 +1,47 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
   <meta charset="UTF-8">
-  <title>Login</title>
+  <title>Login - Sistema de Armazém</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- CSS LOGIN -->
+  <link rel="stylesheet" href="css/login-style.css">
+
 </head>
+
 <body>
 
-  <h2>Login</h2>
+  <div class="login-container">
 
-  <input type="email" id="usuario" placeholder="Email">
-  <input type="password" id="senha" placeholder="Senha">
-  <button id="btnLogin">Entrar</button>
+    <h2>Sistema de Armazém</h2>
 
-  <p id="errorLogin" style="color:red;"></p>
+    <input 
+      type="email" 
+      id="usuario" 
+      placeholder="Email"
+    >
+
+    <input 
+      type="password" 
+      id="senha" 
+      placeholder="Senha"
+    >
+
+    <button id="btnLogin">
+      Entrar
+    </button>
+
+    <p id="errorLogin"></p>
+
+    <div class="login-footer">
+      Controle Logístico
+    </div>
+
+  </div>
+
 
   <!-- SDK Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -24,4 +53,5 @@
   <script src="js/login.js"></script>
 
 </body>
+
 </html>
