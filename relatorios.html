@@ -22,7 +22,9 @@
 
 body{
 background:#f4f4f4;
-font-family:Arial;
+font-family:Arial, Helvetica, sans-serif;
+margin:0;
+padding:0;
 }
 
 h1{
@@ -31,8 +33,7 @@ margin:20px 0;
 }
 
 h2{
-margin-left:20px;
-margin-top:30px;
+margin:25px 20px 10px 20px;
 }
 
 .filtro{
@@ -40,11 +41,30 @@ margin:20px;
 display:flex;
 gap:10px;
 flex-wrap:wrap;
+align-items:center;
 }
 
 .filtro select,
 .filtro button{
-padding:8px;
+padding:8px 10px;
+border-radius:4px;
+border:1px solid #ccc;
+cursor:pointer;
+}
+
+button{
+background:#f4c430;
+border:none;
+}
+
+button:hover{
+background:#e6b800;
+}
+
+#resumo{
+margin:20px;
+font-size:15px;
+font-weight:bold;
 }
 
 .tabela-container{
@@ -52,6 +72,7 @@ margin:20px;
 background:white;
 overflow-x:auto;
 border-radius:6px;
+box-shadow:0 0 4px rgba(0,0,0,0.1);
 }
 
 table{
@@ -70,6 +91,10 @@ th{
 background:#f4c430;
 }
 
+tbody tr:nth-child(even){
+background:#fafafa;
+}
+
 </style>
 
 </head>
@@ -81,11 +106,17 @@ background:#f4c430;
 <h1>Relatórios de Armazém</h1>
 
 
+<!-- ========================================= -->
+<!-- FILTROS -->
+<!-- ========================================= -->
+
 <div class="filtro">
 
-<select id="selectLote"></select>
+<select id="selectLote">
+<option value="">Todos os lotes</option>
+</select>
 
-<button onclick="gerarRelatorioDetalhado()">
+<button onclick="gerarRelatorio()">
 Gerar Relatório
 </button>
 
@@ -104,7 +135,9 @@ PDF
 </div>
 
 
-<div id="resumo"></div>
+<div id="resumo">
+Nenhum relatório gerado
+</div>
 
 
 
@@ -131,7 +164,13 @@ PDF
 </tr>
 </thead>
 
-<tbody></tbody>
+<tbody>
+
+<tr>
+<td colspan="8">Clique em "Gerar Relatório"</td>
+</tr>
+
+</tbody>
 
 </table>
 
@@ -158,7 +197,13 @@ PDF
 </tr>
 </thead>
 
-<tbody></tbody>
+<tbody>
+
+<tr>
+<td colspan="4">Clique em "Gerar Relatório"</td>
+</tr>
+
+</tbody>
 
 </table>
 
