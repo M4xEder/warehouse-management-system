@@ -24,9 +24,9 @@ carregarLotesSelect()
 
 
 
-// ===============================
+// ======================================================
 // FORMATA DATA E HORA (CORREÇÃO INVALID DATE)
-// ===============================
+// ======================================================
 
 function formatarDataHora(valor){
 
@@ -53,9 +53,9 @@ return {data:"-",hora:"-"}
 
 
 
-// ===============================
+// ======================================================
 // SELECT LOTES
-// ===============================
+// ======================================================
 
 function carregarLotesSelect(){
 
@@ -80,9 +80,9 @@ select.appendChild(opt)
 
 
 
-// ===============================
+// ======================================================
 // GERAR RELATÓRIO
-// ===============================
+// ======================================================
 
 function gerarRelatorio(){
 
@@ -93,9 +93,9 @@ gerarResumoEndereco()
 
 
 
-// ===============================
+// ======================================================
 // RELATÓRIO DETALHADO
-// ===============================
+// ======================================================
 
 function gerarRelatorioDetalhado(){
 
@@ -110,9 +110,9 @@ let encontrou = false
 
 
 
-// =========================
+// ===============================
 // GAYLORDS ALOCADOS
-// =========================
+// ===============================
 
 state.posicoes.forEach(p=>{
 
@@ -147,9 +147,9 @@ encontrou = true
 
 
 
-// =========================
+// ===============================
 // GAYLORDS EXPEDIDOS
-// =========================
+// ===============================
 
 if(state.historico_expedidos){
 
@@ -161,7 +161,8 @@ const lote = getLoteById(h.lote_id)
 const rua = getRuaById(h.rua_id)
 const area = getAreaById(h.area_id)
 
-const dataHora = formatarDataHora(h.data)
+// aceita data ou created_at
+const dataHora = formatarDataHora(h.data || h.created_at)
 
 const tr = document.createElement("tr")
 
@@ -200,9 +201,9 @@ tbody.innerHTML = `
 
 
 
-// ===============================
+// ======================================================
 // RESUMO POR ENDEREÇO
-// ===============================
+// ======================================================
 
 function gerarResumoEndereco(){
 
@@ -212,6 +213,7 @@ const tbody = document.querySelector("#tabelaRelatorio tbody")
 if(!tbody) return
 
 tbody.innerHTML = ""
+
 dadosRelatorio = []
 
 const agrupado = {}
@@ -251,6 +253,8 @@ agrupado[chave].quantidade++
 
 })
 
+
+
 Object.values(agrupado).forEach(item => {
 
 const tr = document.createElement("tr")
@@ -268,6 +272,8 @@ dadosRelatorio.push(item)
 
 })
 
+
+
 if(dadosRelatorio.length === 0){
 
 tbody.innerHTML = `
@@ -284,9 +290,9 @@ atualizarResumo()
 
 
 
-// ===============================
-// RESUMO
-// ===============================
+// ======================================================
+// RESUMO TOTAL
+// ======================================================
 
 function atualizarResumo(){
 
@@ -302,9 +308,9 @@ Total de Gaylords no Armazém: <b>${total}</b>
 
 
 
-// ===============================
+// ======================================================
 // EXPORTAR EXCEL
-// ===============================
+// ======================================================
 
 function exportarExcelLote(){
 
@@ -324,9 +330,9 @@ XLSX.writeFile(wb,"relatorio_armazem.xlsx")
 
 
 
-// ===============================
+// ======================================================
 // EXPORTAR PDF
-// ===============================
+// ======================================================
 
 function exportarPDF(){
 
