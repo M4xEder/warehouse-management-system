@@ -3,18 +3,15 @@
 <head>
 
 <meta charset="UTF-8">
-<title>Relatórios de Expedição</title>
+<title>Relatórios de Armazém</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <link rel="stylesheet" href="css/style.css">
 
-<!-- SUPABASE -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 
-<!-- EXCEL -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js" defer></script>
 
-<!-- PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js" defer></script>
 
@@ -22,9 +19,8 @@
 
 body{
 background:#f4f4f4;
-font-family:Arial, Helvetica, sans-serif;
+font-family:Arial;
 margin:0;
-padding:0;
 }
 
 h1{
@@ -33,7 +29,7 @@ margin:20px 0;
 }
 
 h2{
-margin:25px 20px 10px 20px;
+margin:25px 20px 10px;
 }
 
 .filtro{
@@ -41,29 +37,14 @@ margin:20px;
 display:flex;
 gap:10px;
 flex-wrap:wrap;
-align-items:center;
 }
 
-.filtro select,
-.filtro button{
-padding:8px 10px;
-border-radius:4px;
-border:1px solid #ccc;
-cursor:pointer;
-}
-
-button{
-background:#f4c430;
-border:none;
-}
-
-button:hover{
-background:#e6b800;
+select,button{
+padding:8px;
 }
 
 #resumo{
 margin:20px;
-font-size:15px;
 font-weight:bold;
 }
 
@@ -72,7 +53,6 @@ margin:20px;
 background:white;
 overflow-x:auto;
 border-radius:6px;
-box-shadow:0 0 4px rgba(0,0,0,0.1);
 }
 
 table{
@@ -91,10 +71,6 @@ th{
 background:#f4c430;
 }
 
-tbody tr:nth-child(even){
-background:#fafafa;
-}
-
 </style>
 
 </head>
@@ -104,11 +80,6 @@ background:#fafafa;
 <div id="header-container"></div>
 
 <h1>Relatórios de Armazém</h1>
-
-
-<!-- ========================================= -->
-<!-- FILTROS -->
-<!-- ========================================= -->
 
 <div class="filtro">
 
@@ -134,16 +105,9 @@ PDF
 
 </div>
 
-
-<div id="resumo">
-Nenhum relatório gerado
-</div>
+<div id="resumo"></div>
 
 
-
-<!-- ===================================================== -->
-<!-- TABELA 1 - RELATÓRIO DETALHADO -->
-<!-- ===================================================== -->
 
 <h2>Relatório Detalhado</h2>
 
@@ -165,11 +129,9 @@ Nenhum relatório gerado
 </thead>
 
 <tbody>
-
 <tr>
-<td colspan="8">Clique em "Gerar Relatório"</td>
+<td colspan="8">Clique em gerar relatório</td>
 </tr>
-
 </tbody>
 
 </table>
@@ -177,10 +139,6 @@ Nenhum relatório gerado
 </div>
 
 
-
-<!-- ===================================================== -->
-<!-- TABELA 2 - RESUMO POR ENDEREÇO -->
-<!-- ===================================================== -->
 
 <h2>Quantidade por Endereço</h2>
 
@@ -198,11 +156,9 @@ Nenhum relatório gerado
 </thead>
 
 <tbody>
-
 <tr>
-<td colspan="4">Clique em "Gerar Relatório"</td>
+<td colspan="4">Clique em gerar relatório</td>
 </tr>
-
 </tbody>
 
 </table>
@@ -211,8 +167,6 @@ Nenhum relatório gerado
 
 
 
-<!-- ================= BASE DO SISTEMA ================= -->
-
 <script src="js/supabase.js" defer></script>
 
 <script src="js/model.js" defer></script>
@@ -220,11 +174,9 @@ Nenhum relatório gerado
 
 <script src="js/utils.js" defer></script>
 
-<!-- INTERFACE -->
 <script src="js/header.js" defer></script>
 <script src="js/login.js" defer></script>
 
-<!-- RELATÓRIOS -->
 <script src="js/relat0rios/relatorios.js" defer></script>
 
 </body>
