@@ -25,6 +25,35 @@ carregarLotesSelect()
 
 
 // ===============================
+// FORMATA DATA E HORA (CORREÇÃO INVALID DATE)
+// ===============================
+
+function formatarDataHora(valor){
+
+if(!valor) return {data:"-",hora:"-"}
+
+try{
+
+const dataObj = new Date(valor)
+
+if(!isNaN(dataObj)){
+return {
+data:dataObj.toLocaleDateString("pt-BR"),
+hora:dataObj.toLocaleTimeString("pt-BR")
+}
+}
+
+return {data:"-",hora:"-"}
+
+}catch{
+return {data:"-",hora:"-"}
+}
+
+}
+
+
+
+// ===============================
 // SELECT LOTES
 // ===============================
 
@@ -132,21 +161,7 @@ const lote = getLoteById(h.lote_id)
 const rua = getRuaById(h.rua_id)
 const area = getAreaById(h.area_id)
 
-// tratamento seguro de data
-
-let dataFormatada = "-"
-let horaFormatada = "-"
-
-if(h.data){
-
-const dataObj = new Date(h.data)
-
-if(!isNaN(dataObj)){
-dataFormatada = dataObj.toLocaleDateString("pt-BR")
-horaFormatada = dataObj.toLocaleTimeString("pt-BR")
-}
-
-}
+const dataHora = formatarDataHora(h.data)
 
 const tr = document.createElement("tr")
 
@@ -157,8 +172,8 @@ tr.innerHTML = `
 <td>${area?.nome || "-"}</td>
 <td>${rua?.nome || "-"}</td>
 <td>EXPEDIDO</td>
-<td>${dataFormatada}</td>
-<td>${horaFormatada}</td>
+<td>${dataHora.data}</td>
+<td>${dataHora.hora}</td>
 `
 
 tbody.appendChild(tr)
@@ -197,7 +212,6 @@ const tbody = document.querySelector("#tabelaRelatorio tbody")
 if(!tbody) return
 
 tbody.innerHTML = ""
-
 dadosRelatorio = []
 
 const agrupado = {}
@@ -305,19 +319,6 @@ const wb = XLSX.utils.book_new()
 XLSX.utils.book_append_sheet(wb,ws,"Relatorio")
 
 XLSX.writeFile(wb,"relatorio_armazem.xlsx")
-
-}
-
-
-
-// ===============================
-// EXCEL GERAL
-// ===============================
-
-function exportarExcelGeral(){
-
-gerarRelatorio()
-exportarExcelLote()
 
 }
 
