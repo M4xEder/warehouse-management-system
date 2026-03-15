@@ -3,7 +3,7 @@
 <head>
 
 <meta charset="UTF-8">
-<title>Relatórios de Armazém</title>
+<title>Relatórios de Expedição</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <link rel="stylesheet" href="css/style.css">
@@ -23,7 +23,6 @@
 body{
 background:#f4f4f4;
 font-family:Arial;
-margin:0;
 }
 
 h1{
@@ -31,29 +30,21 @@ text-align:center;
 margin:20px 0;
 }
 
+h2{
+margin-left:20px;
+margin-top:30px;
+}
+
 .filtro{
 margin:20px;
 display:flex;
 gap:10px;
 flex-wrap:wrap;
-justify-content:center;
 }
 
 .filtro select,
 .filtro button{
-padding:8px 12px;
-font-size:14px;
-cursor:pointer;
-}
-
-#resumo{
-margin:20px;
-padding:15px;
-background:white;
-border-radius:6px;
-text-align:center;
-font-size:15px;
-font-weight:bold;
+padding:8px;
 }
 
 .tabela-container{
@@ -79,10 +70,6 @@ th{
 background:#f4c430;
 }
 
-tbody tr:hover{
-background:#f2f2f2;
-}
-
 </style>
 
 </head>
@@ -96,16 +83,14 @@ background:#f2f2f2;
 
 <div class="filtro">
 
-<select id="selectLote">
-<option value="">Todos os Lotes</option>
-</select>
+<select id="selectLote"></select>
 
-<button onclick="gerarRelatorio()">
+<button onclick="gerarRelatorioDetalhado()">
 Gerar Relatório
 </button>
 
 <button onclick="exportarExcelLote()">
-Exportar Excel
+Excel
 </button>
 
 <button onclick="exportarExcelGeral()">
@@ -113,16 +98,52 @@ Excel Geral
 </button>
 
 <button onclick="exportarPDF()">
-Exportar PDF
+PDF
 </button>
 
 </div>
 
 
-<div id="resumo">
-Nenhum relatório gerado.
+<div id="resumo"></div>
+
+
+
+<!-- ===================================================== -->
+<!-- TABELA 1 - RELATÓRIO DETALHADO -->
+<!-- ===================================================== -->
+
+<h2>Relatório Detalhado</h2>
+
+<div class="tabela-container">
+
+<table id="tabelaDetalhada">
+
+<thead>
+<tr>
+<th>Lote</th>
+<th>RZ</th>
+<th>Volume</th>
+<th>Área</th>
+<th>Rua</th>
+<th>Status</th>
+<th>Data</th>
+<th>Hora</th>
+</tr>
+</thead>
+
+<tbody></tbody>
+
+</table>
+
 </div>
 
+
+
+<!-- ===================================================== -->
+<!-- TABELA 2 - RESUMO POR ENDEREÇO -->
+<!-- ===================================================== -->
+
+<h2>Quantidade por Endereço</h2>
 
 <div class="tabela-container">
 
@@ -137,13 +158,12 @@ Nenhum relatório gerado.
 </tr>
 </thead>
 
-<tbody>
-
-</tbody>
+<tbody></tbody>
 
 </table>
 
 </div>
+
 
 
 <!-- ================= BASE DO SISTEMA ================= -->
@@ -160,7 +180,7 @@ Nenhum relatório gerado.
 <script src="js/login.js" defer></script>
 
 <!-- RELATÓRIOS -->
-<script src="js/relat0rios/relatorios.js" defer></script>
+<script src="js/relatorios/relatorios.js" defer></script>
 
 </body>
 </html>
