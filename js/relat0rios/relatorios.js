@@ -76,6 +76,8 @@ if(!tbody) return
 
 tbody.innerHTML = ""
 
+let encontrou = false
+
 
 
 // =========================
@@ -109,6 +111,7 @@ tr.innerHTML = `
 `
 
 tbody.appendChild(tr)
+encontrou = true
 
 })
 
@@ -144,8 +147,21 @@ tr.innerHTML = `
 `
 
 tbody.appendChild(tr)
+encontrou = true
 
 })
+
+}
+
+
+
+if(!encontrou){
+
+tbody.innerHTML = `
+<tr>
+<td colspan="8" style="text-align:center">Nenhum registro encontrado</td>
+</tr>
+`
 
 }
 
@@ -228,6 +244,18 @@ tbody.appendChild(tr)
 dadosRelatorio.push(item)
 
 })
+
+
+
+if(dadosRelatorio.length === 0){
+
+tbody.innerHTML = `
+<tr>
+<td colspan="4" style="text-align:center">Nenhum endereço encontrado</td>
+</tr>
+`
+
+}
 
 atualizarResumo()
 
