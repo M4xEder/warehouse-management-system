@@ -126,7 +126,78 @@ function gerarRelatorio(){
 
 }
 
+// ===============================
+// Relatório detalhado por rz 
+// ===============================
+function gerarRelatorioDetalhado(){
 
+const tbody = document.querySelector("#tabelaDetalhada tbody")
+
+tbody.innerHTML = ""
+
+
+
+// =========================
+// GAYLORDS ALOCADOS
+// =========================
+
+state.posicoes.forEach(p=>{
+
+if(!p.ocupada) return
+
+const lote = getLoteById(p.lote_id)
+const rua = getRuaById(p.rua_id)
+const area = getAreaById(rua.area_id)
+
+const tr = document.createElement("tr")
+
+tr.innerHTML = `
+<td>${lote?.nome || "-"}</td>
+<td>${p.rz || "-"}</td>
+<td>${p.volume || "-"}</td>
+<td>${area?.nome || "-"}</td>
+<td>${rua?.nome || "-"}</td>
+<td>ALOCADO</td>
+<td>-</td>
+<td>-</td>
+`
+
+tbody.appendChild(tr)
+
+})
+
+
+
+// =========================
+// GAYLORDS EXPEDIDOS
+// =========================
+
+state.historico_expedidos.forEach(h=>{
+
+const lote = getLoteById(h.lote_id)
+const rua = getRuaById(h.rua_id)
+const area = getAreaById(h.area_id)
+
+const data = new Date(h.data)
+
+const tr = document.createElement("tr")
+
+tr.innerHTML = `
+<td>${lote?.nome || "-"}</td>
+<td>${h.rz || "-"}</td>
+<td>${h.volume || "-"}</td>
+<td>${area?.nome || "-"}</td>
+<td>${rua?.nome || "-"}</td>
+<td>EXPEDIDO</td>
+<td>${data.toLocaleDateString()}</td>
+<td>${data.toLocaleTimeString()}</td>
+`
+
+tbody.appendChild(tr)
+
+})
+
+}
 
 // ===============================
 // RESUMO
