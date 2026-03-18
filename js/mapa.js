@@ -206,6 +206,9 @@ window.renderMapa = function () {
         const posDiv = document.createElement("div");
         posDiv.className = "posicao";
 
+        // 🔴 IMPORTANTE PARA A BUSCA FUNCIONAR
+        posDiv.dataset.posicaoId = pos.id;
+
         posDiv.textContent = pos.numero;
 
 
@@ -233,6 +236,9 @@ window.renderMapa = function () {
         }
 
 
+        // =====================================
+        // DESTAQUE DA BUSCA
+        // =====================================
         if (pos._highlight) {
 
           posDiv.style.border = "3px solid red";
@@ -241,6 +247,9 @@ window.renderMapa = function () {
         }
 
 
+        // =====================================
+        // CLICK POSIÇÃO
+        // =====================================
         posDiv.onclick = () => {
 
           if (window.abrirModalPorId) {
