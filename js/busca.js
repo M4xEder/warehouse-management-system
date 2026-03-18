@@ -42,6 +42,7 @@ window.buscar = function () {
   }
 
   let encontrados = 0;
+  let primeiraPosicaoEncontrada = null;
 
 
   // ======================================
@@ -97,6 +98,10 @@ window.buscar = function () {
 
       pos._highlight = true;
 
+      if (!primeiraPosicaoEncontrada) {
+        primeiraPosicaoEncontrada = pos;
+      }
+
       encontrados++;
 
     }
@@ -122,6 +127,35 @@ window.buscar = function () {
     renderMapa();
 
   }
+
+
+  // ======================================
+  // ROLAR ATÉ O GAYLORD
+  // ======================================
+  setTimeout(() => {
+
+    if (!primeiraPosicaoEncontrada) return;
+
+    const elemento = document.querySelector(
+      `[data-posicao-id="${primeiraPosicaoEncontrada.id}"]`
+    );
+
+    if (elemento) {
+
+      elemento.scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+      });
+
+      elemento.classList.add("pulse-highlight");
+
+      setTimeout(() => {
+        elemento.classList.remove("pulse-highlight");
+      }, 3000);
+
+    }
+
+  }, 300);
 
 };
 
