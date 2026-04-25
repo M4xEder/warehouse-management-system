@@ -15,61 +15,15 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js" defer></script>
 
 <style>
-
-body{
-background:#f4f4f4;
-font-family:Arial;
-margin:0;
-}
-
-h1{
-text-align:center;
-margin:20px 0;
-}
-
-h2{
-margin:25px 20px 10px;
-}
-
-.filtro{
-margin:20px;
-display:flex;
-gap:10px;
-flex-wrap:wrap;
-}
-
-select,button{
-padding:8px;
-}
-
-#resumo{
-margin:20px;
-font-weight:bold;
-}
-
-.tabela-container{
-margin:20px;
-background:white;
-overflow-x:auto;
-border-radius:6px;
-}
-
-table{
-width:100%;
-border-collapse:collapse;
-}
-
-th,td{
-border:1px solid #ddd;
-padding:8px;
-font-size:13px;
-text-align:center;
-}
-
-th{
-background:#f4c430;
-}
-
+body{background:#f4f4f4;font-family:Arial;margin:0;}
+h1{text-align:center;margin:20px 0;}
+h2{margin:25px 20px 10px;}
+.filtro{margin:20px;display:flex;gap:10px;flex-wrap:wrap;}
+select,button{padding:8px;}
+.tabela-container{margin:20px;background:white;border-radius:6px;overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+th,td{border:1px solid #ddd;padding:8px;text-align:center;font-size:13px;}
+th{background:#f4c430;}
 </style>
 
 </head>
@@ -86,30 +40,19 @@ background:#f4c430;
 <option value="">Todos os lotes</option>
 </select>
 
-<button onclick="gerarRelatorio()">
-Gerar Relatório
-</button>
+<button onclick="gerarRelatorio()">Gerar Relatório</button>
 
-<button onclick="exportarExcelLote()">
-Excel
-</button>
+<button onclick="exportarExcelCompleto()">Excel</button>
 
-<button onclick="exportarPDF()">
-PDF
-</button>
+<button onclick="exportarPDF()">PDF</button>
 
 </div>
-
-<div id="resumo"></div>
-
 
 
 <h2>Relatório Detalhado</h2>
 
 <div class="tabela-container">
-
 <table id="tabelaDetalhada">
-
 <thead>
 <tr>
 <th>Lote</th>
@@ -122,25 +65,17 @@ PDF
 <th>Hora</th>
 </tr>
 </thead>
-
 <tbody>
-<tr>
-<td colspan="8">Clique em gerar relatório</td>
-</tr>
+<tr><td colspan="8">Clique em gerar relatório</td></tr>
 </tbody>
-
 </table>
-
 </div>
-
 
 
 <h2>Quantidade por Endereço</h2>
 
 <div class="tabela-container">
-
 <table id="tabelaRelatorio">
-
 <thead>
 <tr>
 <th>Lote</th>
@@ -149,28 +84,21 @@ PDF
 <th>Gaylords</th>
 </tr>
 </thead>
-
 <tbody>
-<tr>
-<td colspan="4">Clique em gerar relatório</td>
-</tr>
+<tr><td colspan="4">Clique em gerar relatório</td></tr>
 </tbody>
-
 </table>
-
 </div>
-
 
 
 <script src="js/supabase.js" defer></script>
 <script src="js/model.js" defer></script>
 <script src="js/state.js" defer></script>
-
 <script src="js/utils.js" defer></script>
-
 <script src="js/header.js" defer></script>
 <script src="js/login.js" defer></script>
 
+<!-- ⚠️ IMPORTANTE -->
 <script src="js/relat0rios/relatorios.js" defer></script>
 
 </body>
