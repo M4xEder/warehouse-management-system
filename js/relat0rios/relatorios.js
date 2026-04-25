@@ -1,367 +1,299 @@
 // ======================================================
-// RELATORIOS.JS
-// Relatório de localização dos lotes
+// RELATORIOS.JS — COMPLETO FINAL (COM EXCEL 2 ABAS)
 // ======================================================
 
-let dadosRelatorio = []
+let dadosRelatorio = []   // resumo
+let dadosDetalhado = []   // detalhado
 
 document.addEventListener("DOMContentLoaded", iniciarRelatorios)
 
 function iniciarRelatorios(){
-esperarSistema()
+  esperarSistema()
 }
 
 function esperarSistema(){
 
-if(state.carregando){
-setTimeout(esperarSistema,200)
-return
+  if(!window.state || state.carregando){
+    setTimeout(esperarSistema,300)
+    return
+  }
+
+  carregarLotesSelect()
 }
-
-carregarLotesSelect()
-
-}
-
 
 
 // ======================================================
-// FORMATA DATA E HORA (CORREÇÃO INVALID DATE)
+// FORMATAR DATA
 // ======================================================
-
 function formatarDataHora(valor){
 
-if(!valor) return {data:"-",hora:"-"}
+  if(!valor) return {data:"-",hora:"-"}
 
-try{
+  const dataObj = new Date(valor)
 
-const dataObj = new Date(valor)
+  if(isNaN(dataObj.getTime())) return {data:"-",hora:"-"}
 
-if(!isNaN(dataObj)){
-return {
-data:dataObj.toLocaleDateString("pt-BR"),
-hora:dataObj.toLocaleTimeString("pt-BR")
-}
-}
-
-return {data:"-",hora:"-"}
-
-}catch{
-return {data:"-",hora:"-"}
-}
+  return {
+    data:dataObj.toLocaleDateString("pt-BR"),
+    hora:dataObj.toLocaleTimeString("pt-BR")
+  }
 
 }
-
 
 
 // ======================================================
 // SELECT LOTES
 // ======================================================
-
 function carregarLotesSelect(){
 
-const select = document.getElementById("selectLote")
+  const select = document.getElementById("selectLote")
 
-if(!select) return
+  if(!select) return
 
-select.innerHTML = '<option value="">Todos os lotes</option>'
+  select.innerHTML = '<option value="">Todos os lotes</option>'
 
-state.lotes.forEach(lote => {
+  state.lotes.forEach(lote => {
 
-const opt = document.createElement("option")
+    const opt = document.createElement("option")
 
-opt.value = lote.id
-opt.textContent = lote.nome || lote.codigo || lote.id
+    opt.value = lote.id
+    opt.textContent = lote.nome || lote.codigo || lote.id
 
-select.appendChild(opt)
+    select.appendChild(opt)
 
-})
+  })
+
+  select.addEventListener("change", gerarRelatorio)
 
 }
-
 
 
 // ======================================================
 // GERAR RELATÓRIO
 // ======================================================
-
 function gerarRelatorio(){
 
-gerarRelatorioDetalhado()
-gerarResumoEndereco()
+  gerarRelatorioDetalhado()
+  gerarResumoEndereco()
 
 }
-
 
 
 // ======================================================
 // RELATÓRIO DETALHADO
 // ======================================================
-
 function gerarRelatorioDetalhado(){
 
-const loteFiltro = document.getElementById("selectLote").value
-const tbody = document.querySelector("#tabelaDetalhada tbody")
+  const loteFiltro = document.getElementById("selectLote").value
+  const tbody = document.querySelector("#tabelaDetalhada tbody")
 
-if(!tbody) return
+  tbody.innerHTML = ""
+  dadosDetalhado = []
 
-tbody.innerHTML = ""
-
-let encontrou = false
-
+  let encontrou = false
 
 
-// ===============================
-// GAYLORDS ALOCADOS
-// ===============================
+  // ================= ALOCADOS =================
+  state.posicoes.forEach(p=>{
 
-state.posicoes.forEach(p=>{
+    if(!p.ocupada) return
+    if(loteFiltro && !idEquals(p.lote_id,loteFiltro)) return
 
-if(!p.ocupada) return
-if(loteFiltro && !idEquals(p.lote_id,loteFiltro)) return
+    const lote = getLoteById(p.lote_id)
+    const rua = getRuaById(p.rua_id)
+    if(!rua) return
 
-const lote = getLoteById(p.lote_id)
-const rua = getRuaById(p.rua_id)
+    const area = getAreaById(rua.area_id)
 
-if(!rua) return
+    const registro = {
+      Lote: lote?.nome || "-",
+      RZ: p.rz || "-",
+      Volume: p.volume || "-",
+      Área: area?.nome || "-",
+      Rua: rua?.nome || "-",
+      Status: "ALOCADO",
+      Data: "-",
+      Hora: "-"
+    }
 
-const area = getAreaById(rua.area_id)
+    dadosDetalhado.push(registro)
 
-const tr = document.createElement("tr")
+    const tr = document.createElement("tr")
+    tr.innerHTML = `
+      <td>${registro.Lote}</td>
+      <td>${registro.RZ}</td>
+      <td>${registro.Volume}</td>
+      <td>${registro.Área}</td>
+      <td>${registro.Rua}</td>
+      <td>${registro.Status}</td>
+      <td>${registro.Data}</td>
+      <td>${registro.Hora}</td>
+    `
 
-tr.innerHTML = `
-<td>${lote?.nome || "-"}</td>
-<td>${p.rz || "-"}</td>
-<td>${p.volume || "-"}</td>
-<td>${area?.nome || "-"}</td>
-<td>${rua?.nome || "-"}</td>
-<td>ALOCADO</td>
-<td>-</td>
-<td>-</td>
-`
+    tbody.appendChild(tr)
+    encontrou = true
 
-tbody.appendChild(tr)
-
-encontrou = true
-
-})
+  })
 
 
+  // ================= EXPEDIDOS =================
+  state.historico_expedidos.forEach(h=>{
 
-// ===============================
-// GAYLORDS EXPEDIDOS
-// ===============================
+    if(loteFiltro && !idEquals(h.lote_id,loteFiltro)) return
 
-if(state.historico_expedidos){
+    const lote = getLoteById(h.lote_id)
+    const rua = getRuaById(h.rua_id)
+    const area = getAreaById(h.area_id)
 
-state.historico_expedidos.forEach(h=>{
+    const dh = formatarDataHora(h.data || h.created_at)
 
-if(loteFiltro && !idEquals(h.lote_id,loteFiltro)) return
+    const registro = {
+      Lote: lote?.nome || "-",
+      RZ: h.rz || "-",
+      Volume: h.volume || "-",
+      Área: area?.nome || "-",
+      Rua: rua?.nome || "-",
+      Status: "EXPEDIDO",
+      Data: dh.data,
+      Hora: dh.hora
+    }
 
-const lote = getLoteById(h.lote_id)
-const rua = getRuaById(h.rua_id)
-const area = getAreaById(h.area_id)
+    dadosDetalhado.push(registro)
 
-// aceita data ou created_at
-const dataHora = formatarDataHora(h.data || h.created_at)
+    const tr = document.createElement("tr")
+    tr.innerHTML = `
+      <td>${registro.Lote}</td>
+      <td>${registro.RZ}</td>
+      <td>${registro.Volume}</td>
+      <td>${registro.Área}</td>
+      <td>${registro.Rua}</td>
+      <td>${registro.Status}</td>
+      <td>${registro.Data}</td>
+      <td>${registro.Hora}</td>
+    `
 
-const tr = document.createElement("tr")
+    tbody.appendChild(tr)
+    encontrou = true
 
-tr.innerHTML = `
-<td>${lote?.nome || "-"}</td>
-<td>${h.rz || "-"}</td>
-<td>${h.volume || "-"}</td>
-<td>${area?.nome || "-"}</td>
-<td>${rua?.nome || "-"}</td>
-<td>EXPEDIDO</td>
-<td>${dataHora.data}</td>
-<td>${dataHora.hora}</td>
-`
+  })
 
-tbody.appendChild(tr)
 
-encontrou = true
-
-})
+  if(!encontrou){
+    tbody.innerHTML = `<tr><td colspan="8">Nenhum registro encontrado</td></tr>`
+  }
 
 }
-
-
-
-if(!encontrou){
-
-tbody.innerHTML = `
-<tr>
-<td colspan="8">Nenhum registro encontrado</td>
-</tr>
-`
-
-}
-
-}
-
 
 
 // ======================================================
 // RESUMO POR ENDEREÇO
 // ======================================================
-
 function gerarResumoEndereco(){
 
-const loteFiltro = document.getElementById("selectLote").value
-const tbody = document.querySelector("#tabelaRelatorio tbody")
+  const loteFiltro = document.getElementById("selectLote").value
+  const tbody = document.querySelector("#tabelaRelatorio tbody")
 
-if(!tbody) return
+  tbody.innerHTML = ""
+  dadosRelatorio = []
 
-tbody.innerHTML = ""
+  const agrupado = {}
 
-dadosRelatorio = []
+  state.posicoes.forEach(p => {
 
-const agrupado = {}
+    if(!p.ocupada) return
+    if(loteFiltro && !idEquals(p.lote_id,loteFiltro)) return
 
-state.posicoes.forEach(p => {
+    const lote = getLoteById(p.lote_id)
+    const rua = getRuaById(p.rua_id)
+    const area = getAreaById(rua.area_id)
 
-if(!p.ocupada) return
-if(loteFiltro && !idEquals(p.lote_id,loteFiltro)) return
+    if(!lote || !rua || !area) return
 
-const lote = getLoteById(p.lote_id)
-const rua = getRuaById(p.rua_id)
+    const chave = `${lote.id}_${area.id}_${rua.id}`
 
-if(!lote || !rua) return
+    if(!agrupado[chave]){
+      agrupado[chave] = {
+        Lote:lote.nome,
+        Área:area.nome,
+        Rua:rua.nome,
+        Gaylords:0
+      }
+    }
 
-const area = getAreaById(rua.area_id)
+    agrupado[chave].Gaylords++
 
-if(!area) return
+  })
 
-const loteNome = lote.nome || lote.codigo || lote.id
-const areaNome = area.nome || area.codigo || area.id
-const ruaNome = rua.nome || rua.codigo || rua.id
+  Object.values(agrupado).forEach(item=>{
+    dadosRelatorio.push(item)
 
-const chave = `${loteNome}_${areaNome}_${ruaNome}`
-
-if(!agrupado[chave]){
-
-agrupado[chave] = {
-lote:loteNome,
-area:areaNome,
-rua:ruaNome,
-quantidade:0
-}
-
-}
-
-agrupado[chave].quantidade++
-
-})
-
-
-
-Object.values(agrupado).forEach(item => {
-
-const tr = document.createElement("tr")
-
-tr.innerHTML = `
-<td>${item.lote}</td>
-<td>${item.area}</td>
-<td>${item.rua}</td>
-<td>${item.quantidade}</td>
-`
-
-tbody.appendChild(tr)
-
-dadosRelatorio.push(item)
-
-})
-
-
-
-if(dadosRelatorio.length === 0){
-
-tbody.innerHTML = `
-<tr>
-<td colspan="4">Nenhum endereço encontrado</td>
-</tr>
-`
+    const tr = document.createElement("tr")
+    tr.innerHTML = `
+      <td>${item.Lote}</td>
+      <td>${item.Área}</td>
+      <td>${item.Rua}</td>
+      <td>${item.Gaylords}</td>
+    `
+    tbody.appendChild(tr)
+  })
 
 }
-
-atualizarResumo()
-
-}
-
 
 
 // ======================================================
-// RESUMO TOTAL
+// EXCEL COMPLETO (2 ABAS)
 // ======================================================
+function exportarExcelCompleto(){
 
-function atualizarResumo(){
+  if(!dadosDetalhado.length && !dadosRelatorio.length){
+    alert("Gere o relatório primeiro")
+    return
+  }
 
-const div = document.getElementById("resumo")
+  const wb = XLSX.utils.book_new()
 
-const total = dadosRelatorio.reduce((s,v)=>s+v.quantidade,0)
+  if(dadosDetalhado.length){
+    const ws1 = XLSX.utils.json_to_sheet(dadosDetalhado)
+    XLSX.utils.book_append_sheet(wb, ws1, "Detalhado")
+  }
 
-div.innerHTML = `
-Total de Gaylords no Armazém: <b>${total}</b>
-`
+  if(dadosRelatorio.length){
+    const ws2 = XLSX.utils.json_to_sheet(dadosRelatorio)
+    XLSX.utils.book_append_sheet(wb, ws2, "Resumo")
+  }
+
+  XLSX.writeFile(wb, "relatorio_completo.xlsx")
 
 }
 
 
-
 // ======================================================
-// EXPORTAR EXCEL
+// PDF (DETALHADO)
 // ======================================================
-
-function exportarExcelLote(){
-
-if(!dadosRelatorio.length){
-alert("Gere o relatório primeiro")
-return
-}
-
-const ws = XLSX.utils.json_to_sheet(dadosRelatorio)
-const wb = XLSX.utils.book_new()
-
-XLSX.utils.book_append_sheet(wb,ws,"Relatorio")
-
-XLSX.writeFile(wb,"relatorio_armazem.xlsx")
-
-}
-
-
-
-// ======================================================
-// EXPORTAR PDF
-// ======================================================
-
 function exportarPDF(){
 
-if(!dadosRelatorio.length){
-alert("Gere o relatório primeiro")
-return
-}
+  if(!dadosDetalhado.length){
+    alert("Gere o relatório primeiro")
+    return
+  }
 
-const { jsPDF } = window.jspdf
+  const { jsPDF } = window.jspdf
+  const doc = new jsPDF()
 
-const doc = new jsPDF()
+  const colunas = ["Lote","RZ","Volume","Área","Rua","Status","Data","Hora"]
 
-const colunas = ["Lote","Área","Rua","Gaylords"]
+  const linhas = dadosDetalhado.map(r => [
+    r.Lote, r.RZ, r.Volume, r.Área, r.Rua, r.Status, r.Data, r.Hora
+  ])
 
-const linhas = dadosRelatorio.map(r => [
-r.lote,
-r.area,
-r.rua,
-r.quantidade
-])
+  doc.text("Relatório Detalhado",14,15)
 
-doc.text("Relatório de Armazém",14,15)
+  doc.autoTable({
+    head:[colunas],
+    body:linhas,
+    startY:20
+  })
 
-doc.autoTable({
-head:[colunas],
-body:linhas,
-startY:20
-})
+  doc.save("relatorio_detalhado.pdf")
 
-doc.save("relatorio_armazem.pdf")
-
-}
+      }
