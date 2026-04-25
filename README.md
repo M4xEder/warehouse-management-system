@@ -38,12 +38,9 @@ O sistema permite:
 ## 🛠️ Tecnologias Utilizadas
 
 - HTML / CSS / JavaScript  
-- Python (automação e relatórios) *(se aplicável)*  
-- Pandas *(se aplicável)*  
+- SQL  
 - Git & GitHub  
 
 > Obs: Estrutura preparada para futuras integrações com banco de dados e APIs.
 
----
-
-## 📂 Estrutura do Projeto
+____
