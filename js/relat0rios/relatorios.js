@@ -1,5 +1,5 @@
 // ======================================================
-// RELATORIOS.JS — COMPLETO FINAL (COM EXCEL 2 ABAS)
+// RELATORIOS.JS — FINAL PROFISSIONAL
 // ======================================================
 
 let dadosRelatorio = []   // resumo
@@ -22,6 +22,7 @@ function esperarSistema(){
 }
 
 
+
 // ======================================================
 // FORMATAR DATA
 // ======================================================
@@ -41,8 +42,9 @@ function formatarDataHora(valor){
 }
 
 
+
 // ======================================================
-// SELECT LOTES
+// SELECT LOTES (SEM AUTO EXECUÇÃO)
 // ======================================================
 function carregarLotesSelect(){
 
@@ -63,13 +65,12 @@ function carregarLotesSelect(){
 
   })
 
-  select.addEventListener("change", gerarRelatorio)
-
 }
 
 
+
 // ======================================================
-// GERAR RELATÓRIO
+// GERAR RELATÓRIO (BOTÃO)
 // ======================================================
 function gerarRelatorio(){
 
@@ -79,6 +80,7 @@ function gerarRelatorio(){
 }
 
 
+
 // ======================================================
 // RELATÓRIO DETALHADO
 // ======================================================
@@ -86,6 +88,8 @@ function gerarRelatorioDetalhado(){
 
   const loteFiltro = document.getElementById("selectLote").value
   const tbody = document.querySelector("#tabelaDetalhada tbody")
+
+  if(!tbody) return
 
   tbody.innerHTML = ""
   dadosDetalhado = []
@@ -129,8 +133,8 @@ function gerarRelatorioDetalhado(){
       <td>${registro.Data}</td>
       <td>${registro.Hora}</td>
     `
-
     tbody.appendChild(tr)
+
     encontrou = true
 
   })
@@ -171,18 +175,27 @@ function gerarRelatorioDetalhado(){
       <td>${registro.Data}</td>
       <td>${registro.Hora}</td>
     `
-
     tbody.appendChild(tr)
+
     encontrou = true
 
   })
 
 
+  // ================= SEM DADOS =================
   if(!encontrou){
-    tbody.innerHTML = `<tr><td colspan="8">Nenhum registro encontrado</td></tr>`
+
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="8" style="padding:20px;font-weight:bold;color:#666;">
+          Nenhum dado encontrado para o filtro selecionado
+        </td>
+      </tr>
+    `
   }
 
 }
+
 
 
 // ======================================================
@@ -192,6 +205,8 @@ function gerarResumoEndereco(){
 
   const loteFiltro = document.getElementById("selectLote").value
   const tbody = document.querySelector("#tabelaRelatorio tbody")
+
+  if(!tbody) return
 
   tbody.innerHTML = ""
   dadosRelatorio = []
@@ -224,7 +239,9 @@ function gerarResumoEndereco(){
 
   })
 
+
   Object.values(agrupado).forEach(item=>{
+
     dadosRelatorio.push(item)
 
     const tr = document.createElement("tr")
@@ -235,13 +252,28 @@ function gerarResumoEndereco(){
       <td>${item.Gaylords}</td>
     `
     tbody.appendChild(tr)
+
   })
+
+
+  // ================= SEM DADOS =================
+  if(dadosRelatorio.length === 0){
+
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="4" style="padding:20px;font-weight:bold;color:#666;">
+          Nenhum endereço encontrado
+        </td>
+      </tr>
+    `
+  }
 
 }
 
 
+
 // ======================================================
-// EXCEL COMPLETO (2 ABAS)
+// EXCEL (2 ABAS)
 // ======================================================
 function exportarExcelCompleto(){
 
@@ -265,6 +297,7 @@ function exportarExcelCompleto(){
   XLSX.writeFile(wb, "relatorio_completo.xlsx")
 
 }
+
 
 
 // ======================================================
@@ -296,4 +329,4 @@ function exportarPDF(){
 
   doc.save("relatorio_detalhado.pdf")
 
-      }
+}
